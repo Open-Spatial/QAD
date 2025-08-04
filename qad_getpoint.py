@@ -1033,6 +1033,7 @@ class QadGetPoint(QgsMapTool):
          else:
             self.M2P_Mode = False
             self.point = qad_utils.getMiddlePoint(self.M2p_pt1, self.point)
+            self.M2p_pt1 = None
             self.plugIn.setLastPoint(self.point)
             self.plugIn.QadCommands.continueCommandFromMapTool()
       else:

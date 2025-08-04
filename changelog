@@ -1,6 +1,12 @@
+version 3.0.8
+---------------------------
+* 2024-10-07 Fixed bug on m2p option (reported by Fabrice DEMIEL)
+
+
 version 3.0.7
 ---------------------------
 
+* 2024-10-07 Fixed bug on stretching last segment of a polygon
 * 2024-09-19 New set of icons for menus and buttons (proposed and edited by em-rezende)
 * 2024-08-28 Fixed bug on label size calculation (reported by em-rezende)
 * 2024-08-28 Fixed bug on Fedora linux version (reported by Jesper Reenberg)
