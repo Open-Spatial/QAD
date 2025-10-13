@@ -4643,7 +4643,7 @@ class QadDimStylesClass():
          con due parametri, il primo QgsVectorLayer e il secondo l'id della feature
       """
       # verifico se l'entità appartiene ad uno stile di quotatura
-      if type(layer) == QgsVectorLayer:
+      if isinstance(layer, QgsVectorLayer):
          entity = QadEntity()
          entity.set(layer, fid)
          dimStyle, dimId = self.getDimIdByEntity(entity)
