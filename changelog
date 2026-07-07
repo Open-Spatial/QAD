@@ -1,3 +1,23 @@
+version 5.0.6
+---------------------------
+* 2026-07-08 Ported the working QGIS 4.01 / Qt6 compatibility baseline from the Open Spatial prototype archive.
+* 2026-07-08 Fixed ARC command compatibility issues.
+* 2026-07-08 Fixed wheel event handling for the QGIS 4 / Qt6 runtime.
+* 2026-07-08 Fixed focus-out handling.
+* 2026-07-08 Fixed Qt6 compatibility issues across plugin startup, dialogs, generated UI modules, and runtime helpers.
+* 2026-07-08 Fixed plugin load issues in the QGIS 4 / Qt6 runtime.
+* 2026-07-08 Fixed geometry handling and metadata compatibility issues.
+* 2026-07-08 Added capture geometry support for tighter integration workflows.
+* 2026-07-08 Implemented custom prompt handling.
+* 2026-07-08 Added ordered prompt handling.
+* 2026-07-08 Added support for workflows with a fixed number of prompts.
+* 2026-07-08 Added prompt-to-select-object workflow support.
+* 2026-07-08 Fixed initialization of command map tool mode state.
+* 2026-07-08 Fixed selection-only capture completion when commands return selected objects without line geometry.
+* 2026-07-08 Updated polygon capture to return captured polygon geometry.
+* 2026-07-08 Translated Comments from Italian to English.
+
+
 version 3.0.8
 ---------------------------
 * 2024-10-07 Fixed bug on m2p option (reported by Fabrice DEMIEL)
