@@ -1,0 +1,38 @@
+# This file contains metadata for your plugin. Beginning
+# with version 1.8 this is the preferred way to supply information about a
+# plugin. The current method of embedding metadata in __init__.py will
+# be supported until version 2.0
+
+# This file should be included when you package your plugin.
+
+# Mandatory items:
+
+[general]
+name=QAD
+email=support@openspatial.com
+author=Open Spatial Pty Ltd
+qgisMinimumVersion=4.0
+description=Quantum Aided Design: cad like commands in QGIS
+about=Quantum Aided Design: cad like commands in QGIS
+version=5.0.5
+tracker=https://github.com/Open-Spatial/QAD_QT6/issues
+repository=https://github.com/Open-Spatial/QAD_QT6
+
+# end of mandatory metadata
+
+# Optional items:
+
+category=Vector
+
+# tags are comma separated with spaces allowed
+tags=cad,circle,digitizing,dimensioning,ellipse,polygon,polyline,rectangle,snap,vector
+
+homepage=https://qadplugin.wordpress.com
+icon=icons/qad.png
+# experimental flag
+experimental=False
+
+# deprecated flag (applies to the whole plugin, not just a single version
+deprecated=False
+
+qgisMaximumVersion=4.99

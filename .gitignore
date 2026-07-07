@@ -1,0 +1,6 @@
+*.zip
+
+# Local Open Spatial development helpers; keep out of the public fork branch.
+DevTools/
+Create_QAD_QT6_Zip.bat
+QAD_QT6.code-workspace
