@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per la gestione delle scorciatoie
- 
+ class for managing shortcuts
+
                               -------------------
         begin                : 2020-04-23
         copyright            : iiiii
@@ -33,66 +33,66 @@ import string
 # QadShortcuts class
 # ===============================================================================
 class QadShortcuts():
-   
+
    def __init__(self):
       self.sManager = QgsGui.shortcutsManager()
-      self.objList = [] # lista di coppie (shortcut KeySequence) o (action KeySequence)
-      
-   
+      self.objList = [] # list of pairs (shortcut KeySequence) or (action KeySequence)
+
+
    def __del__(self):
-      self.registerForPrintable()    
-      del self.objList[:] # svuoto la lista
+      self.registerForPrintable()
+      del self.objList[:] # I empty the list
 
 
    def registerForPrintableAndQadFKeys(self):
-      # setta una lista di shortcut e una di action
+      # sets a shortcut list and an action list
       for item in self.objList:
          self.sManager.setObjectKeySequence(item[0], item[1].toString())
-            
+
       return
 
 
    def unregisterForPrintableAndQadFKeys(self):
-      # rimuove gli shortcut e le action relative ai caratteri stampabili
-      # e li memorizza in 2 liste interne: una per gi shortcut ed una per le action che sono state rimosse                                
-      del self.objList[:] # svuoto la lista
+      # removes shortcuts and actions related to printable characters
+      # and stores them in 2 internal lists: one for shortcuts and one for actions that have been removed
+      del self.objList[:] # I empty the list
       s = string.printable
       for i in range(0, len(s)):
          seq = QKeySequence(s[i])
          obj = self.sManager.objectForSequence(seq)
          if obj is not None:
             self.objList.append([obj, seq])
-            self.sManager.setObjectKeySequence(obj, QKeySequence().toString()) # lo annulla
+            self.sManager.setObjectKeySequence(obj, QKeySequence().toString()) # cancels it
 
-      # rimuove gli shortcut e le action relative ai caratteri F2, F3, F8, F12, ESC
+      # removes shortcuts and actions related to the characters F2, F3, F8, F12, ESC
       seq = QKeySequence(Qt.Key_F2)
       obj = self.sManager.objectForSequence(seq)
       if obj is not None:
          self.objList.append([obj, seq])
-         self.sManager.setObjectKeySequence(obj, QKeySequence().toString()) # lo annulla
+         self.sManager.setObjectKeySequence(obj, QKeySequence().toString()) # cancels it
 
       seq = QKeySequence(Qt.Key_F3)
       obj = self.sManager.objectForSequence(seq)
       if obj is not None:
          self.objList.append([obj, seq])
-         self.sManager.setObjectKeySequence(obj, QKeySequence().toString()) # lo annulla
-           
+         self.sManager.setObjectKeySequence(obj, QKeySequence().toString()) # cancels it
+
       seq = QKeySequence(Qt.Key_F8)
       obj = self.sManager.objectForSequence(seq)
       if obj is not None:
          self.objList.append([obj, seq])
-         self.sManager.setObjectKeySequence(obj, QKeySequence().toString()) # lo annulla
+         self.sManager.setObjectKeySequence(obj, QKeySequence().toString()) # cancels it
 
       seq = QKeySequence(Qt.Key_F12)
       obj = self.sManager.objectForSequence(seq)
       if obj is not None:
          self.objList.append([obj, seq])
-         self.sManager.setObjectKeySequence(obj, QKeySequence().toString()) # lo annulla
+         self.sManager.setObjectKeySequence(obj, QKeySequence().toString()) # cancels it
 
       seq = QKeySequence(Qt.Key_Escape)
       obj = self.sManager.objectForSequence(seq)
       if obj is not None:
          self.objList.append([obj, seq])
-         self.sManager.setObjectKeySequence(obj, QKeySequence().toString()) # lo annulla
+         self.sManager.setObjectKeySequence(obj, QKeySequence().toString()) # cancels it
 
-      return                            
+      return

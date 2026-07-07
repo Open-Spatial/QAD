@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- comando DSETTINGS per impostazione disegno
- 
+ DSETTINGS command for drawing settings
+
                               -------------------
         begin                : 2013-05-22
         copyright            : iiiii
@@ -34,13 +34,13 @@ from .qad_generic_cmd import QadCommandClass
 from ..qad_msg import QadMsg
 
 
-# Classe che gestisce il comando DSETTINGS
+# Class that manages the DSETTINGS command
 class QadDSETTINGSCommandClass(QadCommandClass):
-   
+
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadDSETTINGSCommandClass(self.plugIn)
-   
+
    def getName(self):
       return QadMsg.translate("Command_list", "DSETTINGS")
 
@@ -54,13 +54,13 @@ class QadDSETTINGSCommandClass(QadCommandClass):
       return QIcon(":/plugins/qad/icons/dsettings.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_DSETTINGS", "Drafting Settings (snaps, etc.).")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
-            
+
    def run(self, msgMapTool = False, msg = None):
       Form = QadDSETTINGSDialog(self.plugIn)
-      Form.exec_()
+      Form.exec()
       return True

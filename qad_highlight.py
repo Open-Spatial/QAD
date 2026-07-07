@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- Classe per gestire l'evidenziazione delle geometrie
- 
+ Class for managing geometry highlighting
+
                               -------------------
         begin                : 2015-12-12
         copyright            : iiiii
@@ -34,9 +34,8 @@ from qgis.gui import *
 # getQGISColorForHighlight
 # ===============================================================================
 def getQGISColorForHighlight():
-   """
-   La funzione legge il colore impostato da QGIS per il rubber band di tipo <geometryType>.
-   Se <alternativeBand> = True, il rubber band sarà impostato con più trasparenza
+   """The function reads the color set by QGIS for the rubber band of type <geometryType>.
+      If <alternativeBand> = True, the rubber band will be set with more transparency
    """
    settings = QSettings()
    color = QColor(int(settings.value( "/qgis/digitizing/line_color_red", 1)), \
@@ -52,15 +51,14 @@ def getQGISColorForHighlight():
 # createHighlight
 # ===============================================================================
 def createHighlight(mapCanvas, geometry_feature, layer, borderColor = None, fillColor = None):
-   """
-   la funzione crea un rubber band di tipo <geometryType> con le impostazioni di QGIS.
-   Se <alternativeBand> = True, il rubber band sarà impostato con più trasparenza e tipolinea punteggiato   
+   """the function creates a rubber band of type <geometryType> with the QGIS settings.
+      If <alternativeBand> = True, the rubber band will be set with more transparency and dotted linetype
    """
    settings = QSettings()
    width = int(settings.value( "/qgis/digitizing/line_width", 1))
 
    hl = QgsHighlight(mapCanvas, geometry_feature, layer)
-   
+
    if borderColor is None:
       borderColor = getQGISColorForHighlight()
    hl.setColor(borderColor)
@@ -69,11 +67,11 @@ def createHighlight(mapCanvas, geometry_feature, layer, borderColor = None, fill
       hl.setFillColor(borderColor)
    else:
       hl.setFillColor(fillColor)
-   
+
    return hl
 
 
-# Classe che gestisce l'evidenziazione delle geometrie
+# Class that manages geometry highlighting
 class QadHighlight():
    def __init__(self, mapCanvas, borderColor = None, fillColor = None):
       self.mapCanvas = mapCanvas
@@ -81,12 +79,12 @@ class QadHighlight():
 
    def __del__(self):
       self.reset()
-      
+
       for highlight in self.__highlight:
          self.mapCanvas.scene().removeItem(highlight)
 
       del self.__highlight[:]
-   
+
    def hide(self):
       for highlight in self.__highlight:
          highlight.hide()
@@ -94,7 +92,7 @@ class QadHighlight():
    def show(self):
       for highlight in self.__highlight:
          highlight.show()
-      
+
    def addGeometry(self, geom, layer, borderColor = None, fillColor = None):
       highlight = createHighlight(self.mapCanvas, geom, layer, borderColor, fillColor)
       highlight.show()
@@ -102,8 +100,8 @@ class QadHighlight():
 
    def addGeometries(self, geoms, layer, borderColor = None, fillColor = None):
       for g in geoms:
-         self.addGeometry(g, layer, borderColor, fillColor)         
-         
+         self.addGeometry(g, layer, borderColor, fillColor)
+
    def reset(self):
       self.hide()
       for highlight in self.__highlight:

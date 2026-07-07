@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per gestire i grip
- 
+ class to manage grips
+
                               -------------------
         begin                : 2015-09-29
         copyright            : iiiii
@@ -27,7 +27,7 @@ from qgis.PyQt.QtGui import QPen, QColor, QBrush
 from qgis.core import QgsPointXY, QgsWkbTypes, QgsGeometry
 from qgis.gui import QgsMapCanvasItem
 
-from .qad_multi_geom import * 
+from .qad_multi_geom import *
 from .qad_variables import QadVariables
 from .qad_entity import QadEntity, QadEntityTypeEnum
 from .qad_dim import QadDimStyles, QadDimComponentEnum
@@ -38,19 +38,19 @@ from .qad_msg import QadMsg
 # QadGripStatusEnum class.
 # ===============================================================================
 class QadGripStatusEnum():
-   NONE             = 0  # nessuno
-   UNSELECTED       = 1  # grip non selezionato
-   SELECTED         = 2  # grip selezionato
-   HOVER            = 3  # grip non selezionati quando il cursore si ferma su di essi
+   NONE             = 0  # none
+   UNSELECTED       = 1  # grip not selected
+   SELECTED         = 2  # grip selected
+   HOVER            = 3  # grips not selected when the cursor lands on them
 
 
 # ===============================================================================
 # QadGripIconTypeEnum class.
 # ===============================================================================
 class QadGripIconTypeEnum():
-   NONE             = 0  # nessuno
-   BOX              = 1  # un quadrato
-   CIRCLE           = 2  # cerchio
+   NONE             = 0  # none
+   BOX              = 1  # a square
+   CIRCLE           = 2  # circle
    RECTANGLE        = 3  # rettangolo
 
 
@@ -58,10 +58,8 @@ class QadGripIconTypeEnum():
 # QadGripMarker class.
 # ===============================================================================
 class QadGripMarker(QgsMapCanvasItem):
-   """
-   Classe che gestisce i marcatori dei grip
-   """
-      
+   """Class that manages grip markers"""
+
 
    # ============================================================================
    # __init__
@@ -75,22 +73,22 @@ class QadGripMarker(QgsMapCanvasItem):
       self.center = QgsPointXY(0, 0) #  coordinates of the point in the center
       self.setGrip(QadGripStatusEnum.UNSELECTED, QadGripIconTypeEnum.BOX)
 
-      
-   def __del__(self):     
+
+   def __del__(self):
       self.removeItem()
 
 
    def removeItem(self):
       self.canvas.scene().removeItem(self)
-      
+
 
    def setCenter(self, point):
-      # point è in map coordinates
+      # point is in map coordinates
       self.center = point
       pt = self.toCanvasCoordinates(self.center)
       self.setPos(pt)
-   
-   
+
+
    def setGrip(self, status, iconType, rot = None):
       # rot in radians counterclockwise (0 = horizontal)
       if status == QadGripStatusEnum.UNSELECTED:
@@ -99,17 +97,15 @@ class QadGripMarker(QgsMapCanvasItem):
          self.fillColor = QadVariables.get(QadMsg.translate("Environment variables", "GRIPHOT"))
       elif status == QadGripStatusEnum.HOVER:
          self.fillColor = QadVariables.get(QadMsg.translate("Environment variables", "GRIPHOVER"))
-      
+
       self.status = status
       self.__iconType = iconType
       if rot is not None:
          self.__rot = -qad_utils.toDegrees(rot) # trasformo in gradi in senso orario
 
-      
+
    def paint(self, painter, option, widget):
-      """
-      painter é un QPainter
-      """
+      """painter is a QPainter"""
       pen = QPen(QColor(self.borderColor))
       pen.setWidth(1)
       painter.setPen(pen)
@@ -118,27 +114,27 @@ class QadGripMarker(QgsMapCanvasItem):
       if self.__iconType == QadGripIconTypeEnum.NONE:
          pass
       elif self.__iconType == QadGripIconTypeEnum.BOX:
-         # un quadrato
+         # a square
          painter.fillRect(-self.iconSize, -self.iconSize, self.iconSize * 2, self.iconSize * 2, QBrush(QColor(self.fillColor)));
          painter.drawRect(-self.iconSize, -self.iconSize, self.iconSize * 2, self.iconSize * 2)
       elif self.__iconType == QadGripIconTypeEnum.CIRCLE:
-         # cerchio
+         # circle
          painter.setBrush(QBrush(QColor(self.fillColor)))
          painter.drawEllipse(QPointF(0, 0), self.iconSize, self.iconSize)
       elif self.__iconType == QadGripIconTypeEnum.RECTANGLE:
-         # un rettangolo
+         # a rectangle
          painter.fillRect(-self.iconSize, -int(self.iconSize / 2), self.iconSize * 2, self.iconSize, QBrush(QColor(self.fillColor)));
          painter.drawRect(-self.iconSize, -int(self.iconSize / 2), self.iconSize * 2, self.iconSize)
-         
+
 
    def boundingRect(self):
       if self.__rot != 0:
          width = qad_utils.getDistance(QgsPointXY(0,0), QgsPointXY(self.iconSize, self.iconSize))
-         height = width            
+         height = width
       else:
          width = self.iconSize
          height = self.iconSize
-         
+
       return QRectF(-width/2, -height/2, width, height)
 
 
@@ -150,50 +146,48 @@ class QadGripMarker(QgsMapCanvasItem):
 # QadGripPointTypeEnum class.
 # ===============================================================================
 class QadGripPointTypeEnum():
-   NONE           = 0  # nessuno
-   VERTEX         = 1  # vertice di una geometria
-   LINE_MID_POINT = 2  # punto medio di un segmento
-   CENTER         = 3  # centro di un cerchio, di un arco, di un ellisse o di un arco di ellisse
-   QUA_POINT      = 4  # punto quadrante
-   ARC_MID_POINT  = 5  # punto medio di un arco o fi un arco di ellisse
-   END_VERTEX     = 6  # vertice iniziale e finale di una geometria
+   NONE           = 0  # none
+   VERTEX         = 1  # vertex of a geometry
+   LINE_MID_POINT = 2  # midpoint of a segment
+   CENTER         = 3  # center of a circle, an arc, an ellipse or an arc of an ellipse
+   QUA_POINT      = 4  # quadrant point
+   ARC_MID_POINT  = 5  # midpoint of an arc or an arc of an ellipse
+   END_VERTEX     = 6  # initial and final vertex of a geometry
 
 
 # ===============================================================================
 # QadEntityGripPoint class.
 # ===============================================================================
 class QadEntityGripPoint():
-   """
-   Classe che gestisce un punto di grip per una entità
-   """
+   """Class that manages a grip point for an entity"""
 
 
    # ============================================================================
    # __init__
    # ============================================================================
    def __init__(self, mapCanvas, point, type, atGeom = 0, atSubGeom = 0, nVertex = 0, rot = 0.0):
-      self.atGeom = atGeom # numero di geometria (0-index)
-      self.atSubGeom = atSubGeom # numero di sotto-geometria (0-index)
-      self.nVertex = nVertex # numero di vertice della polilinea della geometria e sotto-geometria (0-index)
-      
+      self.atGeom = atGeom # geometry number (0-index)
+      self.atSubGeom = atSubGeom # sub-geometry number (0-index)
+      self.nVertex = nVertex # vertex number of the geometry polyline and sub-geometry (0-index)
+
       self.gripType = type
-         
+
       self.gripMarker = QadGripMarker(mapCanvas)
       self.gripMarker.setGrip(QadGripStatusEnum.UNSELECTED, self.gripType2IconType(self.gripType), rot)
       self.gripMarker.setCenter(point)
-      
+
    def __del__(self):
       self.removeItem()
       del self.gripMarker
 
    def removeItem(self):
       self.gripMarker.removeItem()
-   
+
    def getPoint(self):
       return self.gripMarker.center
-   
+
    def isIntersecting(self, point):
-      # point è in map coordinate
+      # point is in map coordinates
       ToleranceInMapUnits = self.gripMarker.iconSize * self.gripMarker.canvas.mapSettings().mapUnitsPerPixel()
       if point.x() >= self.getPoint().x() - ToleranceInMapUnits and \
          point.x() <= self.getPoint().x() + ToleranceInMapUnits and \
@@ -202,23 +196,23 @@ class QadEntityGripPoint():
          return True
       else:
          return False
-      
-   def select(self): # seleziona un grip
+
+   def select(self): # select a grip
       self.gripMarker.setGrip(QadGripStatusEnum.SELECTED, self.gripType2IconType(self.gripType))
       self.gripMarker.show()
 
-   def unselect(self): # deseleziona un grip
+   def unselect(self): # deselects a grip
       self.gripMarker.setGrip(QadGripStatusEnum.UNSELECTED, self.gripType2IconType(self.gripType))
       self.gripMarker.show()
 
-   def hover(self): # grip non selezionato quando il cursore si ferma su di esso
+   def hover(self): # grip not selected when cursor lands on it
       if self.getStatus() == QadGripStatusEnum.UNSELECTED:
          self.gripMarker.setGrip(QadGripStatusEnum.HOVER, self.gripType2IconType(self.gripType))
          self.gripMarker.show()
-   
+
    def getStatus(self):
       return self.gripMarker.status
-   
+
    def gripType2IconType(self, gripType):
       if gripType == QadGripPointTypeEnum.VERTEX or gripType == QadGripPointTypeEnum.END_VERTEX:
          return QadGripIconTypeEnum.BOX
@@ -231,15 +225,13 @@ class QadEntityGripPoint():
       else:
          return None
 
-   
+
 # ===============================================================================
 # QadEntityGripPoints class.
 # ===============================================================================
 class QadEntityGripPoints(QgsMapCanvasItem):
-   """
-   Classe che gestisce i punti di grip per una entità
-   """
-      
+   """Class that manages grip points for an entity"""
+
 
    # ============================================================================
    # __init__
@@ -247,8 +239,8 @@ class QadEntityGripPoints(QgsMapCanvasItem):
    def __init__(self, plugIn, entity = None, grips = 2):
       self.plugIn = plugIn
       self.mapCanvas = plugIn.canvas
-      self.gripPoints = [] # lista dei punti di grip in map coordinate
-      self.iHoverGripPoints = [] # lista delle posizioni in gripPoints del punti hover
+      self.gripPoints = [] # list of grip points in map coordinates
+      self.iHoverGripPoints = [] # list of hover point positions in gripPoints
       # Build the spatial index for faster lookup.
       self.index = QgsSpatialIndex()
       if entity is not None:
@@ -280,16 +272,16 @@ class QadEntityGripPoints(QgsMapCanvasItem):
 
 
    def selectIntersectingGripPoints(self, point):
-      # seleziona i grip che intersecano un punto in map coordinate     
+      # selects grips that intersect a point in map coordinates
       res = 0
-      
+
       # Get the i-pos of all the features in the index that are within
       # the bounding box of the current feature because these are the ones
       # that will be touching.
       ToleranceInMapUnits = QadVariables.get(QadMsg.translate("Environment variables", "GRIPSIZE")) * self.mapCanvas.mapSettings().mapUnitsPerPixel()
       rect = QgsRectangle(point.x() - ToleranceInMapUnits, point.y() - ToleranceInMapUnits, \
                           point.x() + ToleranceInMapUnits, point.y() + ToleranceInMapUnits)
-      
+
       iList = self.index.intersects(rect)
       for i in iList:
          self.gripPoints[i].select()
@@ -299,26 +291,26 @@ class QadEntityGripPoints(QgsMapCanvasItem):
 #          if gripPoint.isIntersecting(point):
 #             gripPoint.select()
 #             res = res + 1
-         
+
       return res
 
-      
+
    def unselectIntersectingGripPoints(self, point):
-      # deseleziona i grip che intersecano un punto in map coordinate
+      # deselects grips that intersect a point in map coordinates
       res = 0
-      
+
       # Get the i-pos of all the features in the index that are within
       # the bounding box of the current feature because these are the ones
       # that will be touching.
       ToleranceInMapUnits = QadVariables.get(QadMsg.translate("Environment variables", "GRIPSIZE")) * self.mapCanvas.mapSettings().mapUnitsPerPixel()
       rect = QgsRectangle(point.x() - ToleranceInMapUnits, point.y() - ToleranceInMapUnits, \
                           point.x() + ToleranceInMapUnits, point.y() + ToleranceInMapUnits)
-      
+
       iList = self.index.intersects(rect)
       for i in iList:
          self.gripPoints[i].unselect()
          res = res + 1
-      
+
 #       for gripPoint in self.gripPoints:
 #          if gripPoint.isIntersecting(point):
 #             gripPoint.unselect()
@@ -327,42 +319,42 @@ class QadEntityGripPoints(QgsMapCanvasItem):
 
 
    def toggleSelectIntersectingGripPoints(self, point):
-      # seleziona i grip deselezionati e deseleziona i grip selezionati
-      # che intersecano un punto in map coordinate
-      
+      # select deselected grips and deselect selected grips
+      # that intersect a point in map coordinates
+
       # Get the i-pos of all the features in the index that are within
       # the bounding box of the current feature because these are the ones
       # that will be touching.
       ToleranceInMapUnits = QadVariables.get(QadMsg.translate("Environment variables", "GRIPSIZE")) * self.mapCanvas.mapSettings().mapUnitsPerPixel()
       rect = QgsRectangle(point.x() - ToleranceInMapUnits, point.y() - ToleranceInMapUnits, \
                           point.x() + ToleranceInMapUnits, point.y() + ToleranceInMapUnits)
-      
+
       iList = self.index.intersects(rect)
       for i in iList:
          if self.gripPoints[i].getStatus() == QadGripStatusEnum.SELECTED:
             self.gripPoints[i].unselect()
          else:
             self.gripPoints[i].select()
-            
+
 #       for gripPoint in self.gripPoints:
 #          if gripPoint.isIntersecting(point):
 #             if gripPoint.getStatus() == QadGripStatusEnum.SELECTED:
 #                gripPoint.unselect()
 #             else:
 #                gripPoint.select()
-      
+
 
    def hoverIntersectingGripPoints(self, point):
-      # seleziono in modo hover i grip che intersecano un punto (in map coordinate)
-      # non selezionati quando il cursore si ferma su di esso
-     
-      for i in self.iHoverGripPoints:         
+      # I select in hover mode the grips that intersect a point (in map coordinates)
+      # not selected when the cursor lands on it
+
+      for i in self.iHoverGripPoints:
          status = self.gripPoints[i].getStatus()
          if status == QadGripStatusEnum.SELECTED:
             self.gripPoints[i].select()
          else:
             self.gripPoints[i].unselect()
-         
+
 #       for gripPoint in self.gripPoints:
 #          status = gripPoint.getStatus()
 #          if status == QadGripStatusEnum.SELECTED:
@@ -372,14 +364,14 @@ class QadEntityGripPoints(QgsMapCanvasItem):
 
       res = 0
       del self.iHoverGripPoints[:]
-            
+
       # Get the i-pos of all the features in the index that are within
       # the bounding box of the current feature because these are the ones
       # that will be touching.
       ToleranceInMapUnits = QadVariables.get(QadMsg.translate("Environment variables", "GRIPSIZE")) * self.mapCanvas.mapSettings().mapUnitsPerPixel()
       rect = QgsRectangle(point.x() - ToleranceInMapUnits, point.y() - ToleranceInMapUnits, \
                           point.x() + ToleranceInMapUnits, point.y() + ToleranceInMapUnits)
-      
+
       iList = self.index.intersects(rect)
       for i in iList:
          self.gripPoints[i].hover()
@@ -400,20 +392,20 @@ class QadEntityGripPoints(QgsMapCanvasItem):
 
 
    def isIntersecting(self, point):
-      # ritorna il primo punto di grip (QadEntityGripPoint) che interseca point (in map coordinate)
-      
+      # returns the first grip point (QadEntityGripPoint) that intersects point (in map coordinates)
+
       # Get the i-pos of all the features in the index that are within
       # the bounding box of the current feature because these are the ones
       # that will be touching.
       ToleranceInMapUnits = QadVariables.get(QadMsg.translate("Environment variables", "GRIPSIZE")) * self.mapCanvas.mapSettings().mapUnitsPerPixel()
       rect = QgsRectangle(point.x() - ToleranceInMapUnits, point.y() - ToleranceInMapUnits, \
                           point.x() + ToleranceInMapUnits, point.y() + ToleranceInMapUnits)
-      
+
       iList = self.index.intersects(rect)
       for i in iList:
          return self.gripPoints[i]
-      
-      
+
+
 #       for gripPoint in self.gripPoints:
 #          if gripPoint.isIntersecting(point):
 #             return gripPoint
@@ -421,18 +413,18 @@ class QadEntityGripPoints(QgsMapCanvasItem):
 
 
    def getSelectedGripPoints(self):
-      # restituisce una lista di punti in cui i grip sono selezionati
+      # returns a list of points where grips are selected
       result = []
-      
+
       for gripPoint in self.gripPoints:
          if gripPoint.getStatus() == QadGripStatusEnum.SELECTED:
             result.append(gripPoint)
-      
+
       return result
-         
+
 
    def initGripPoints(self, grips = 2):
-      # restituisce una lista di QadEntityGripPoint
+      # returns a list of QadEntityGripPoints
       atGeom = 0
       atSubGeom = 0
       result = []
@@ -441,31 +433,31 @@ class QadEntityGripPoints(QgsMapCanvasItem):
       if g is None:
          return result
 
-      # verifico se l'entità appartiene ad uno stile di quotatura
+      # check if the entity belongs to a dimensioning style
       dimEntity = QadDimStyles.getDimEntity(self.entity)
       if dimEntity is not None:
          return self.getGripPointsFromDimComponent(dimEntity, self.entity)
-         
+
       gType = g.whatIs()
       if gType == "POINT":
-         # converto il punto dal layer coordinate in map coordinates
+         # I convert the point from the coordinate layer into map coordinates
          gp = QadEntityGripPoint(self.mapCanvas, g, QadGripPointTypeEnum.VERTEX)
          result.append(gp)
-         
+
       elif gType == "MULTI_POINT":
          for atGeom in range(0, g.qty()):
             gp = QadEntityGripPoint(self.mapCanvas, g.getPointAt(atGeom), QadGripPointTypeEnum.VERTEX, atGeom)
             result.append(gp)
-            
+
       elif gType == "ARC":
          result = self.getGripPointsFromQadArc(g, 0, 0, grips)
-            
+
       elif gType == "CIRCLE":
          result = self.getGripPointsFromQadCircle(g, 0, 0)
 
       elif gType == "ELLIPSE":
          result = self.getGripPointsFromQadEllipse(g, 0, 0)
-         
+
       elif gType == "ELLIPSE_ARC":
          result = self.getGripPointsFromQadEllipseArc(g, 0, 0, grips)
 
@@ -474,13 +466,13 @@ class QadEntityGripPoints(QgsMapCanvasItem):
 
       elif gType == "POLYLINE":
          result = self.getGripPointsFromPolyline(g, 0, 0, grips)
-         
+
       elif gType == "MULTI_LINEAR_OBJ":
          for atGeom in range(0, g.qty()):
             subGeom = g.getLinearObjectAt(atGeom)
             subGeomType = subGeom.whatIs()
             if subGeomType == "ARC":
-               result.extend(self.getGripPointsFromQadArc(subGeom, atGeom, 0, grips))                 
+               result.extend(self.getGripPointsFromQadArc(subGeom, atGeom, 0, grips))
             elif subGeomType == "CIRCLE":
                result.extend(self.getGripPointsFromQadCircle(subGeom, atGeom, 0))
             elif subGeomType == "ELLIPSE":
@@ -491,13 +483,13 @@ class QadEntityGripPoints(QgsMapCanvasItem):
                result.extend(self.getGripPointsFromQadLine(subGeom, atGeom, 0, grips))
             elif subGeomType == "POLYLINE":
                result.extend(self.getGripPointsFromPolyline(subGeom, atGeom, 0, grips))
-                        
+
       elif gType == "POLYGON":
          for atSubGeom in range(0, g.qty()):
             closedObj = g.getClosedObjectAt(atSubGeom)
             subGeomType = closedObj.whatIs()
             if subGeomType == "ARC":
-               result.extend(self.getGripPointsFromQadArc(closedObj, 0, atSubGeom, grips))                 
+               result.extend(self.getGripPointsFromQadArc(closedObj, 0, atSubGeom, grips))
             elif subGeomType == "CIRCLE":
                result.extend(self.getGripPointsFromQadCircle(closedObj, 0, atSubGeom))
             elif subGeomType == "ELLIPSE":
@@ -508,10 +500,10 @@ class QadEntityGripPoints(QgsMapCanvasItem):
                result.extend(self.getGripPointsFromQadLine(closedObj, 0, atSubGeom, grips))
             elif subGeomType == "POLYLINE":
                result.extend(self.getGripPointsFromPolyline(closedObj, 0, atSubGeom, grips))
-               # aggiungo il centroide
+               # add the centroid
                gp = QadEntityGripPoint(self.mapCanvas, closedObj.getCentroid(), QadGripPointTypeEnum.CENTER, 0, atSubGeom)
                result.append(gp)
-         
+
       elif gType == "MULTI_POLYGON":
          for atGeom in range(0, g.qty()):
             polygon = g.getPolygonAt(atGeom)
@@ -519,7 +511,7 @@ class QadEntityGripPoints(QgsMapCanvasItem):
                closedObj = polygon.getClosedObjectAt(atSubGeom)
                subGeomType = closedObj.whatIs()
                if subGeomType == "ARC":
-                  result.extend(self.getGripPointsFromQadArc(closedObj, atGeom, atSubGeom, grips))                 
+                  result.extend(self.getGripPointsFromQadArc(closedObj, atGeom, atSubGeom, grips))
                elif subGeomType == "CIRCLE":
                   result.extend(self.getGripPointsFromQadCircle(closedObj, atGeom, atSubGeom))
                elif subGeomType == "ELLIPSE":
@@ -530,18 +522,18 @@ class QadEntityGripPoints(QgsMapCanvasItem):
                   result.extend(self.getGripPointsFromQadLine(closedObj, atGeom, atSubGeom, grips))
                elif subGeomType == "POLYLINE":
                   result.extend(self.getGripPointsFromPolyline(closedObj, atGeom, atSubGeom, grips))
-                  # aggiungo il centroide
+                  # add the centroid
                   gp = QadEntityGripPoint(self.mapCanvas, closedObj.getCentroid(), QadGripPointTypeEnum.CENTER, atGeom, atSubGeom)
                   result.append(gp)
-               
+
                atSubGeom = atSubGeom + 1
             atGeom = atGeom + 1
 
       return result
-   
-   
+
+
    def initIndexGripPoints(self):
-      # inizializza l'indice spaziale della lista dei punti di grip
+      # initializes the spatial index of the grip point list
       index = QgsSpatialIndex()
       f = QgsFeature(QgsFields(), 0)
       i = 0
@@ -550,18 +542,17 @@ class QadEntityGripPoints(QgsMapCanvasItem):
          f.setGeometry(QgsGeometry.fromPointXY(gp.getPoint()))
          index.addFeature(f)
          i = i + 1
-         
+
       return index
 
 
    def getGripPointsFromPolyline(self, polyline, atGeom = 0, atSubGeom = 0, grips = 2):
-      """
-      Ottiene una lista di punti di grip da una QadPolyline in map coordinate (vertici e punti medi con rotaz)
-      grips = 1 Displays grips
-      grips = 2 Displays additional midpoint grips on polyline segments
+      """Gets a list of grip points from a QadPolyline in map coordinates (vertices and midpoints with rotation)
+            grips = 1 Displays grips
+            grips = 2 Displays additional midpoint grips on polyline segments
       """
       result = []
-     
+
       isClosed = polyline.isClosed()
       nVertex = 0
       while nVertex < polyline.qty():
@@ -572,7 +563,7 @@ class QadEntityGripPoints(QgsMapCanvasItem):
          else:
             gp = QadEntityGripPoint(self.mapCanvas, startPt, QadGripPointTypeEnum.VERTEX, atGeom, atSubGeom, nVertex)
          result.append(gp)
-         
+
          if grips == 2: # Displays additional midpoint grips on polyline segments
             middlePt = linearObject.getMiddlePt()
             rot = linearObject.getTanDirectionOnPt(middlePt)
@@ -585,25 +576,23 @@ class QadEntityGripPoints(QgsMapCanvasItem):
             result.append(gp)
          nVertex = nVertex + 1
 
-      # solo se la polilinea è aperta
+      # only if the polyline is open
       if isClosed == False:
-         linearObject = polyline.getLinearObjectAt(-1) # ultima parte
-         endPt = linearObject.getEndPt()      
-         gp = QadEntityGripPoint(self.mapCanvas, endPt, QadGripPointTypeEnum.END_VERTEX, atGeom, atSubGeom, nVertex)      
+         linearObject = polyline.getLinearObjectAt(-1) # last part
+         endPt = linearObject.getEndPt()
+         gp = QadEntityGripPoint(self.mapCanvas, endPt, QadGripPointTypeEnum.END_VERTEX, atGeom, atSubGeom, nVertex)
          result.append(gp)
-         
+
       return result
 
 
    def getGripPointsFromQadLine(self, line, atGeom = 0, atSubGeom = 0, grips = 2):
-      """
-      Ottiene una lista di punti di grip da un QadLine in map coordinate (iniziale, finale, medio)
-      """
+      """Gets a list of grip points from a QadLine in map coordinates (start, end, middle)"""
       result = []
       startPt = line.getStartPt()
       gp = QadEntityGripPoint(self.mapCanvas, startPt, QadGripPointTypeEnum.END_VERTEX, atGeom, atSubGeom, 0)
       result.append(gp)
-      
+
       if grips == 2: # Displays additional midpoint grips on polyline segments
          middlePt = line.getMiddlePt()
          rot = line.getTanDirectionOnMiddlePt()
@@ -614,14 +603,12 @@ class QadEntityGripPoints(QgsMapCanvasItem):
       endPt = line.getEndPt()
       gp = QadEntityGripPoint(self.mapCanvas, endPt, QadGripPointTypeEnum.END_VERTEX, atGeom, atSubGeom, 1)
       result.append(gp)
-         
+
       return result
 
 
    def getGripPointsFromQadCircle(self, circle, atGeom = 0, atSubGeom = 0):
-      """
-      Ottiene una lista di punti di grip da un QadCircle in map coordinate (centro e punti quadrante)
-      """
+      """Gets a list of grip points from a QadCircle in map coordinates (center and quadrant points)"""
       result = []
       gp = QadEntityGripPoint(self.mapCanvas, circle.center, QadGripPointTypeEnum.CENTER, atGeom, atSubGeom, -1)
       result.append(gp)
@@ -629,14 +616,12 @@ class QadEntityGripPoints(QgsMapCanvasItem):
       for pt in qua_points:
          gp = QadEntityGripPoint(self.mapCanvas, pt, QadGripPointTypeEnum.QUA_POINT, atGeom, atSubGeom, -1)
          result.append(gp)
-         
+
       return result
 
 
    def getGripPointsFromQadEllipse(self, ellipse, atGeom = 0, atSubGeom = 0):
-      """
-      Ottiene una lista di punti di grip da un QadEllipse in map coordinate (centro e punti quadrante)
-      """
+      """Gets a list of grip points from a QadEllipse in map coordinates (center and quadrant points)"""
       result = []
       gp = QadEntityGripPoint(self.mapCanvas, ellipse.center, QadGripPointTypeEnum.CENTER, atGeom, atSubGeom, -1)
       result.append(gp)
@@ -644,14 +629,12 @@ class QadEntityGripPoints(QgsMapCanvasItem):
       for pt in qua_points:
          gp = QadEntityGripPoint(self.mapCanvas, pt, QadGripPointTypeEnum.QUA_POINT, atGeom, atSubGeom, -1)
          result.append(gp)
-               
+
       return result
 
 
    def getGripPointsFromQadArc(self, arc, atGeom = 0, atSubGeom = 0, grips = 2):
-      """
-      Ottiene una lista di punti di grip da un QadArc in map coordinate (punto centrale, iniziale, finale, medio)
-      """
+      """Gets a list of grip points from a QadArc in map coordinates (center, start, end, middle point)"""
       result = []
       gp = QadEntityGripPoint(self.mapCanvas, arc.center, QadGripPointTypeEnum.CENTER, atGeom, atSubGeom, -1)
       result.append(gp)
@@ -663,20 +646,18 @@ class QadEntityGripPoints(QgsMapCanvasItem):
       endPt = arc.getEndPt()
       gp = QadEntityGripPoint(self.mapCanvas, endPt, QadGripPointTypeEnum.END_VERTEX, atGeom, atSubGeom, 1)
       result.append(gp)
-      
+
       if grips == 2: # Displays additional midpoint grips on polyline segments
          middlePt = arc.getMiddlePt()
          rot = arc.getTanDirectionOnMiddlePt()
          gp = QadEntityGripPoint(self.mapCanvas, middlePt, QadGripPointTypeEnum.ARC_MID_POINT, atGeom, atSubGeom, 0, rot)
          result.append(gp)
-         
+
       return result
 
 
    def getGripPointsFromQadEllipseArc(self, ellipseArc, atGeom = 0, atSubGeom = 0, grips = 2):
-      """
-      Ottiene una lista di punti di grip da un QadEllipseArc in map coordinate (punto centrale, iniziale, finale e punti quadrante)
-      """
+      """Gets a list of grip points from a QadEllipseArc in map coordinates (center point, start point, end point, and quadrant points)"""
       result = []
       gp = QadEntityGripPoint(self.mapCanvas, ellipseArc.center, QadGripPointTypeEnum.CENTER, atGeom, atSubGeom, -1)
       result.append(gp)
@@ -688,25 +669,24 @@ class QadEntityGripPoints(QgsMapCanvasItem):
       endPt = ellipseArc.getEndPt()
       gp = QadEntityGripPoint(self.mapCanvas, endPt, QadGripPointTypeEnum.END_VERTEX, atGeom, atSubGeom, 1)
       result.append(gp)
-      
+
       qua_points = ellipseArc.getQuadrantPoints()
       for pt in qua_points:
          if pt is not None:
             gp = QadEntityGripPoint(self.mapCanvas, pt, QadGripPointTypeEnum.QUA_POINT, atGeom, atSubGeom, -1)
             result.append(gp)
-         
+
       return result
 
 
    def getGripPointsFromDimComponent(self, dimEntity, component):
-      """
-      Ottiene una lista di punti di grip del componente di una quotatura
-      component = QadEntity
+      """Gets a list of dimension component grip points
+            component = QadEntity
       """
       result = []
       dimComponent = dimEntity.getDimComponentByEntity(component)
       if dimComponent is None: return result
-      
+
       if dimComponent == QadDimComponentEnum.TEXT_PT or \
          dimComponent == QadDimComponentEnum.DIM_PT1 or \
          dimComponent == QadDimComponentEnum.DIM_PT2:
@@ -723,10 +703,8 @@ class QadEntityGripPoints(QgsMapCanvasItem):
 # QadEntitySetGripPoints class.
 # ===============================================================================
 class QadEntitySetGripPoints(QgsMapCanvasItem):
-   """
-   Classe che gestisce i punti di grip per una gruppo di selezione di entità
-   """
-      
+   """Class that manages grip points for a selection set of entities"""
+
 
    # ============================================================================
    # __init__
@@ -754,7 +732,7 @@ class QadEntitySetGripPoints(QgsMapCanvasItem):
          grips = 2 Displays additional midpoint grips on polyline segments
       """
       self.removeItems()
-      
+
       if grips == 0: # nasconde i grip
          return
 
@@ -773,7 +751,7 @@ class QadEntitySetGripPoints(QgsMapCanvasItem):
          grips = 2 Displays additional midpoint grips on polyline segments
       """
       if grips == 0: # nasconde i grip
-         return      
+         return
       if self.containsEntity(entity) == False:
          entityGripPoints = QadEntityGripPoints(self.plugIn)
          entityGripPoints.set(entity.layer, entity.featureId, grips)
@@ -807,23 +785,23 @@ class QadEntitySetGripPoints(QgsMapCanvasItem):
 
 
    def isIntersecting(self, point):
-      # ritorna 2 valori:  QadEntityGripPoints, QadEntityGripPoint
+      # returns 2 values: QadEntityGripPoints, QadEntityGripPoint
       for entityGripPoints in self.entityGripPoints:
          res = entityGripPoints.isIntersecting(point)
          if res is not None:
             return entityGripPoints, res
       return None, None
 
-      
+
    def getSelectedEntityGripPoints(self):
-      # ritorna una lista delle entityGripPoint con dei grip point selezionati
-      # la funzione non fa copie delle entityGripPoint
+      # returns a list of entityGripPoints with selected grip points
+      # the function does not make copies of entityGripPoints
       result = []
       for entityGripPoint in self.entityGripPoints:
          for gripPoint in entityGripPoint.gripPoints:
             if gripPoint.getStatus() == QadGripStatusEnum.SELECTED:
                result.append(entityGripPoint)
-      
+
       return result
 
 
@@ -832,8 +810,8 @@ class QadEntitySetGripPoints(QgsMapCanvasItem):
          if entityGripPoint.entity == entity:
             return True
       return False
-   
-   
+
+
    def count(self):
       return len(self.entityGripPoints)
 

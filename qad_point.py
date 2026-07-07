@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per la gestione dei punti
- 
+ class for managing points
+
                               -------------------
         begin                : 2018-12-27
         copyright            : iiiii
@@ -30,14 +30,14 @@ from qgis.gui import *
 import math
 
 
-from . import qad_utils 
+from . import qad_utils
 
 
 # ===============================================================================
 # QadPoint point class derivato da QgsPointXY
 # ===============================================================================
 class QadPoint(QgsPointXY):
-    
+
    def __init__(self, point = None):
       QgsPointXY.__init__(self)
       if point is not None:
@@ -45,42 +45,42 @@ class QadPoint(QgsPointXY):
 
 
    def whatIs(self):
-      # obbligatoria
+      # required
       return "POINT"
 
-   
+
    # ============================================================================
    # isClosed
    # ============================================================================
    def isClosed(self):
       return False
 
-   
+
    def set(self, point):
       QgsPointXY.set(self, point.x(), point.y())
       return self
 
 
    def transform(self, coordTransform):
-      # obbligatoria
+      # required
       """Transform this geometry as described by CoordinateTransform ct."""
       self.set(coordTransform.transform(self))
 
 
    def transformFromCRSToCRS(self, sourceCRS, destCRS):
-      # obbligatoria
+      # required
       """Transform this geometry as described by CRS."""
-      if (sourceCRS is not None) and (destCRS is not None) and sourceCRS != destCRS:       
-         coordTransform = QgsCoordinateTransform(sourceCRS, destCRS, QgsProject.instance()) # trasformo le coord
+      if (sourceCRS is not None) and (destCRS is not None) and sourceCRS != destCRS:
+         coordTransform = QgsCoordinateTransform(sourceCRS, destCRS, QgsProject.instance()) # I transform the coordinates
          self.transform(coordTransform)
 
-      
+
    def __eq__(self, point):
-      # obbligatoria
+      # required
       """self == other"""
       return qad_utils.ptNear(self, point)
 
-  
+
    def __ne__(self, point):
       """self != other"""
       return not qad_utils.ptNear(self, point)
@@ -90,9 +90,7 @@ class QadPoint(QgsPointXY):
    # getBoundingBox
    # ===============================================================================
    def getBoundingBox(self):
-      """
-      la funzione ritorna il rettangolo che racchiude il punto.
-      """
+      """the function returns the rectangle that encloses the point."""
       return QgsRectangle(self.x(), self.y(), self.x(), self.y())
 
 
@@ -102,25 +100,24 @@ class QadPoint(QgsPointXY):
 
 
    def copy(self):
-      # obbligatoria
+      # required
       return QadPoint(self)
-      
+
 
    # ===============================================================================
    # asGeom
    # ===============================================================================
    def asGeom(self, wkbType = QgsWkbTypes.LineString, tolerance2ApproxCurve = None, atLeastNSegment = None):
-      """
-      la funzione ritorna il punto in forma di QgsGeometry.
-      wkbType, tolerance2ApproxCurve e atLeastNSegment sono dichiarati solo per compatibilità
+      """the function returns the point in the form of QgsGeometry.
+            wkbType, tolerance2ApproxCurve and atLeastNSegment are declared for compatibility only
       """
       flatType = QgsWkbTypes.flatType(wkbType)
 
       if flatType == QgsWkbTypes.MultiPoint:
          multiPoint = QgsMultiPoint()
-         multiPoint.addGeometry(QgsPoint(self))   
+         multiPoint.addGeometry(QgsPoint(self))
          return QgsGeometry(multiPoint)
-      
+
       return QgsGeometry.fromPointXY(self)
 
 
@@ -128,9 +125,7 @@ class QadPoint(QgsPointXY):
    # fromGeom
    # ===============================================================================
    def fromGeom(self, geom):
-      """
-      la funzione ritorna il punto in forma di QgsGeometry.
-      """
+      """the function returns the point in the form of QgsGeometry."""
       return self.set(geom.asPoint())
 
 
@@ -146,7 +141,7 @@ class QadPoint(QgsPointXY):
    # ============================================================================
    def rotate(self, basePt, angle):
       self.set(qad_utils.rotatePoint(self, basePt, angle))
-   
+
 
    # ============================================================================
    # scale

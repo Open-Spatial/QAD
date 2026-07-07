@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- Classe per gestire rubber band di oggetti geometricamente non omogenei
- 
+ Class for managing rubber bands for geometrically non-homogeneous objects
+
                               -------------------
         begin                : 2013-12-12
         copyright            : iiiii
@@ -31,6 +31,7 @@ from qgis.core import *
 from qgis.gui import *
 
 
+from . import qad_utils
 from .qad_variables import QadVariables
 from .qad_msg import QadMsg
 
@@ -39,28 +40,28 @@ from .qad_msg import QadMsg
 # QadCursorTypeEnum class.
 # ===============================================================================
 class QadCursorTypeEnum():
-   NONE     = 0   # nessun cursore
-   BOX      = 1   # un quadratino usato per selezionare entità
-   CROSS    = 2   # una croce usata per selezionare un punto
-   APERTURE = 4   # un quadratino usato per selezionare i punti di snap
+   NONE     = 0   # no cursor
+   BOX      = 1   # a small square used to select entities
+   CROSS    = 2   # a cross used to select a point
+   APERTURE = 4   # a small handle used to select snap points
 
 
 # ===============================================================================
 # createCursorRubberBand
 # ===============================================================================
-# Classe che gestisce rubber band per disegnare il cursore a croce e il quadratino di pickbox
+# Class that manages rubber band to draw the cross cursor and the pickbox handle
 class QadCursorRubberBand():
    def __init__(self, mapCanvas, cursorType):
       self.mapCanvas = mapCanvas
       self.cursorType = cursorType
-      
+
       if cursorType & QadCursorTypeEnum.BOX:
          self.__boxRubberBand = QgsRubberBand(mapCanvas, QgsWkbTypes.LineGeometry)
          self.__boxRubberBand.setColor(QColor(QadVariables.get(QadMsg.translate("Environment variables", "PICKBOXCOLOR"))))
          self.__pickSize = QadVariables.get(QadMsg.translate("Environment variables", "PICKBOX"))
       else:
          self.__boxRubberBand = None
-     
+
       if cursorType & QadCursorTypeEnum.CROSS:
          csrColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "CURSORCOLOR")))
          csrSize = QadVariables.get(QadMsg.translate("Environment variables", "CURSORSIZE"))
@@ -72,7 +73,7 @@ class QadCursorRubberBand():
          self.__crosshairRubberBandDw.setColor(csrColor)
          self.__crosshairRubberBandUp = QgsRubberBand(mapCanvas, QgsWkbTypes.LineGeometry)
          self.__crosshairRubberBandUp.setColor(csrColor)
-         screenRect = QApplication.desktop().screenGeometry(mapCanvas)
+         screenRect = qad_utils.getScreenGeometry(mapCanvas)
          self.__halfScreenSize = max(screenRect.height(), screenRect.width())
          if csrSize < 100:
             self.__halfScreenSize = self.__halfScreenSize / 2
@@ -93,13 +94,13 @@ class QadCursorRubberBand():
 
    def __del__(self):
       self.removeItems()
-      
-   def removeItems(self):      
+
+   def removeItems(self):
       if self.__boxRubberBand is not None:
          self.mapCanvas.scene().removeItem(self.__boxRubberBand)
          del self.__boxRubberBand
          self.__boxRubberBand = None
-         
+
       if self.__crosshairRubberBandSx is not None:
          self.mapCanvas.scene().removeItem(self.__crosshairRubberBandSx)
          self.mapCanvas.scene().removeItem(self.__crosshairRubberBandDx)
@@ -121,12 +122,12 @@ class QadCursorRubberBand():
 
 
    def moveEvent(self, point):
-      # point è risultato di toMapCoordinates      
+      # point is the result of toMapCoordinates
       if self.cursorType & QadCursorTypeEnum.BOX:
          pickSize = self.__pickSize * self.mapCanvas.mapUnitsPerPixel()
 
          self.__boxRubberBand.reset(QgsWkbTypes.LineGeometry)
-         
+
          point1 = QgsPointXY(point.x() - pickSize, point.y() - pickSize)
          dblPickSize = pickSize * 2
          self.__boxRubberBand.addPoint(point1, False)
@@ -141,12 +142,12 @@ class QadCursorRubberBand():
 
       if self.cursorType & QadCursorTypeEnum.CROSS:
          halfScreenSize = self.__halfScreenSize * self.mapCanvas.mapUnitsPerPixel()
-         
+
          self.__crosshairRubberBandSx.reset(QgsWkbTypes.LineGeometry)
          self.__crosshairRubberBandDx.reset(QgsWkbTypes.LineGeometry)
          self.__crosshairRubberBandDw.reset(QgsWkbTypes.LineGeometry)
          self.__crosshairRubberBandUp.reset(QgsWkbTypes.LineGeometry)
-         
+
          if self.cursorType & QadCursorTypeEnum.BOX:
             point1 = QgsPointXY(point.x() - halfScreenSize, point.y())
             point2 = QgsPointXY(point.x() - pickSize, point.y())
@@ -157,29 +158,29 @@ class QadCursorRubberBand():
             point2.setX(point.x() + pickSize)
             self.__crosshairRubberBandDx.addPoint(point1, False)
             self.__crosshairRubberBandDx.addPoint(point2, True)
-            
+
             point1.set(point.x(), point.y() - halfScreenSize)
             point2.set(point.x(), point.y() - pickSize)
             self.__crosshairRubberBandDw.addPoint(point1, False)
             self.__crosshairRubberBandDw.addPoint(point2, True)
-            
+
             point1.setY(point.y() + halfScreenSize)
-            point2.setY(point.y() + pickSize)           
+            point2.setY(point.y() + pickSize)
             self.__crosshairRubberBandUp.addPoint(point1, False)
-            self.__crosshairRubberBandUp.addPoint(point2, True)            
+            self.__crosshairRubberBandUp.addPoint(point2, True)
          else:
             point1 = QgsPointXY(point.x() - halfScreenSize, point.y())
             self.__crosshairRubberBandSx.addPoint(point, False)
             self.__crosshairRubberBandSx.addPoint(point1, True)
-            
+
             point1.setX(point.x() + halfScreenSize)
             self.__crosshairRubberBandDx.addPoint(point, False)
             self.__crosshairRubberBandDx.addPoint(point1, True)
-            
+
             point1.set(point.x(), point.y() - halfScreenSize)
             self.__crosshairRubberBandDw.addPoint(point, False)
             self.__crosshairRubberBandDw.addPoint(point1, True)
-            
+
             point1.setY(point.y() + halfScreenSize)
             self.__crosshairRubberBandUp.addPoint(point, False)
             self.__crosshairRubberBandUp.addPoint(point1, True)
@@ -188,7 +189,7 @@ class QadCursorRubberBand():
          apertureSize = self.__apertureSize * self.mapCanvas.mapUnitsPerPixel()
 
          self.__apertureRubberBand.reset(QgsWkbTypes.LineGeometry)
-         
+
          point1 = QgsPointXY(point.x() - apertureSize, point.y() - apertureSize)
          dblApertureSize = apertureSize * 2
          self.__apertureRubberBand.addPoint(point1, False)
@@ -205,7 +206,7 @@ class QadCursorRubberBand():
    def hide(self):
       if self.__boxRubberBand is not None:
          self.__boxRubberBand.hide()
-         
+
       if self.__crosshairRubberBandSx is not None:
          self.__crosshairRubberBandSx.hide()
          self.__crosshairRubberBandDx.hide()
@@ -215,11 +216,11 @@ class QadCursorRubberBand():
       if self.__apertureRubberBand is not None:
          self.__apertureRubberBand.hide()
 
-      
+
    def show(self):
       if self.__boxRubberBand is not None:
          self.__boxRubberBand.show()
-         
+
       if self.__crosshairRubberBandSx is not None:
          self.__crosshairRubberBandSx.show()
          self.__crosshairRubberBandDx.show()
@@ -234,19 +235,18 @@ class QadCursorRubberBand():
 # getQGISColorForRubberBand
 # ===============================================================================
 def getQGISColorForRubberBand(geometryType = QgsWkbTypes.LineGeometry, alternativeBand = False):
-   """
-   La funzione legge il colore impostato da QGIS per il rubber band di tipo <geometryType>.
-   Se <alternativeBand> = True, il rubber band sarà impostato con più trasparenza
+   """The function reads the color set by QGIS for the rubber band of type <geometryType>.
+      If <alternativeBand> = True, the rubber band will be set with more transparency
    """
    settings = QSettings()
    color = QColor(int(settings.value( "/qgis/digitizing/line_color_red", 1)), \
                   int(settings.value( "/qgis/digitizing/line_color_green", 1)), \
                   int(settings.value( "/qgis/digitizing/line_color_blue", 1)))
    alpha = float(int(settings.value( "/qgis/digitizing/line_color_alpha", 200)) / 255.0)
-  
+
    if alternativeBand:
       alpha = alpha * float(settings.value( "/qgis/digitizing/line_color_alpha_scale", 0.75))
- 
+
    if geometryType == QgsWkbTypes.PolygonGeometry:
       color.setAlphaF(alpha)
 
@@ -258,17 +258,15 @@ def getQGISColorForRubberBand(geometryType = QgsWkbTypes.LineGeometry, alternati
 # getColorForWindowSelectionArea
 # ===============================================================================
 def getColorForWindowSelectionArea():
-   """
-   La funzione legge il colore (RGB) dell'area di selezione degli oggetti nel modo finestra.
-   """
+   """The function reads the color (RGB) of the object selection area in window mode."""
    if QadVariables.get(QadMsg.translate("Environment variables", "SELECTIONAREA")) == 0:
       color = QColor()
-      color.setAlphaF(0) # trasparente      
+      color.setAlphaF(0) # trasparente
    else:
       color = QColor(QadVariables.get(QadMsg.translate("Environment variables", "WINDOWAREACOLOR")))
-      opacity = QadVariables.get(QadMsg.translate("Environment variables", "SELECTIONAREAOPACITY")) # 0 = trasparente [0-100] 
+      opacity = QadVariables.get(QadMsg.translate("Environment variables", "SELECTIONAREAOPACITY")) # 0 = trasparente [0-100]
       color.setAlphaF(opacity / 100.0) # trasformo da 0-100 a 0-1
-      
+
    return color
 
 
@@ -276,17 +274,15 @@ def getColorForWindowSelectionArea():
 # getColorForCrossingSelectionArea
 # ===============================================================================
 def getColorForCrossingSelectionArea():
-   """
-   La funzione legge il colore (RGB) dell'area di selezione degli oggetti nel modo intersezione.
-   """
+   """The function reads the color (RGB) of the object selection area in intersection mode."""
    if QadVariables.get(QadMsg.translate("Environment variables", "SELECTIONAREA")) == 0:
       color = QColor()
-      color.setAlphaF(0) # trasparente      
+      color.setAlphaF(0) # trasparente
    else:
       color = QColor(QadVariables.get(QadMsg.translate("Environment variables", "CROSSINGAREACOLOR")))
-      opacity = QadVariables.get(QadMsg.translate("Environment variables", "SELECTIONAREAOPACITY")) # 0 = trasparente [0-100] 
+      opacity = QadVariables.get(QadMsg.translate("Environment variables", "SELECTIONAREAOPACITY")) # 0 = trasparente [0-100]
       color.setAlphaF(opacity / 100.0) # trasformo da 0-100 a 0-1
-      
+
    return color
 
 
@@ -294,15 +290,14 @@ def getColorForCrossingSelectionArea():
 # createRubberBand
 # ===============================================================================
 def createRubberBand(mapCanvas, geometryType = QgsWkbTypes.LineGeometry, alternativeBand = False, borderColor = None, fillColor = None):
-   """
-   la funzione crea un rubber band di tipo <geometryType> con le impostazioni di QGIS.
-   Se <alternativeBand> = True, il rubber band sarà impostato con più trasparenza e tipolinea punteggiato   
+   """the function creates a rubber band of type <geometryType> with the QGIS settings.
+      If <alternativeBand> = True, the rubber band will be set with more transparency and dotted linetype
    """
    settings = QSettings()
    width = int(settings.value( "/qgis/digitizing/line_width", 1))
 
    rb = QgsRubberBand(mapCanvas, geometryType)
-   
+
    if alternativeBand:
       rb.setLineStyle(Qt.DotLine)
 
@@ -316,16 +311,14 @@ def createRubberBand(mapCanvas, geometryType = QgsWkbTypes.LineGeometry, alterna
       rb.setFillColor(fillColor)
 
    rb.setWidth(width)
-   
+
    return rb
 
 
-# Classe che gestisce rubber band di oggetti geometricamente non omogenei
+# Class that manages rubber bands of geometrically non-homogeneous objects
 class QadRubberBand():
    def __init__(self, mapCanvas, alternativeBand = False, borderColor = None, fillColor = None):
-      """
-      Se <alternativeBand> = True, il rubber band sarà impostato con più trasparenza e tipolinea punteggiato   
-      """
+      """If <alternativeBand> = True, the rubber band will be set with more transparency and dotted linetype"""
       self.mapCanvas = mapCanvas
       self.__rubberBandPoint = createRubberBand(self.mapCanvas, QgsWkbTypes.PointGeometry, alternativeBand, borderColor, fillColor)
       self.__rubberBandLine = createRubberBand(self.mapCanvas, QgsWkbTypes.LineGeometry, alternativeBand, borderColor, fillColor)
@@ -333,30 +326,30 @@ class QadRubberBand():
 
    def __del__(self):
       self.hide()
-      
+
       self.mapCanvas.scene().removeItem(self.__rubberBandPoint)
       del self.__rubberBandPoint
-      
+
       self.mapCanvas.scene().removeItem(self.__rubberBandLine)
       del self.__rubberBandLine
-      
+
       self.mapCanvas.scene().removeItem(self.__rubberBandPolygon)
-      del self.__rubberBandPolygon         
-   
+      del self.__rubberBandPolygon
+
    def hide(self):
       self.__rubberBandPoint.hide()
       self.__rubberBandLine.hide()
-      self.__rubberBandPolygon.hide()         
+      self.__rubberBandPolygon.hide()
 
    def show(self):
       self.__rubberBandPoint.show()
       self.__rubberBandLine.show()
       self.__rubberBandPolygon.show()
-      
+
    def addGeometry(self, geom, layer = None, doUpdate = True):
       if layer is not None:
-         # uso la geometria del layer per risolvere il caso ambiguo in cui
-         # si vuole inserire una linea chiusa in un layer poligono      
+         # use layer geometry to resolve the ambiguous case where
+         # you want to insert a closed line into a polygon layer
          geomType = layer.geometryType()
          #geomType = geom.type()
          if geomType == QgsWkbTypes.PointGeometry:
@@ -378,13 +371,13 @@ class QadRubberBand():
    def addGeometries(self, geoms, layer = None):
       for g in geoms:
          self.addGeometry(g, layer, False)
-      
+
       # After adding the final geometry updatePosition() should be called.
       self.__rubberBandPoint.updatePosition()
       self.__rubberBandLine.updatePosition()
-      self.__rubberBandPolygon.updatePosition()  
-         
-         
+      self.__rubberBandPolygon.updatePosition()
+
+
    def setLine(self, points):
       self.__rubberBandLine.reset(QgsWkbTypes.LineGeometry)
       tot = len(points) - 1
@@ -392,7 +385,7 @@ class QadRubberBand():
       while i <= tot:
          if i < tot:
             self.__rubberBandLine.addPoint(points[i], False)
-         else: # ultimo punto
+         else: # last point
             self.__rubberBandLine.addPoint(points[i], True)
          i = i + 1
 
@@ -403,14 +396,14 @@ class QadRubberBand():
       while i <= tot:
          if i < tot:
             self.__rubberBandPolygon.addPoint(points[i], False)
-         else: # ultimo punto
+         else: # last point
             self.__rubberBandPolygon.addPoint(points[i], True)
          i = i + 1
 
 
    def setGeometry(self, geom):
       self.reset()
-      self.addGeometry(geom)      
+      self.addGeometry(geom)
 
 
    def addLinePoint(self, point, doUpdate = True, geometryIndex = 0):
@@ -422,17 +415,17 @@ class QadRubberBand():
    def reset(self):
       self.__rubberBandPoint.reset(QgsWkbTypes.PointGeometry)
       self.__rubberBandLine.reset(QgsWkbTypes.LineGeometry)
-      self.__rubberBandPolygon.reset(QgsWkbTypes.PolygonGeometry)      
-      
-   def setLineStyle(self, penStyle):      
+      self.__rubberBandPolygon.reset(QgsWkbTypes.PolygonGeometry)
+
+   def setLineStyle(self, penStyle):
       self.__rubberBandLine.setLineStyle(penStyle)
       self.__rubberBandPolygon.setLineStyle(penStyle)
-      
+
    def setBorderColor(self, color):
       self.__rubberBandPoint.setSecondaryStrokeColor(color)
       self.__rubberBandLine.setSecondaryStrokeColor(color)
       self.__rubberBandPolygon.setSecondaryStrokeColor(color)
-      
+
    def setFillColor(self, color):
       self.__rubberBandPolygon.setFillColor(color)
 
@@ -440,4 +433,4 @@ class QadRubberBand():
       self.__rubberBandPoint.setWidth(width)
       self.__rubberBandLine.setWidth(width)
       self.__rubberBandPolygon.setWidth(width)
-   
+

@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per le traduzioni dei messaggi
- 
+ class for message translations
+
                               -------------------
         begin                : 2013-05-22
         copyright            : iiiii
@@ -40,31 +40,31 @@ class QadMsgClass():
 
    def __init__(self):
       pass
-      
+
 
    # ============================================================================
    # translate
    # ============================================================================
    def translate(self, context, sourceText, disambiguation = None, n = -1):
-      # da usare in una riga senza accoppiarla ad altre chiamate ad esempio (per lupdate.exe che altrimenti non le trova):
+      # to use in a line without coupling it to other calls for example (for lupdate.exe which otherwise doesn't find them):
       # NON VA BENE
       #     proplist["blockScale"] = [QadMsg.translate("Dimension", "Scala frecce"), \
       #                               self.blockScale]
       # VA BENE
       #     msg = QadMsg.translate("Dimension", "Scala frecce")
       #     proplist["blockScale"] = [msg, self.blockScale]
- 
+
       # contesti:
-      # "QAD" per traduzioni generali
-      # "Popup_menu_graph_window" per il menu popup nella finestra grafica
-      # "Text_window" per la finestra testuale
-      # "Command_list" per nomi di comandi
-      # "Command_<nome comando in inglese>" per traduzioni di un comando specifico (es. "Command_PLINE")
-      # "Snap" per i tipi di snap
+      # "QAD" for general translations
+      # "Popup_menu_graph_window" for the popup menu in the graphics window
+      # "Text_window" for the text window
+      # "Command_list" for command names
+      # "Command_<English command name>" for translations of a specific command (e.g. "Command_PLINE")
+      # "Snap" for snap types
       # finestre varie (es. "DSettings_Dialog", DimStyle_Dialog, ...)
-      # "Dimension" per le quotature
-      # "Environment variables" per i nomi delle variabili di ambiente
-      # "Help" per i titoli dei capitoli del manuale che servono da section nel file html di help
+      # "Dimension" for dimensions
+      # "Environment variables" for environment variable names
+      # "Help" for the titles of the chapters of the manual which serve as sections in the help html file
       return QCoreApplication.translate(context, sourceText, disambiguation, n)
 
 
@@ -78,7 +78,7 @@ class QadMsgClass():
          title += " (supported by "
          title +=  QadMsg.translate("SUPPORTER", "SUPPORTER WANTED")
          title += ")"
-         
+
       return title
 
 
@@ -86,45 +86,43 @@ class QadMsgClass():
 # qadShowPluginHelp
 # ===============================================================================
 def qadShowPluginPDFHelp(section = "", filename = "QAD"):
+   """Opens the help file in PDF format to the notes section.
+      to know the section/page of the html file use internet explorer,
+      select the item of interest in the right window and read its address from the box at the top.
+      This is because Internet Explorer inserts all the whitespace and tab characters that other browsers don't.
    """
-   Apre il file di help in formato PDF alla sezione nota.
-   per conoscere la sezione/pagina del file html usare internet explorer,
-   selezionare nella finestra di destra la voce di interesse e leggerne l'indirizzo dalla casella in alto.
-   Questo perché internet explorer inserisce tutti i caratteri di spaziatura e tab che gli altri browser non fanno.
-   """   
    basepath = os.path.dirname(os.path.realpath(__file__))
-   
+
    # initialize locale
    userLocaleList = QSettings().value("locale/userLocale").split("_")
    language = userLocaleList[0]
    region = userLocaleList[1] if len(userLocaleList) > 1 else ""
 
    path = QDir.cleanPath(basepath + "/help")
-   helpfile = os.path.join(path, filename + "_" + language + "_" + region + ".pdf") # provo a caricare la lingua e la regione selezionate
-   
+   helpfile = os.path.join(path, filename + "_" + language + "_" + region + ".pdf") # I try to load the selected language and region
+
    if not os.path.exists(helpfile):
-      helpfile = os.path.join(path, filename + "_" + language + ".pdf")  # provo a caricare la lingua
+      helpfile = os.path.join(path, filename + "_" + language + ".pdf")  # I try to load the language
       if not os.path.exists(helpfile):
-         helpfile = os.path.join(path, filename + "_en" + ".pdf") # provo a caricare la lingua inglese
+         helpfile = os.path.join(path, filename + "_en" + ".pdf") # I try to load the English language
          if not os.path.exists(helpfile):
             return
-      
+
    if section != "":
       helpfile = helpfile + "#" + urllib.parse.quote(section.encode('utf-8').decode('utf-8'))
 
    webbrowser.open_new(helpfile)
-   
+
 
 # ===============================================================================
 # qadShowPluginHelp
 # ===============================================================================
 def qadShowPluginHelp(section = "", filename = "index", packageName = None):
+   """show a help in the user's html browser.
+      to know the section/page of the html file use internet explorer,
+      select the item of interest in the right window and read its address from the box at the top.
+      This is because Internet Explorer inserts all the whitespace and tab characters that other browsers don't.
    """
-   show a help in the user's html browser.
-   per conoscere la sezione/pagina del file html usare internet explorer,
-   selezionare nella finestra di destra la voce di interesse e leggerne l'indirizzo dalla casella in alto.
-   Questo perché internet explorer inserisce tutti i caratteri di spaziatura e tab che gli altri browser non fanno.
-   """   
    try:
       basepath = ""
       if packageName is None:
@@ -140,15 +138,15 @@ def qadShowPluginHelp(section = "", filename = "index", packageName = None):
    region = userLocaleList[1] if len(userLocaleList) > 1 else ""
 
    path = QDir.cleanPath(basepath + "/help/help")
-   helpPath = path + "_" + language + "_" + region # provo a caricare la lingua e la regione selezionate
-   
+   helpPath = path + "_" + language + "_" + region # I try to load the selected language and region
+
    if not os.path.exists(helpPath):
-      helpPath = path + "_" + language # provo a caricare la lingua
+      helpPath = path + "_" + language # I try to load the language
       if not os.path.exists(helpPath):
-         helpPath = path + "_en" # provo a caricare la lingua inglese
+         helpPath = path + "_en" # I try to load the English language
          if not os.path.exists(helpPath):
             return
-      
+
    helpfile = os.path.join(helpPath, filename + ".html")
    if os.path.exists(helpfile):
       url = "file:///"+helpfile
@@ -156,44 +154,44 @@ def qadShowPluginHelp(section = "", filename = "index", packageName = None):
       if section != "":
          url = url + "#" + urllib.parse.quote(section.encode('utf-8').decode('utf-8'))
 
-      # la funzione QDesktopServices.openUrl in windows non apre la sezione
+      # the QDesktopServices.openUrl function in windows does not open the section
       if platform.system() == "Windows":
          import subprocess
          from winreg import HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, OpenKey, QueryValue
-         
+
          try: # provo a livello di utente
             with OpenKey(HKEY_CURRENT_USER, r"Software\Classes\http\shell\open\command") as key:
                cmd = QueryValue(key, None)
-         except: # se non c'era a livello di utente provo a livello di macchina
+         except: # if it wasn't there at user level I try at machine level
             with OpenKey(HKEY_LOCAL_MACHINE, r"Software\Classes\http\shell\open\command") as key:
                cmd = QueryValue(key, None)
-   
+
          if cmd.find("\"%1\"") >= 0:
             subprocess.Popen(cmd.replace("%1", url))
-         else:    
+         else:
             if cmd.find("%1") >= 0:
-               subprocess.Popen(cmd.replace("%1", "\"" + url + "\""))       
+               subprocess.Popen(cmd.replace("%1", "\"" + url + "\""))
             else:
                subprocess.Popen(cmd + " \"" + url + "\"")
       else:
-         QDesktopServices.openUrl(QUrl(url))           
-   
-   
+         QDesktopServices.openUrl(QUrl(url))
+
+
 # ===============================================================================
 # qadShowSupportersPage
 # ===============================================================================
 def qadShowSupportersPage():
    """
    show the supporter members page in the user's html browser.
-   """   
+   """
    try:
       webbrowser.open_new("https://qadplugin.wordpress.com/donations")
    except:
       return
 
-   
+
 # ===============================================================================
-# QadMsg = variabile globale
+# QadMsg = global variable
 # ===============================================================================
 
 QadMsg = QadMsgClass()

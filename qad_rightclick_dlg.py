@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- Gestione dei click destro del mouse di QAD
- 
+ QAD right mouse button click management
+
                               -------------------
         begin                : 2016-17-02
         copyright            : iiiii
@@ -41,7 +41,7 @@ from . import qad_utils
 
 
 #######################################################################################
-# Classe che gestisce l'interfaccia grafica per il click destro del mouse
+# Class that manages the graphical interface for right-clicking the mouse
 class QadRightClickDialog(QDialog, QObject, Ui_RightClick_Dialog):
    def __init__(self, plugIn, parent):
       self.plugIn = plugIn
@@ -51,14 +51,14 @@ class QadRightClickDialog(QDialog, QObject, Ui_RightClick_Dialog):
 
       self.setupUi(self)
       self.setWindowTitle(QadMsg.getQADTitle() + " - " + self.windowTitle())
-      
-      # Inizializzazione dei valori
+
+      # Value initialization
       self.init_values()
 
-   
+
    def eventFilter(self, obj, event):
       if event is not None:
-         if event.type() == QEvent.FocusOut:
+         if event.type() == QEvent.Type.FocusOut:
             if obj == self.lineEdit_duration:
                return not self.lineEdit_SHORTCUTMENUDURATION_Validation()
 
@@ -82,17 +82,17 @@ class QadRightClickDialog(QDialog, QObject, Ui_RightClick_Dialog):
 
    def lineEdit_SHORTCUTMENUDURATION_Validation(self):
       varName = QadMsg.translate("Environment variables", "SHORTCUTMENUDURATION")
-      var = QadVariables.getVariable(QadMsg.translate("Environment variables", varName))      
+      var = QadVariables.getVariable(QadMsg.translate("Environment variables", varName))
       return qad_utils.intLineEditWidgetValidation(self.lineEdit_duration, \
                                                    var, \
                                                    QadMsg.translate("RightClick_Dialog", "Invalid duration time"))
 
-   
+
    # ============================================================================
    # init_values
    # ============================================================================
    def init_values(self):
-      # Inizializzazione dei valori
+      # Value initialization
       shortCutMenu = QadVariables.get(QadMsg.translate("Environment variables", "SHORTCUTMENU"))
       if shortCutMenu == 0:
          shortCutMenu = 11 # inizializzo questo default
@@ -107,18 +107,18 @@ class QadRightClickDialog(QDialog, QObject, Ui_RightClick_Dialog):
          self.radioButton_default_shortcut.setChecked(True)
       else:
          self.radioButton_default_last_cmd.setChecked(True)
-         
+
       # 2 = Enables Edit mode shortcut menus
       if shortCutMenu & 2:
          self.radioButton_edit_shortcut.setChecked(True)
       else:
          self.radioButton_edit_last_cmd.setChecked(True)
 
-      # 4 = Enables Command mode shortcut menus whenever a command is active. 
+      # 4 = Enables Command mode shortcut menus whenever a command is active.
       if shortCutMenu & 4:
          self.radioButton_cmd_shortcut.setChecked(True)
       else:
-         # 8 = Enables Command mode shortcut menus only when command options are currently available at the Command prompt. 
+         # 8 = Enables Command mode shortcut menus only when command options are currently available at the Command prompt.
          if shortCutMenu & 8:
             self.radioButton_cmd_shortcut_with_options.setChecked(True)
          else:
@@ -133,23 +133,23 @@ class QadRightClickDialog(QDialog, QObject, Ui_RightClick_Dialog):
 
    # ============================================================================
    # getShortCutMenuValue
-   # ============================================================================   
+   # ============================================================================
    def getShortCutMenuValue(self):
-      # ritorna la composizione bit a bit della variabile SHORTCUTMENU leggendo i valori dei vari widget della dialog
+      # returns the bit-by-bit composition of the SHORTCUTMENU variable by reading the values of the various widgets in the dialog
       shortCutMenu = 0
       # 1 = Enables Default mode shortcut menus
       if self.radioButton_default_shortcut.isChecked():
          shortCutMenu = shortCutMenu | 1
-         
+
       # 2 = Enables Edit mode shortcut menus
       if self.radioButton_edit_shortcut.isChecked():
          shortCutMenu = shortCutMenu | 2
-         
-      # 4 = Enables Command mode shortcut menus whenever a command is active. 
+
+      # 4 = Enables Command mode shortcut menus whenever a command is active.
       if self.radioButton_cmd_shortcut.isChecked():
          shortCutMenu = shortCutMenu | 4
 
-      # 8 = Enables Command mode shortcut menus only when command options are currently available at the Command prompt. 
+      # 8 = Enables Command mode shortcut menus only when command options are currently available at the Command prompt.
       if self.radioButton_cmd_shortcut_with_options.isChecked():
          shortCutMenu = shortCutMenu | 8
 
@@ -164,9 +164,9 @@ class QadRightClickDialog(QDialog, QObject, Ui_RightClick_Dialog):
    # getSysVariableList
    # ============================================================================
    def getSysVariableList(self):
-      # ritorna una lista di variabili gestite da questa finestra
+      # returns a list of variables managed by this window
       variables = []
-      
+
       variable = QadVariables.getVariable(QadMsg.translate("Environment variables", "SHORTCUTMENUDURATION"))
       varValue = qad_utils.str2int(self.lineEdit_duration.text())
       variables.append(QadVariable(variable.name, varValue, variable.typeValue))
@@ -174,7 +174,7 @@ class QadRightClickDialog(QDialog, QObject, Ui_RightClick_Dialog):
       variable = QadVariables.getVariable(QadMsg.translate("Environment variables", "SHORTCUTMENU"))
       varValue = self.getShortCutMenuValue()
       variables.append(QadVariable(variable.name, varValue, variable.typeValue))
-      
+
       return variables
 
 
@@ -182,7 +182,7 @@ class QadRightClickDialog(QDialog, QObject, Ui_RightClick_Dialog):
    # applyClose_clicked
    # ============================================================================
    def applyClose_clicked(self):
-      # Memorizzo il valore di SHORTCUTMENUDURATION
+      # I store the value of SHORTCUTMENUDURATION
       value = self.lineEdit_duration.text()
       shortCutMenuDuration = qad_utils.str2int(value)
       QadVariables.set(QadMsg.translate("Environment variables", "SHORTCUTMENUDURATION"), shortCutMenuDuration)

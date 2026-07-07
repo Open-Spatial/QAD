@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin ok
 
- classe per gestire il map tool di richiesta di un punto in ambito del comando ellisse
- 
+ class to manage the point request map tool for the ellipse command
+
                               -------------------
         begin                : 2018-05-22
         copyright            : iiiii
@@ -40,61 +40,61 @@ from ..qad_rubberband import QadRubberBand
 # Qad_ellipse_maptool_ModeEnum class.
 # ===============================================================================
 class Qad_ellipse_maptool_ModeEnum():
-   # noto niente si richiede il primo punto finale dell'asse
+   # if nothing is known, the first end point of the axis is required
    NONE_KNOWN_ASK_FOR_FIRST_FINAL_AXIS_PT = 1
-   # noto il primo punto finale dell'asse si richiede il secondo punto finale dell'asse
+   # once the first end point of the axis is known, the second end point of the axis is required
    FIRST_FINAL_AXIS_PT_KNOWN_ASK_FOR_SECOND_FINAL_AXIS_PT = 2
-   # si richiede di specificare la distanza dal secondo asse
+   # requires specifying the distance from the second axis
    ASK_FOR_DIST_TO_OTHER_AXIS = 3
-   # richiede la rotazione attorno all'asse maggiore
+   # requires rotation around the major axis
    ASK_ROTATION_ROUND_MAJOR_AXIS = 4
-   # richiede l'angolo iniziale
+   # requires the starting angle
    ASK_START_ANGLE = 5
-   # richiede l'angolo finale
+   # requires the final angle
    ASK_END_ANGLE = 6
-   # richiede l'angolo incluso
+   # requires the included angle
    ASK_INCLUDED_ANGLE = 7
-   # richiede l'angolo parametrico iniziale
+   # requires the initial parametric angle
    ASK_START_PARAMETER = 8
-   # richiede l'angolo parametrico finale
+   # requires the final parametric angle
    ASK_END_PARAMETER = 9
-   # richiede il centro
+   # requires the center
    ASK_FOR_CENTER = 10
-   # richiede il primo punto di fuoco
+   # requires the first firing point
    ASK_FOR_FIRST_FOCUS = 11
-   # richiede il secondo punto di fuoco
+   # requires the second focus point
    ASK_FOR_SECOND_FOCUS = 12
-   # richiede un punto sull'ellisse
+   # requires a point on the ellipse
    ASK_FOR_PT_ON_ELLIPSE = 13
-   # richede l'area dell'ellisse
-   ASK_AREA = 14 
-   
+   # requires the area of the ellipse
+   ASK_AREA = 14
+
 
 # ===============================================================================
 # Qad_ellipse_maptool class
 # ===============================================================================
 class Qad_ellipse_maptool(QadGetPoint):
-    
+
    def __init__(self, plugIn):
       QadGetPoint.__init__(self, plugIn)
-                        
-      self.axis1Pt1 = None # primo punto finale dell'asse
-      self.axis1Pt2 = None # secondo punto finale dell'asse
-      self.distToOtherAxis = 0.0 # distanza dall'altro asse
-      self.rot = 0 # rotazione intorno all'asse
-      self.centerPt = None # punto centrale dell'ellisse
+
+      self.axis1Pt1 = None # first endpoint of the axis
+      self.axis1Pt2 = None # second endpoint of the axis
+      self.distToOtherAxis = 0.0 # distance from the other axis
+      self.rot = 0 # rotation around the axis
+      self.centerPt = None # central point of the ellipse
       self.ellipse = None
       self.ellipseArc = QadEllipseArc()
-      self.startAngle = 0.0 # l'ellisse può essere incompleta (come l'arco per il cerchio)
+      self.startAngle = 0.0 # the ellipse can be incomplete (like the arc for the circle)
       self.endAngle = math.pi * 2 # A startAngle of 0 and endAngle of 2pi will produce a closed Ellipse.
       self.includedAngle = 0.0
-      self.focus1 = None # primo punto di fuoco
-      self.focus2 = None # secondo punto di fuoco
-      
+      self.focus1 = None # first firing point
+      self.focus2 = None # second firing point
+
       self.__rubberBand = QadRubberBand(self.canvas, False)
       self.geomType = QgsWkbTypes.PolygonGeometry
       self.mode = None
-      
+
 
    def setRubberBandColor(self, rubberBandBorderColor, rubberBandFillColor):
       if rubberBandBorderColor is not None:
@@ -109,60 +109,60 @@ class Qad_ellipse_maptool(QadGetPoint):
    def showPointMapToolMarkers(self):
       QadGetPoint.showPointMapToolMarkers(self)
       self.__rubberBand.show()
-                             
+
    def clear(self):
       QadGetPoint.clear(self)
       self.__rubberBand.reset()
       self.mode = None
-      
-      
+
+
    def canvasMoveEvent(self, event):
       QadGetPoint.canvasMoveEvent(self, event)
-      
+
       self.__rubberBand.reset()
-         
+
       ellipse = None
-      
-      # noto il centro dell'ellisse, richiede di specificare la distanza dal secondo asse
+
+      # once the center of the ellipse is known, it requires specifying the distance from the second axis
       if self.mode == Qad_ellipse_maptool_ModeEnum.ASK_FOR_DIST_TO_OTHER_AXIS:
          dist = qad_utils.getDistance(self.centerPt, self.tmpPoint)
          ellipse = QadEllipse().fromAxis1FinalPtsAxis2Len(self.axis1Pt2, self.axis1Pt1, dist)
-      # noto il centro dell'ellisse, richiede la rotazione attorno all'asse maggiore
+      # once the center of the ellipse is known, it requires rotation around the major axis
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_ROTATION_ROUND_MAJOR_AXIS:
          angle = qad_utils.getAngleBy2Pts(self.centerPt, self.tmpPoint)
          dist = math.fabs(qad_utils.getDistance(self.axis1Pt1, self.axis1Pt2) / 2 * math.cos(angle))
          ellipse = QadEllipse().fromAxis1FinalPtsAxis2Len(self.axis1Pt2, self.axis1Pt1, dist)
-      # nota l'ellisse, richiede l'angolo iniziale
+      # note the ellipse, requires the initial angle
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_START_ANGLE:
          ellipse = self.ellipse
-      # nota l'ellisse, richiede l'angolo finale
+      # note the ellipse, requires the final angle
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_END_ANGLE:
          ellipseAngle = qad_utils.getAngleBy2Pts(self.ellipse.center, self.ellipse.majorAxisFinalPt)
          self.endAngle = qad_utils.getAngleBy2Pts(self.ellipse.center, self.tmpPoint) - ellipseAngle
          self.ellipseArc.set(self.ellipse.center, self.ellipse.majorAxisFinalPt, self.ellipse.axisRatio, self.startAngle, self.endAngle)
          ellipse = self.ellipseArc
-      # nota l'ellisse, richiede l'angolo incluso
+      # note the ellipse, requires the included angle
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_INCLUDED_ANGLE:
          includedAngle = qad_utils.getAngleBy2Pts(self.ellipse.center, self.tmpPoint)
          self.endAngle = self.startAngle + includedAngle
          self.ellipseArc.set(self.ellipse.center, self.ellipse.majorAxisFinalPt, self.ellipse.axisRatio, self.startAngle, self.endAngle)
          ellipse = self.ellipseArc
-      # nota l'ellisse, richiede l'angolo parametrico iniziale
+      # note the ellipse, requires the initial parametric angle
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_START_PARAMETER:
          ellipse = self.ellipse
-      # nota l'ellisse, richiede l'angolo parametrico finale
+      # note the ellipse, requires the final parametric angle
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_END_PARAMETER:
          ellipseAngle = qad_utils.getAngleBy2Pts(self.ellipse.center, self.ellipse.majorAxisFinalPt)
          self.endAngle = self.ellipse.getAngleFromParam(qad_utils.getAngleBy2Pts(self.ellipse.center, self.tmpPoint) - ellipseAngle)
          self.ellipseArc.set(self.ellipse.center, self.ellipse.majorAxisFinalPt, self.ellipse.axisRatio, self.startAngle, self.endAngle)
          ellipse = self.ellipseArc
-      # not i fuochi dell'ellisse, richiede di specificare un punto sull'ellisse
+      # not the foci of the ellipse, requires specifying a point on the ellipse
       if self.mode == Qad_ellipse_maptool_ModeEnum.ASK_FOR_PT_ON_ELLIPSE:
          ellipse = QadEllipse().fromFoci(self.focus1, self.focus2, self.tmpPoint)
 
       if ellipse is not None:
          points = ellipse.asPolyline()
-      
+
          if points is not None:
             if self.geomType == QgsWkbTypes.PolygonGeometry:
                self.__rubberBand.setPolygon(points)
@@ -176,7 +176,7 @@ class Qad_ellipse_maptool(QadGetPoint):
 
 
    def deactivate(self):
-      try: # necessario perché se si chiude QGIS parte questo evento nonostante non ci sia più l'oggetto maptool !
+      try: # necessary because if you close QGIS this event starts even though the map tool object is no longer there!
          QadGetPoint.deactivate(self)
          self.__rubberBand.hide()
       except:
@@ -184,56 +184,56 @@ class Qad_ellipse_maptool(QadGetPoint):
 
    def setMode(self, mode):
       self.mode = mode
-      # noto niente si richiede il primo punto finale dell'asse
+      # if nothing is known, the first end point of the axis is required
       if self.mode == Qad_ellipse_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_FIRST_FINAL_AXIS_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
-      # si richiede di specificare la distanza dal secondo asse
+      # requires specifying the distance from the second axis
       elif self.mode == Qad_ellipse_maptool_ModeEnum.FIRST_FINAL_AXIS_PT_KNOWN_ASK_FOR_SECOND_FINAL_AXIS_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          if self.axis1Pt1 is not None:
             self.setStartPoint(self.axis1Pt1)
          else:
             self.setStartPoint(self.centerPt)
-      # si richiede di specificare la distanza dal secondo asse
+      # requires specifying the distance from the second axis
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_FOR_DIST_TO_OTHER_AXIS:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.centerPt)
-      # richiede la rotazione attorno all'asse maggiore
-      elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_ROTATION_ROUND_MAJOR_AXIS:     
+      # requires rotation around the major axis
+      elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_ROTATION_ROUND_MAJOR_AXIS:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
-         self.setStartPoint(self.centerPt)         
-      # richiede l'angolo iniziale
+         self.setStartPoint(self.centerPt)
+      # requires the starting angle
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_START_ANGLE:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.ellipse.center)
-      # richiede l'angolo finale
+      # requires the final angle
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_END_ANGLE:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.ellipse.center)
-      # richiede l'angolo incluso
+      # requires the included angle
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_INCLUDED_ANGLE:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.ellipse.center)
-      # richiede l'angolo parametrico iniziale
+      # requires the initial parametric angle
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_START_PARAMETER:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.ellipse.center)
-      # richiede l'angolo parametrico finale
+      # requires the final parametric angle
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_END_PARAMETER:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.ellipse.center)
-      # richiede il centro
+      # requires the center
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_FOR_CENTER:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
-      # richiede il primo punto di fuoco
+      # requires the first firing point
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_FOR_FIRST_FOCUS:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
-      # richiede il secondo punto di fuoco
+      # requires the second focus point
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_FOR_SECOND_FOCUS:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
-      # richiede un punto sull'ellisse
+      # requires a point on the ellipse
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_FOR_PT_ON_ELLIPSE:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
-      # richede l'area dell'ellisse
+      # requires the area of the ellipse
       elif self.mode == Qad_ellipse_maptool_ModeEnum.ASK_AREA:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)

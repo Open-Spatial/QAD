@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- funzioni per undo e redo
- 
+ functions for undo and redo
+
                               -------------------
         begin                : 2014-04-24
         copyright            : iiiii
@@ -34,35 +34,35 @@ from qgis.gui import *
 # QadUndoRecordTypeEnum class.
 # ===============================================================================
 class QadUndoRecordTypeEnum():
-   NONE     = 0     # nessuno
-   COMMAND  = 1     # singolo comando
-   BEGIN    = 2     # inizio di un gruppo di comandi
-   END      = 3     # fine di un gruppo di comandi
-   BOOKMARK = 4     # flag di segnalibro, significa che si tratta di un segno a cui
-                     # si può ritornare
+   NONE     = 0     # none
+   COMMAND  = 1     # single command
+   BEGIN    = 2     # start of a group of commands
+   END      = 3     # end of a group of commands
+   BOOKMARK = 4     # bookmark flag, it means that it is a sign to which
+                     # you can return
 
 
 # ===============================================================================
-# QadUndoRecord classe x gestire un registrazione di UNDO
+# QadUndoRecord class to manage an UNDO recording
 # ===============================================================================
 class QadUndoRecord():
 
 
    def __init__(self):
       self.text = "" # descrizione operazione
-      self.undoType = QadUndoRecordTypeEnum.NONE # tipo di undo (vedi QadUndoRecordTypeEnum)
-      self.layerList = None # lista di layer coinvolti nel comando di editazione
+      self.undoType = QadUndoRecordTypeEnum.NONE # undo type (see QadUndoRecordTypeEnum)
+      self.layerList = None # list of layers involved in the editing command
 
-      
+
    def setUndoType(self, text = "", undoType = QadUndoRecordTypeEnum.NONE):
-      # si sta impostando una tipologia di marcatore di undo
+      # a typology of undo marker is being set up
       self.text = text
-      self.layerList = None # lista di layer coinvolti nel comando di editazione
+      self.layerList = None # list of layers involved in the editing command
       self.undoType = undoType
 
 
    def layerAt(self, layerId):
-      # ritorna la posizione nella lista 0-based), -1 se non trovato
+      # returns the position in the list 0-based), -1 if not found
       if self.layerList is not None and self.undoType == QadUndoRecordTypeEnum.COMMAND:
          for j in range(0, len(self.layerList), 1):
             if self.layerList[j].id() == layerId:
@@ -71,26 +71,26 @@ class QadUndoRecord():
 
 
    def clearByLayer(self, layerId):
-      # elimino dalla lista il layer <layerId>
+      # delete the layer <layerId> from the list
       pos = self.layerAt(layerId)
       if pos >= 0:
          del self.layerList[pos]
 
 
    def beginEditCommand(self, text, layerList):
-      # si sta iniziando un comando che coinvolge una lista di layer
-      self.text = text # descrizione operazione     
+      # you are starting a command involving a list of layers
+      self.text = text # descrizione operazione
       self.undoType = QadUndoRecordTypeEnum.COMMAND
-      # <parameter> contiene la lista dei layer coinvolti nel comando di editazione
+      # <parameter> contains the list of layers involved in the editing command
       self.layerList = []
-      for layer in layerList: # copio la lista
-         if self.layerAt(layer.id()) == -1: # non ammetto duplicazioni di layer
+      for layer in layerList: # I copy the list
+         if self.layerAt(layer.id()) == -1: # I do not allow layer duplications
             layer.beginEditCommand(text)
             self.layerList.append(layer)
-               
-               
+
+
    def destroyEditCommand(self):
-      # si sta distruggendo un comando che coinvolge una lista di layer
+      # a command involving a list of layers is being destroyed
       if self.layerList is not None and self.undoType == QadUndoRecordTypeEnum.COMMAND:
          for layer in self.layerList:
             layer.destroyEditCommand() # Destroy active command and reverts all changes in it
@@ -100,67 +100,67 @@ class QadUndoRecord():
 
 
    def endEditCommand(self, canvas):
-      # si sta concludendo un comando che coinvolge una lista di layer
+      # a command involving a list of layers is being concluded
       if self.layerList is not None and self.undoType == QadUndoRecordTypeEnum.COMMAND:
          for layer in self.layerList:
             layer.endEditCommand()
             layer.triggerRepaint()
          canvas.refresh()
-  
-      
+
+
    def undoEditCommand(self, canvas = None):
-      # si sta facendo un UNDO di un comando che coinvolge una lista di layer
+      # you are doing an UNDO of a command involving a list of layers
       if self.layerList is not None and self.undoType == QadUndoRecordTypeEnum.COMMAND:
          for layer in self.layerList:
             layer.undoStack().undo()
          if canvas is not None:
             canvas.refresh()
- 
-      
+
+
    def redoEditCommand(self, canvas = None):
-      # si sta facendo un REDO di un comando che coinvolge una lista di layer
+      # you are doing a REDO of a command involving a list of layers
       if self.layerList is not None and self.undoType == QadUndoRecordTypeEnum.COMMAND:
          for layer in self.layerList:
             layer.undoStack().redo()
          if canvas is not None:
             canvas.refresh()
 
-     
+
    def addLayer(self, layer):
-      # si sta aggiungendo un layer al comando corrente
-      if self.undoType != QadUndoRecordTypeEnum.COMMAND: # si deve trattare di un comando
+      # you are adding a layer to the current command
+      if self.undoType != QadUndoRecordTypeEnum.COMMAND: # it must be a command
          return False
-      if self.layerAt(layer.id()) == -1: # non ammetto duplicazioni di layer
+      if self.layerAt(layer.id()) == -1: # I do not allow layer duplications
          layer.beginEditCommand(self.text)
          self.layerList.append(layer)
 
 
 # ===============================================================================
-# QadUndoStack classe x gestire lo stack delle operazioni
+# QadUndoStack class to manage the operations stack
 # ===============================================================================
 class QadUndoStack():
 
-    
+
    def __init__(self):
-      self.UndoRecordList = [] # lista di record di undo
+      self.UndoRecordList = [] # list of undo records
       self.index = -1
- 
-   
+
+
    def clear(self):
-      del self.UndoRecordList[:] # svuoto la lista
+      del self.UndoRecordList[:] # I empty the list
       self.index = -1
 
 
    def clearByLayer(self, layerId):
-      # elimino il layer <layerId> dalla lista dei record di undo
+      # delete the layer <layerId> from the undo record list
       for i in range(len(self.UndoRecordList) - 1, -1, -1):
          UndoRecord = self.UndoRecordList[i]
          if UndoRecord.undoType == QadUndoRecordTypeEnum.COMMAND:
-            UndoRecord.clearByLayer(layerId)      
+            UndoRecord.clearByLayer(layerId)
             if len(UndoRecord.layerList) == 0:
-               # elimino la lista dei layer (vuota) coinvolta nel comando di editazione
+               # delete the (empty) layer list involved in the editing command
                del self.UndoRecordList[i]
-               if self.index >= i: # aggiorno il puntatore
+               if self.index >= i: # update the pointer
                   self.index = self.index - 1
 
 
@@ -173,8 +173,8 @@ class QadUndoStack():
 
 
    def getOpenGroupPos(self, endGroupPos):
-      # dalla posizione di fine gruppo <endgroupPos> cerca la posizione di inizio gruppo
-      # -1 se non trovato
+      # from the end group position <endgroupPos> searces for the group start position
+      # -1 if not found
       openFlag = 0
       for i in range(endGroupPos, -1, -1):
          UndoRecord = self.UndoRecordList[i]
@@ -188,8 +188,8 @@ class QadUndoStack():
 
 
    def getEndGroupPos(self, beginGroupPos):
-      # dalla posizione di inizio gruppo <endgroupPos> cerca la posizione di inizio gruppo
-      # -1 se non trovato
+      # from the group start position <endgroupPos> searces for the group start position
+      # -1 if not found
       closeFlag = 0
       for i in range(beginGroupPos, len(self.UndoRecordList), 1):
          UndoRecord = self.UndoRecordList[i]
@@ -200,10 +200,10 @@ class QadUndoStack():
             if closeFlag >= 0:
                return i
       return -1
-   
+
 
    def insertEndGroup(self):
-      # non si può inserire un end gruppo se non si é rimasto aperto un gruppo
+      # you cannot insert an end group if you have not left a group open
       openGroupPos = self.getOpenGroupPos(len(self.UndoRecordList) - 1)
       if openGroupPos == -1:
          return False
@@ -214,18 +214,18 @@ class QadUndoStack():
       self.index = len(self.UndoRecordList) - 1
       return True
 
-      
+
    def beginEditCommand(self, text, layerList):
       tot = len(self.UndoRecordList)
       if tot > 0 and self.index < tot - 1:
-         del self.UndoRecordList[self.index + 1 :] # cancello fino alla fine
-         
+         del self.UndoRecordList[self.index + 1 :] # gate to the end
+
       UndoRecord = QadUndoRecord()
       UndoRecord.beginEditCommand(text, layerList)
       self.UndoRecordList.append(UndoRecord)
       self.index = len(self.UndoRecordList) - 1
 
-      
+
    def destroyEditCommand(self):
       if len(self.UndoRecordList) > 0:
          UndoRecord = self.UndoRecordList[-1]
@@ -241,27 +241,27 @@ class QadUndoStack():
 
 
    def moveOnFirstUndoRecord(self):
-      # sposta il cursore dalla posizione attuale fino l'inizio
-      # e si ferma quando trova un record di tipo END o COMMAND
+      # moves the cursor from the current position to the beginning
+      # and stops when it finds a record of type END or COMMAND
       while self.index >= 0:
          UndoRecord = self.UndoRecordList[self.index]
          if UndoRecord.undoType == QadUndoRecordTypeEnum.END or \
             UndoRecord.undoType == QadUndoRecordTypeEnum.COMMAND:
             return True
          self.index = self.index - 1
-      return False 
-         
+      return False
+
    def undoEditCommand(self, canvas = None, nTimes = 1):
       for i in range(0, nTimes, 1):
-         # cerco il primo record in cui ha senso fare UNDO
+         # I'm looking for the first record where it makes sense to do UNDO
          if self.moveOnFirstUndoRecord() == False:
             break
          UndoRecord = self.UndoRecordList[self.index]
-         # se incontro un end-group devo andare fino al begin-group
+         # if I encounter an end-group I have to go to the begin-group
          if UndoRecord.undoType == QadUndoRecordTypeEnum.END:
-            openGroupPos = self.getOpenGroupPos(self.index)           
+            openGroupPos = self.getOpenGroupPos(self.index)
             while self.index >= openGroupPos:
-               UndoRecord.undoEditCommand(None) # senza fare refresh
+               UndoRecord.undoEditCommand(None) # without refreshing
                self.index = self.index - 1
                if self.moveOnFirstUndoRecord() == False:
                   break
@@ -269,51 +269,51 @@ class QadUndoStack():
          else:
             UndoRecord.undoEditCommand(None)
             self.index = self.index - 1
-      
-      if canvas is not None:   
+
+      if canvas is not None:
          canvas.refresh()
 
 
    def moveOnFirstRedoRecord(self):
-      # sposta il cursore dalla posizione attuale fino alla fine
-      # e si ferma quando trova un record di tipo BEGIN o COMMAND
-      tot = len(self.UndoRecordList) - 1 
+      # moves the cursor from the current position to the end
+      # and stops when it finds a record of type BEGIN or COMMAND
+      tot = len(self.UndoRecordList) - 1
       while self.index < tot:
-         self.index = self.index + 1                  
+         self.index = self.index + 1
          UndoRecord = self.UndoRecordList[self.index]
          if UndoRecord.undoType == QadUndoRecordTypeEnum.BEGIN or \
             UndoRecord.undoType == QadUndoRecordTypeEnum.COMMAND:
             return True
-      return False     
-      
+      return False
+
    def redoEditCommand(self, canvas = None, nTimes = 1):
-      for i in range(0, nTimes, 1):         
-         # cerco il primo record in cui ha senso fare REDO
+      for i in range(0, nTimes, 1):
+         # I'm looking for the first record where it makes sense to do REDO
          if self.moveOnFirstRedoRecord() == False:
             break
          UndoRecord = self.UndoRecordList[self.index]
-         # se incontro un begin-group devo andare fino al end-group
+         # if I encounter a begin-group I have to go to the end-group
          if UndoRecord.undoType == QadUndoRecordTypeEnum.BEGIN:
-            endGroupPos = self.getEndGroupPos(self.index)           
+            endGroupPos = self.getEndGroupPos(self.index)
             while self.index <= endGroupPos:
-               UndoRecord.redoEditCommand(None) # senza refresh
+               UndoRecord.redoEditCommand(None) # without refresh
                if self.moveOnFirstRedoRecord() == False:
                   break
                UndoRecord = self.UndoRecordList[self.index]
-         else:            
+         else:
             UndoRecord.redoEditCommand(None)
 
-      if canvas is not None:   
+      if canvas is not None:
          canvas.refresh()
 
-     
+
    def addLayerToLastEditCommand(self, text, layer):
-      if len(self.UndoRecordList) > 0:     
+      if len(self.UndoRecordList) > 0:
          self.UndoRecordList[-1].addLayer(layer)
 
 
    def isUndoAble(self):
-      # cerca un record di tipo COMMAND dalla posizione attuale fino l'inizio
+      # searces for a COMMAND record from the current position to the beginning
       i = self.index
       while i >= 0:
          UndoRecord = self.UndoRecordList[i]
@@ -324,7 +324,7 @@ class QadUndoStack():
 
 
    def isRedoAble(self):
-      # cerca un record di tipo COMMAND dalla posizione attuale fino alla fine
+      # searces for a record of type COMMAND from the current position to the end
       i = self.index + 1
       tot = len(self.UndoRecordList)
       while i < tot:
@@ -335,9 +335,9 @@ class QadUndoStack():
       return False
 
    # ===============================================================================
-   # BOOKMARK - INIZIO
+   # BOOKMARK - BEGINNING
    # ===============================================================================
-   
+
    def undoUntilBookmark(self, canvas):
       if self.index == -1:
          return
@@ -345,10 +345,10 @@ class QadUndoStack():
          UndoRecord = self.UndoRecordList[i]
          if UndoRecord.undoType == QadUndoRecordTypeEnum.BOOKMARK:
             break
-         
-         UndoRecord.undoEditCommand(None) # senza refresh         
-      self.index = i - 1        
-      
+
+         UndoRecord.undoEditCommand(None) # without refresh
+      self.index = i - 1
+
       canvas.refresh()
 
 
@@ -357,31 +357,31 @@ class QadUndoStack():
          UndoRecord = self.UndoRecordList[i]
          if UndoRecord.undoType == QadUndoRecordTypeEnum.BOOKMARK:
             break
-         UndoRecord.redoEditCommand(None) # senza refresh         
-      self.index = i         
-      
+         UndoRecord.redoEditCommand(None) # without refresh
+      self.index = i
+
       canvas.refresh()
 
 
    def getPrevBookmarkPos(self, pos):
-      # dalla posizione <pos> cerca la posizione di bookmark precedente
-      # -1 se non trovato
+      # from position <pos> searces for the previous bookmark position
+      # -1 if not found
       for i in range(pos - 1, -1, -1):
          UndoRecord = self.UndoRecordList[i]
          if UndoRecord.undoType == QadUndoRecordTypeEnum.BOOKMARK:
             return i
       return -1
- 
-      
+
+
    def insertBookmark(self, text):
-      # non si può inserire un bookmark all'interno di un gruppo begin-end
+      # you cannot insert a bookmark inside a begin-end group
       if self.getOpenGroupPos(self.index) >= 0:
-         return False  
-      
+         return False
+
       tot = len(self.UndoRecordList)
       if tot > 0 and self.index < tot - 1:
-         del self.UndoRecordList[self.index + 1 :] # cancello fino alla fine
-      
+         del self.UndoRecordList[self.index + 1 :] # gate to the end
+
       UndoRecord = QadUndoRecord()
       UndoRecord.setUndoType(text, QadUndoRecordTypeEnum.BOOKMARK)
       self.UndoRecordList.append(UndoRecord)
@@ -389,5 +389,5 @@ class QadUndoStack():
       return True
 
    # ===============================================================================
-   # BOOKMARK - FINE
+   # BOOKMARK - END
    # ===============================================================================

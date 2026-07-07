@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- Gestione dei colori dei grip di QAD
- 
+ QAD grip color management
+
                               -------------------
         begin                : 2016-17-02
         copyright            : iiiii
@@ -39,7 +39,7 @@ from . import qad_utils
 
 
 #######################################################################################
-# Classe che gestisce l'interfaccia grafica per i colori dei grip
+# Class that manages the graphical interface for grip colors
 class QadGripColorDialog(QDialog, QObject, Ui_GripColor_Dialog):
    def __init__(self, plugIn, parent, gripColor, gripHot, gripHover, gripContour):
       self.plugIn = plugIn
@@ -51,36 +51,36 @@ class QadGripColorDialog(QDialog, QObject, Ui_GripColor_Dialog):
       self.gripHot     = gripHot
       self.gripHover   = gripHover
       self.gripContour = gripContour
-      
+
       self.setupUi(self)
       self.setWindowTitle(QadMsg.getQADTitle() + " - " + self.windowTitle())
-      
+
       # Inizializzazione dei colori
       self.init_colors()
 
 
    def setupUi(self, Dialog):
       Ui_GripColor_Dialog.setupUi(self, self)
-      # aggiungo il bottone di qgis QgsColorButton chiamato unselectedGripColor 
-      # che eredita la posizione di unselectedGripColorDummy (che viene nascosto)
+      # add the qgis button QgsColorButton called unselectedGripColor
+      # which inherits the position of unselectedGripColorDummy (which is hidden)
       self.unselectedGripColorDummy.setHidden(True)
       self.unselectedGripColor = QgsColorButton(self.unselectedGripColorDummy.parent())
       self.unselectedGripColor.setGeometry(self.unselectedGripColorDummy.geometry())
       self.unselectedGripColor.setObjectName("unselectedGripColor")
-      # aggiungo il bottone di qgis QgsColorButton chiamato selectedGripColor 
-      # che eredita la posizione di selectedGripColorDummy (che viene nascosto)
+      # add the qgis QgsColorButton button called selectedGripColor
+      # which inherits the position of selectedGripColorDummy (which is hidden)
       self.selectedGripColorDummy.setHidden(True)
       self.selectedGripColor = QgsColorButton(self.selectedGripColorDummy.parent())
       self.selectedGripColor.setGeometry(self.selectedGripColorDummy.geometry())
       self.selectedGripColor.setObjectName("selectedGripColor")
-      # aggiungo il bottone di qgis QgsColorButton chiamato hoverGripColor 
-      # che eredita la posizione di hoverGripColorDummy (che viene nascosto)
+      # add the qgis QgsColorButton button called hoverGripColor
+      # which inherits the position of hoverGripColorDummy (which is hidden)
       self.hoverGripColorDummy.setHidden(True)
-      self.hoverGripColor = QgsColorButton(self.hoverGripColorDummy.parent())      
+      self.hoverGripColor = QgsColorButton(self.hoverGripColorDummy.parent())
       self.hoverGripColor.setGeometry(self.hoverGripColorDummy.geometry())
       self.hoverGripColor.setObjectName("hoverGripColor")
-      # aggiungo il bottone di qgis QgsColorButton chiamato contourGripColor 
-      # che eredita la posizione di contourGripColorDummy (che viene nascosto)
+      # add the qgis QgsColorButton button called contourGripColor
+      # which inherits the position of contourGripColorDummy (which is hidden)
       self.contourGripColorDummy.setHidden(True)
       self.contourGripColor = QgsColorButton(self.contourGripColorDummy.parent())
       self.contourGripColor.setGeometry(self.contourGripColorDummy.geometry())
@@ -96,7 +96,7 @@ class QadGripColorDialog(QDialog, QObject, Ui_GripColor_Dialog):
       self.selectedGripColor.setColor(QColor(self.gripHot))
       self.hoverGripColor.setColor(QColor(self.gripHover))
       self.contourGripColor.setColor(QColor(self.gripContour))
-  
+
 
    def ButtonBOX_Accepted(self):
       self.gripColor = self.unselectedGripColor.color().name()

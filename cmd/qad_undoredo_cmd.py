@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- comando UNDO e REDO di QAD
- 
+ QAD UNDO and REDO command
+
                               -------------------
         begin                : 2013-05-22
         copyright            : iiiii
@@ -31,11 +31,11 @@ from ..qad_msg import QadMsg
 from ..qad_textwindow import QadInputTypeEnum, QadInputModeEnum
 
 
-# Classe che gestisce il comando UNDO
+# Class that manages the UNDO command
 class QadUNDOCommandClass(QadCommandClass):
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadUNDOCommandClass(self.plugIn)
 
    def getName(self):
@@ -49,54 +49,54 @@ class QadUNDOCommandClass(QadCommandClass):
 
    def getIcon(self):
       return QIcon(":/plugins/qad/icons/undo.svg")
-   
+
    def getNote(self):
-      # impostare le note esplicative del comando      
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_UNDO", "Reverses the effect of commands.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
-         
-   def run(self, msgMapTool = False, msg = None):
-      self.isValidPreviousInput = True # per gestire il comando anche in macro
 
-      if self.step == 0: # inizio del comando
+   def run(self, msgMapTool = False, msg = None):
+      self.isValidPreviousInput = True # to manage the command also in macros
+
+      if self.step == 0: # start of command
          keyWords = QadMsg.translate("Command_UNDO", "BEgin") + "/" + \
                     QadMsg.translate("Command_UNDO", "End") + "/" + \
                     QadMsg.translate("Command_UNDO", "Mark") + "/" + \
                     QadMsg.translate("Command_UNDO", "Back")
          default = 1
          prompt = QadMsg.translate("Command_UNDO", "Enter the number of operations to undo or [{0}] <{1}>: ").format(keyWords, str(default))
-         
+
          englishKeyWords = "BEgin" + "/" + "End" + "/" + "Mark" + "/" + "Back"
          keyWords += "_" + englishKeyWords
-         # si appresta ad attendere un numero intero positivo o enter o una parola chiave         
-         # msg, inputType, default, keyWords, valori positivi
+         # is going to wait for a positive integer or enter or a keyword
+         # msg, inputType, default, keyWords, positive values
          self.waitFor(prompt, \
                       QadInputTypeEnum.INT | QadInputTypeEnum.KEYWORDS, \
                       default, \
-                      keyWords, QadInputModeEnum.NOT_ZERO | QadInputModeEnum.NOT_NEGATIVE)      
+                      keyWords, QadInputModeEnum.NOT_ZERO | QadInputModeEnum.NOT_NEGATIVE)
          self.step = 1
          return False
-   
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA NUMERO INTERO (da step = 0)
-      elif self.step == 1: # dopo aver atteso un punto o un numero reale si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
+      # RESPONSE TO THE INTEGER NUMBER REQUEST (from step = 0)
+      elif self.step == 1: # after waiting for a point or a real number the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
                   self.plugIn.undoEditCommand()
-                  return True # fine comando
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == unicode:
@@ -114,43 +114,43 @@ class QadUNDOCommandClass(QadCommandClass):
                              QadMsg.translate("QAD", "No")
                   default = QadMsg.translate("QAD", "Yes")
                   prompt = QadMsg.translate("Command_UNDO", "This will undo everything. OK ? <{0}>: ").format(default)
-                  
+
                   englishKeyWords = "Yes" + "/" + "No"
                   keyWords += "_" + englishKeyWords
-                  # si appresta ad attendere enter o una parola chiave         
-                  # msg, inputType, default, keyWords, nessun controllo
+                  # is preparing to wait for enter or a keyword
+                  # msg, inputType, default, keyWords, no check
                   self.waitFor(prompt, \
                                QadInputTypeEnum.KEYWORDS, \
                                default, \
                                keyWords, QadInputModeEnum.NONE)
                   self.step = 2
-                  return False                                       
+                  return False
                else:
                   self.plugIn.undoUntilBookmark()
          elif type(value) == int:
             self.plugIn.undoEditCommand(value)
 
          return True
-         
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DI ANNULLARE TUTTO (da step = 1)
-      elif self.step == 2: # dopo aver atteso una parola chiave si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
+      # RESPONSE TO THE REQUEST TO CANCEL EVERYTHING (from step = 1)
+      elif self.step == 2: # after waiting for a keyword the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
                   self.plugIn.undoUntilBookmark()
                   self.showMsg(QadMsg.translate("Command_UNDO", "All has been undone."))
-                  return True # fine comando
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == unicode:
@@ -158,14 +158,14 @@ class QadUNDOCommandClass(QadCommandClass):
                self.showMsg(QadMsg.translate("Command_UNDO", "All has been undone."))
                self.plugIn.undoUntilBookmark()
 
-         return True # fine comando
+         return True # end command
 
-   
-# Classe che gestisce il comando REDO
+
+# Class that manages the REDO command
 class QadREDOCommandClass(QadCommandClass):
-   
+
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadREDOCommandClass(self.plugIn)
 
    def getName(self):
@@ -179,14 +179,14 @@ class QadREDOCommandClass(QadCommandClass):
 
    def getIcon(self):
       return QIcon(":/plugins/qad/icons/redo.svg")
-   
+
    def getNote(self):
-      # impostare le note esplicative del comando      
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_UNDO", "Reverses the effects of previous UNDO.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
-         
+
    def run(self, msgMapTool = False, msg = None):
       self.plugIn.redoEditCommand()
-      return True   
+      return True

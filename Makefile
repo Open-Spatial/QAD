@@ -6,6 +6,7 @@
 #UI_FILES = qad.ui qad_dsettings.ui qad_dimstyle.ui
 #Qt resource files to compile
 RESOURCES = qad.qrc qad_dsettings.qrc 
+PYRCC ?= pyrcc6
  
  
 #################################
@@ -25,7 +26,7 @@ resources : $(COMPILED_RESOURCES)
 #	pyuic4 $< -o $@
  
 %_rc.py : %.qrc
-	pyrcc4 $< -o $@
+	$(PYRCC) $< -o $@
  
 clean : 
 	#$(RM) $(COMPILED_UI) $(COMPILED_RESOURCES) $(COMPILED_UI:.py=.pyc) $(COMPILED_RESOURCES:.py=.pyc)  

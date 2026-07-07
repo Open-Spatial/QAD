@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per la gestione dei poligoni (lista di polilinee)
- 
+ class for managing polygons (list of polylines)
+
                               -------------------
         begin                : 2019-03-14
         copyright            : iiiii
@@ -37,13 +37,13 @@ from .qad_polyline import QadPolyline
 
 # ===============================================================================
 # QadPolygon class
-# rappresenta una lista di geometrie chiuse: QadPolyline, QadCircle, QadEllipse
+# represents a list of closed geometries: QadPolyline, QadCircle, QadEllipse
 # ===============================================================================
 class QadPolygon():
-    
+
    def __init__(self, polygon=None):
       self.defList = []
-      # deflist = (<geometria chiusa 1> <geometria chiusa 2>...)
+      # deflist = (<closed geometry 1> <closed geometry 2>...)
       if polygon is not None:
          self.set(polygon)
 
@@ -54,7 +54,7 @@ class QadPolygon():
    def whatIs(self):
       return "POLYGON"
 
-   
+
    # ============================================================================
    # isClosed
    # ============================================================================
@@ -73,15 +73,15 @@ class QadPolygon():
 
 
    def __eq__(self, polygon):
-      # obbligatoria
+      # required
       """self == other"""
       if polygon.whatIs() != "POLYLINE": return False
       if self.qty() != polygon.qty(): return False
       for i in range(0, self.qty()):
          if self.getClosedObjectAt(i) != polygon.getClosedObjectAt(i): return False
       return True
-  
-  
+
+
    def __ne__(self, polygon):
       """self != other"""
       return not self.__eq__(polygon)
@@ -91,9 +91,7 @@ class QadPolygon():
    # append
    # ============================================================================
    def append(self, closedObject):
-      """
-      la funzione aggiunge una geometria chiusa in fondo alla lista.
-      """
+      """the function adds a closed geometry to the bottom of the list."""
       if closedObject is None: return
       objectType = closedObject.whatIs()
       if objectType == "POLYLINE":
@@ -103,17 +101,15 @@ class QadPolygon():
       self.defList.append(closedObject.copy())
       return True
 
-   
+
    # ============================================================================
    # insert
    # ============================================================================
    def insert(self, i, closedObject):
-      """
-      la funzione aggiunge una geometria chiusa nella posizione i-esima della lista delle geometrie chiuse.
-      """
+      """the function adds a closed geometry in the i-th position of the list of closed geometries."""
       if i >= self.qty():
          return self.append(closedObject)
-      else:         
+      else:
          return self.defList.insert(i, closedObject.copy())
 
 
@@ -121,9 +117,7 @@ class QadPolygon():
    # remove
    # ============================================================================
    def remove(self, i):
-      """
-      la funzione cancella una geometria chiusa nella posizione i-esima della lista.
-      """
+      """the function deletes a closed geometry in the i-th position of the list."""
       del self.defList[i]
 
 
@@ -131,9 +125,7 @@ class QadPolygon():
    # removeAll
    # ============================================================================
    def removeAll(self):
-      """
-      la funzione cancella le geometrie chiuse della lista.
-      """
+      """the function deletes the closed geometries of the list."""
       del self.defList[:]
 
 
@@ -141,41 +133,38 @@ class QadPolygon():
    # getClosedObjectAt
    # ============================================================================
    def getClosedObjectAt(self, i):
-      """
-      la funzione restituisce la geometria chiusa alla posizione i-esima 
-      con numeri negativi parte dal fondo (es. -1 = ultima posizione)
+      """the function returns the geometry closed at the i-th position
+            with negative numbers it starts from the bottom (e.g. -1 = last position)
       """
       if self.qty() == 0 or i > self.qty() - 1:
          return None
       return self.defList[i]
-   
-   
+
+
    # ============================================================================
    # fromPolygon
    # ============================================================================
    def fromPolygon(self, lineList):
-      """
-      la funzione inizializza una lista di geometrie chiuse che compone il poligono passato in liste di punti.
-      """
+      """the function initializes a list of closed geometries that composes the polygon passed into lists of points."""
       self.removeAll()
       ellipse = QadEllipse()
       circle = QadCircle()
       polyline = QadPolyline()
-      
+
       for points in lineList:
-         # verifico se è un cerchio
+         # check if it is a circle
          if circle.fromPolyline(points):
             self.append(circle)
          else:
-            # verifico se è una ellisse
+            # check if it is an ellipse
             if ellipse.fromPolyline(points):
                self.append(ellipse)
             else:
-               # verifico se è una polilinea
+               # check if it is a polyline
                if polyline.fromPolyline(points):
                   if polyline.isClosed():
                      self.append(polyline)
-   
+
       if self.qty() == 0: return None
       return True
 
@@ -184,9 +173,7 @@ class QadPolygon():
    # fromGeom
    # ============================================================================
    def fromGeom(self, geom):
-      """
-      la funzione inizializza il poligono da un oggetto QgsGeometry.
-      """
+      """the function initializes the polygon from a QgsGeometry object."""
       return self.fromPolygon(geom.asPolygon())
 
 
@@ -194,23 +181,19 @@ class QadPolygon():
    # asPolygon
    # ===============================================================================
    def asPolygon(self, tolerance2ApproxCurve = None, atLeastNSegment = None):
-      """
-      la funzione ritorna una lista di liste di punti che compongono un poligono.
-      """
+      """the function returns a list of lists of points that make up a polygon."""
       result = []
       for closedObject in self.defList:
          result.append(closedObject.asPolyline(tolerance2ApproxCurve, atLeastNSegment))
 
       return result
 
-   
+
    # ===============================================================================
    # asAbstractGeom
    # ===============================================================================
    def asAbstractGeom(self, wkbType = QgsWkbTypes.LineString, tolerance2ApproxCurve = None, atLeastNSegment = None):
-      """
-      la funzione ritorna il poligono in forma di QgsAbstractGeometry.
-      """
+      """the function returns the polygon in the form of QgsAbstractGeometry."""
       flatType = QgsWkbTypes.flatType(wkbType)
 
       if flatType == QgsWkbTypes.CurvePolygon:
@@ -221,9 +204,9 @@ class QadPolygon():
                curvePolygon.setExteriorRing(closedObject.asAbstractGeom(QgsWkbTypes.CompoundCurve , tolerance2ApproxCurve, atLeastNSegment))
                exteriorRing = False
             else:
-               curvePolygon.addInteriorRing(closedObject.asAbstractGeom(QgsWkbTypes.CompoundCurve , tolerance2ApproxCurve, atLeastNSegment))               
+               curvePolygon.addInteriorRing(closedObject.asAbstractGeom(QgsWkbTypes.CompoundCurve , tolerance2ApproxCurve, atLeastNSegment))
          return curvePolygon
-         
+
       elif flatType == QgsWkbTypes.MultiSurface: # Geometry that is combined from several Curvepolygons is called MultiSurface
          curvedPolygon = self.asAbstractGeom(QgsWkbTypes.CurvePolygon, tolerance2ApproxCurve, atLeastNSegment)
          multiSurface = QgsMultiSurface()
@@ -235,7 +218,7 @@ class QadPolygon():
          multiPolygon = QgsMultiPolygon()
          multiPolygon.addGeometry(polygon)
          return multiPolygon
-             
+
       polygon = QgsPolygon()
       exteriorRing = True
       for closedObject in self.defList:
@@ -243,35 +226,31 @@ class QadPolygon():
             polygon.setExteriorRing(closedObject.asAbstractGeom(QgsWkbTypes.LineString , tolerance2ApproxCurve, atLeastNSegment))
             exteriorRing = False
          else:
-            polygon.addInteriorRing(closedObject.asAbstractGeom(QgsWkbTypes.LineString , tolerance2ApproxCurve, atLeastNSegment))               
+            polygon.addInteriorRing(closedObject.asAbstractGeom(QgsWkbTypes.LineString , tolerance2ApproxCurve, atLeastNSegment))
       return polygon
 
-   
+
    # ===============================================================================
    # asGeom
    # ===============================================================================
    def asGeom(self, wkbType = QgsWkbTypes.LineString, tolerance2ApproxCurve = None, atLeastNSegment = None):
-      """
-      la funzione ritorna il poligono in forma di QgsGeometry.
-      """
+      """the function returns the polygon in the form of QgsGeometry."""
       return QgsGeometry(self.asAbstractGeom(wkbType, tolerance2ApproxCurve, atLeastNSegment))
 
-   
+
    # ===============================================================================
    # copy
    # ===============================================================================
    def copy(self):
-      # obbligatoria
+      # required
       return QadPolygon(self)
-   
+
 
    # ============================================================================
    # move
    # ============================================================================
    def move(self, offsetX, offsetY):
-      """
-      la funzione sposta le geometrie chiuse secondo un offset X e uno Y
-      """
+      """the function moves the closed geometries according to an X and a Y offset"""
       for closedObject in self.defList:
          closedObject.move(offsetX, offsetY)
 
@@ -304,19 +283,15 @@ class QadPolygon():
    # qty
    # ============================================================================
    def qty(self):
-      """
-      la funzione restituisce la quantità di geometrie chiuse che compongono il poligono.
-      """
+      """the function returns the quantity of closed geometries that make up the polygon."""
       return len(self.defList)
-         
+
 
    # ============================================================================
    # getCentroid
    # ============================================================================
    def getCentroid(self, tolerance2ApproxCurve = None):
-      """
-      la funzione restituisce il punto centroide.
-      """
+      """the function returns the centroid point."""
       g = self.asGeom(QgsWkbTypes.LineString, tolerance2ApproxCurve)
       if g is not None:
          centroid = g.centroid()
@@ -325,27 +300,23 @@ class QadPolygon():
 
       return None
 
-   
+
    # ===============================================================================
    # transform
    # ===============================================================================
    def transform(self, coordTransform):
-      """
-      la funzione restituisce un nuovo poligono con le coordinate trasformate.
-      """
+      """the function returns a new polygon with the transformed coordinates."""
       result = QadPolygon()
       for closedObject in self.defList:
          result.append(closedObject.transform(coordTransform))
       return result
-   
+
 
    # ===============================================================================
    # transformFromCRSToCRS
    # ===============================================================================
    def transformFromCRSToCRS(self, sourceCRS, destCRS):
-      """
-      la funzione trasforma le coordinate dei punti che compone il poligono.
-      """
+      """the function transforms the coordinates of the points that make up the polygon."""
       return self.transform(QgsCoordinateTransform(sourceCRS, destCRS, QgsProject.instance()))
 
 
@@ -353,15 +324,13 @@ class QadPolygon():
    # getBoundingBox
    # ===============================================================================
    def getBoundingBox(self):
-      """
-      la funzione ritorna il rettangolo che racchiude il poligono.
-      """
+      """the function returns the rectangle that encloses the polygon."""
       boundingBox = self.getClosedObjectAt(0).getBoundingBox()
       i = 1
       while i < self.qty():
          boundingBox.combineExtentWith(self.getClosedObjectAt(i).getBoundingBox())
          i = i + 1
-         
+
       return boundingBox
 
 
@@ -369,10 +338,8 @@ class QadPolygon():
    # containsPt
    # ===============================================================================
    def containsPt(self, pt):
-      """
-      la funzione ritorna True se il punto è sul poligono altrimenti False.
-      """
+      """the function returns True if the point is on the polygon otherwise False."""
       for closedObject in self.defList:
          if closedObject.containsPt(pt): return True
-         
+
       return False

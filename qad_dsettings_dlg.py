@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- comando DSETTINGS per impostazione disegno
- 
+ DSETTINGS command for drawing settings
+
                               -------------------
         begin                : 2013-05-22
         copyright            : iiiii
@@ -53,42 +53,42 @@ class QadDSETTINGSTabIndexEnum():
 
 
 #######################################################################################
-# Classe che gestisce l'interfaccia grafica del comando DSETTINGS
+# Class that manages the graphical interface of the DSETTINGS command
 class QadDSETTINGSDialog(QDialog, QObject, qad_dsettings_ui.Ui_DSettings_Dialog):
    def __init__(self, plugIn, dsettingsTabIndex = None):
       self.plugIn = plugIn
       self.iface = self.plugIn.iface.mainWindow()
 
       QDialog.__init__(self)
-      # non passo il parent perchè altrimenti il font e la sua dimensione verrebbero ereditati dalla dialog scombinando tutto 
+      # I don't pass the parent because otherwise the font and its size would be inherited from the dialog, messing up everything
       #QDialog.__init__(self, self.iface)
 
       self.setupUi(self)
       self.setWindowTitle(QadMsg.getQADTitle() + " - " + self.windowTitle())
-      
-      # Inizializzazione del TAB che riguarda gli SNAP ad oggetto
+
+      # Initialization of the TAB regarding object SNAPs
       self.init_osnap_tab()
-      
-      # Inizializzazione del TAB che riguarda il puntamento polare
+
+      # Initialization of the TAB regarding polar pointing
       self.init_polar_tab()
-      
-      # Inizializzazione del TAB che riguarda l'input dinamico
+
+      # Initialization of the TAB regarding dynamic input
       self.init_dynamic_input_tab()
-      
+
       if dsettingsTabIndex is not None:
          self.tabWidget.setCurrentIndex(dsettingsTabIndex)
       else:
          if self.plugIn.dsettingsLastUsedTabIndex == -1: # non inizializzato
             self.plugIn.dsettingsLastUsedTabIndex = QadDSETTINGSTabIndexEnum.OBJECT_SNAP
          self.tabWidget.setCurrentIndex(self.plugIn.dsettingsLastUsedTabIndex)
-            
+
 
    ######################################
-   # TAB che riguarda gli SNAP ad oggetto
+   # TAB regarding object-specific SNAPs
    def init_osnap_tab(self):
-      # Inizializzazione del TAB che riguarda gli SNAP ad oggetto
-      
-      # Memorizzo il valore dell'OSMODE per determinare gli osnap impostati
+      # Initialization of the TAB regarding object SNAPs
+
+      # I store the OSMODE value to determine the set osnaps
       OsMode = QadVariables.get(QadMsg.translate("Environment variables", "OSMODE"))
       self.checkBox_CENP.setChecked(OsMode & QadSnapTypeEnum.CEN)
       self.checkBox_ENDP.setChecked(OsMode & QadSnapTypeEnum.END)
@@ -107,7 +107,7 @@ class QadDSETTINGSDialog(QDialog, QObject, qad_dsettings_ui.Ui_DSettings_Dialog)
       self.checkBox_TANP.setChecked(OsMode & QadSnapTypeEnum.TAN)
       self.checkBox_EXT_INT.setChecked(OsMode & QadSnapTypeEnum.EXT_INT)
       self.checkBox_TANP.setChecked(OsMode & QadSnapTypeEnum.TAN)
-      
+
       self.checkBox_IsOsnapON.setChecked(not(OsMode & QadSnapTypeEnum.DISABLE))
 
       AutoSnap = QadVariables.get(QadMsg.translate("Environment variables", "AUTOSNAP"))
@@ -118,10 +118,10 @@ class QadDSETTINGSDialog(QDialog, QObject, qad_dsettings_ui.Ui_DSettings_Dialog)
       self.lineEdit_ProgrDistance.setText(stringA)
       self.lineEdit_ProgrDistance.setValidator(QDoubleValidator(self.lineEdit_ProgrDistance))
       self.lineEdit_ProgrDistance.installEventFilter(self)
-      
+
 
    def accept_osnap_tab(self):
-      # Memorizzo il valore di OSMODE
+      # I store the value of OSMODE
       newOSMODE = 0
       if self.checkBox_CENP.checkState() == Qt.Checked:
          newOSMODE = newOSMODE | QadSnapTypeEnum.CEN
@@ -159,13 +159,13 @@ class QadDSETTINGSDialog(QDialog, QObject, qad_dsettings_ui.Ui_DSettings_Dialog)
          newOSMODE = newOSMODE | QadSnapTypeEnum.DISABLE
       QadVariables.set(QadMsg.translate("Environment variables", "OSMODE"), newOSMODE)
 
-      # Memorizzo il valore di OSPROGRDISTANCE
+      # I store the value of OSPROGRDISTANCE
       SProgrDist = self.lineEdit_ProgrDistance.text()
       ProgrDist = qad_utils.str2float(SProgrDist)
       QadVariables.set(QadMsg.translate("Environment variables", "OSPROGRDISTANCE"), ProgrDist)
-      
-      # Memorizzo il valore di AUTOSNAP
-      AutoSnap = QadVariables.get(QadMsg.translate("Environment variables", "AUTOSNAP"))      
+
+      # I store the AUTOSNAP value
+      AutoSnap = QadVariables.get(QadMsg.translate("Environment variables", "AUTOSNAP"))
       if self.checkBox_ObjectSnapTracking.checkState() == Qt.Checked:
          AutoSnap = AutoSnap | QadAUTOSNAPEnum.OBJ_SNAP_TRACKING
       elif AutoSnap & QadAUTOSNAPEnum.OBJ_SNAP_TRACKING:
@@ -191,7 +191,7 @@ class QadDSETTINGSDialog(QDialog, QObject, qad_dsettings_ui.Ui_DSettings_Dialog)
       self.checkBox_TANP.setChecked(True)
       self.checkBox_EXT_INT.setChecked(True)
       return True
-  
+
 
    def ButtonDeselectALL_Pressed(self):
       self.checkBox_CENP.setChecked(False)
@@ -225,16 +225,16 @@ class QadDSETTINGSDialog(QDialog, QObject, qad_dsettings_ui.Ui_DSettings_Dialog)
 
 
    ######################################
-   # TAB che riguarda il puntamento polare
+   # TAB regarding polar pointing
    def init_polar_tab(self):
-      # Inizializzazione del TAB che riguarda il puntamento polare
+      # Initialization of the TAB regarding polar pointing
       UserAngle = QadVariables.get(QadMsg.translate("Environment variables", "POLARANG"))
       angoliDef = ["90", "45", "30", "22.5", "18", "15", "10", "5"]
       self.comboBox_increment_angle.addItems(angoliDef)
       stringA = str(UserAngle)
       self.comboBox_increment_angle.lineEdit().setText(stringA)
       self.comboBox_increment_angle.installEventFilter(self)
-      
+
       AutoSnap = QadVariables.get(QadMsg.translate("Environment variables", "AUTOSNAP"))
       self.checkBox_PolarPickPoint.setChecked(AutoSnap & QadAUTOSNAPEnum.POLAR_TRACKING)
 
@@ -254,56 +254,56 @@ class QadDSETTINGSDialog(QDialog, QObject, qad_dsettings_ui.Ui_DSettings_Dialog)
       self.CheckAdditionalAngles()
 
       PolarAddAngles = QadVariables.get(QadMsg.translate("Environment variables", "POLARADDANG"))
-      
-      addAngleList = POLARADDANG_to_list(PolarAddAngles) # es. "1;2.3" genera la lista in ordine crescente 1 2.3
+
+      addAngleList = POLARADDANG_to_list(PolarAddAngles) # e.g. "1;2.3" generates the list in ascending order 1 2.3
       model = QStandardItemModel()
-      self.listView_AdditionalAngles.setModel(model)      
+      self.listView_AdditionalAngles.setModel(model)
       for addAngle in addAngleList:
          item = QStandardItem(qad_utils.numToStringFmt(addAngle))
          item.setEditable(False)
          model.appendRow(item)
-              
+
 
    def accept_polar_tab(self):
-      # Memorizzo il valore di AUTOSNAP
+      # I store the AUTOSNAP value
       AutoSnap = QadVariables.get(QadMsg.translate("Environment variables", "AUTOSNAP"))
       if self.checkBox_PolarPickPoint.checkState() == Qt.Checked:
          AutoSnap = AutoSnap | QadAUTOSNAPEnum.POLAR_TRACKING
       elif AutoSnap & QadAUTOSNAPEnum.POLAR_TRACKING:
          AutoSnap = AutoSnap - QadAUTOSNAPEnum.POLAR_TRACKING
       QadVariables.set(QadMsg.translate("Environment variables", "AUTOSNAP"), AutoSnap)
-      
-      # Memorizzo il valore di POLARANG
+
+      # I store the POLARANG value
       SUserAngle = self.comboBox_increment_angle.currentText()
       UserAngle = qad_utils.str2float(SUserAngle)
       QadVariables.set(QadMsg.translate("Environment variables", "POLARANG"), UserAngle)
 
-      # Memorizzo il valore di POLARMODE
+      # I store the POLARMODE value
       PolarMode = 0
       if self.radioButton_OsnapPolarAngle.isChecked():
          PolarMode = PolarMode | QadPOLARMODEnum.POLAR_TRACKING
       if self.radioButton_OsnapPolarRelative.isChecked():
          PolarMode = PolarMode | QadPOLARMODEnum.MEASURE_RELATIVE_ANGLE
-      if self.checkBox_AdditionaltAngles.isChecked():         
+      if self.checkBox_AdditionaltAngles.isChecked():
          PolarMode = PolarMode | QadPOLARMODEnum.ADDITIONAL_ANGLES
       QadVariables.set(QadMsg.translate("Environment variables", "POLARMODE"), PolarMode)
-      
-      # Memorizzo il valore di POLARADDANG
+
+      # I store the value of POLARADDANG
       PolarAddAngles = ""
       model = self.listView_AdditionalAngles.model()
       for row in range(0, model.rowCount()):
          index = model.index(row, 0)
          if row > 0:
             PolarAddAngles += ";"
-         PolarAddAngles += index.data()         
+         PolarAddAngles += index.data()
       QadVariables.set(QadMsg.translate("Environment variables", "POLARADDANG"), PolarAddAngles)
-    
-    
+
+
    def comboBox_increment_angle_Validation(self):
       string = self.comboBox_increment_angle.lineEdit().text()
       if qad_utils.str2float(string) is None or qad_utils.str2float(string) <= 0 or qad_utils.str2float(string) >= 360:
          msg = QadMsg.translate("DSettings_Dialog", "Invalid increment angle: enter a number greater than zero and less than 360 degree.")
-         QMessageBox.critical(self, QadMsg.getQADTitle(), msg) 
+         QMessageBox.critical(self, QadMsg.getQADTitle(), msg)
          self.comboBox_increment_angle.lineEdit().setFocus()
          self.comboBox_increment_angle.lineEdit().selectAll()
          return False
@@ -322,10 +322,10 @@ class QadDSETTINGSDialog(QDialog, QObject, qad_dsettings_ui.Ui_DSettings_Dialog)
    def ButtonNewAngle(self):
       self.checkBox_AdditionaltAngles.setChecked(True)
       self.CheckAdditionalAngles()
-      
+
       while True:
-         # restituisce (valore, True o False a seconda del tasto OK o Cancel)
-         res = QInputDialog.getDouble(self, 
+         # returns (value, True or False depending on the OK or Cancel button)
+         res = QInputDialog.getDouble(self,
                                       QadMsg.translate("DSettings_Dialog", "QAD - Additional angle"), \
                                       QadMsg.translate("DSettings_Dialog", "New angle:"), \
                                       0, -360, 360, 8)
@@ -333,7 +333,7 @@ class QadDSETTINGSDialog(QDialog, QObject, qad_dsettings_ui.Ui_DSettings_Dialog)
             return
          newAngle = res[0]
          reAsk = False
-         # controllo che l'angolo non sia già presente
+         # check that the corner is not already present
          model = self.listView_AdditionalAngles.model()
          for row in range(0, model.rowCount()):
             index = model.index(row, 0)
@@ -348,65 +348,65 @@ class QadDSETTINGSDialog(QDialog, QObject, qad_dsettings_ui.Ui_DSettings_Dialog)
                item.setEditable(False)
                model.insertRow(row, item)
                return
-         
+
          if reAsk == False:
             item = QStandardItem(qad_utils.numToStringFmt(newAngle))
             item.setEditable(False)
             model.appendRow(item)
-            return                                   
+            return
 
 
    def ButtonDelAngle(self):
-      # cancello le righe selezionate (devo ordinarle in modo inverso)
+      # delete the selected rows (I have to sort them in reverse)
       indexes = self.listView_AdditionalAngles.selectedIndexes()
       for index in reversed(sorted(indexes)):
          self.listView_AdditionalAngles.model().removeRow(index.row())
-      
+
 
 
    ######################################
-   # TAB che riguarda l'input dinamico
+   # TAB regarding dynamic input
    def init_dynamic_input_tab(self):
-      # Inizializzazione del TAB che riguarda l'input dinamico
-      
-      # Memorizzo il valore di DYNMODE = Attiva e disattiva le funzioni di input dinamico
+      # Initialization of the TAB regarding dynamic input
+
+      # I store the value of DYNMODE = Enables and disables the dynamic input functions
       dynMode = QadVariables.get(QadMsg.translate("Environment variables", "DYNMODE"))
       self.checkBox_DI_EnableInputPointer.setChecked(abs(dynMode) & 1)
       self.checkBox_DI_EnableDimPointer.setChecked(abs(dynMode) & 2)
-            
-      # Memorizzo il valore di DYNPROMPT = Controlla la visualizzazione dei messaggi di richiesta nelle descrizioni di input dinamico
+
+      # I store the value of DYNPROMPT = Controls the display of prompts in dynamic input descriptions
       dynPrompt = QadVariables.get(QadMsg.translate("Environment variables", "DYNPROMPT"))
       self.checkBox_DI_ShowPrompt.setChecked(dynPrompt == 1)
 
 
    def Button_DI_DimensionInputSettings_Pressed(self):
       Form = QadDIMINPUTDialog(self.plugIn, self)
-      Form.exec_()
+      Form.exec()
 
-   
+
    def Button_DI_PointerInputSettings_Pressed(self):
       Form = QadPOINTERINPUTDialog(self.plugIn, self)
-      Form.exec_()
+      Form.exec()
 
 
    def Button_DI_TootipAppearance_Pressed(self):
       Form = QadTOOLTIPAPPEARANCEDialog(self.plugIn, self)
-      Form.exec_()
+      Form.exec()
 
 
    def accept_dynamic_input_tab(self):
-      # Memorizzo il valore di DYNMODE = Attiva e disattiva le funzioni di input dinamico
+      # I store the value of DYNMODE = Enables and disables the dynamic input functions
       dynMode = 0
       if self.checkBox_DI_EnableInputPointer.checkState() == Qt.Checked:
          dynMode = dynMode + 1
       if self.checkBox_DI_EnableDimPointer.checkState() == Qt.Checked:
          dynMode = dynMode + 2
-      
+
       if QadVariables.get(QadMsg.translate("Environment variables", "DYNMODE")) < 0:
          dynMode = -dynMode
       QadVariables.set(QadMsg.translate("Environment variables", "DYNMODE"), dynMode)
-            
-      # Memorizzo il valore di DYNPROMPT = Controlla la visualizzazione dei messaggi di richiesta nelle descrizioni di input dinamico
+
+      # I store the value of DYNPROMPT = Controls the display of prompts in dynamic input descriptions
       dynPrompt = 1 if self.checkBox_DI_ShowPrompt.checkState() == Qt.Checked else 0
       QadVariables.set(QadMsg.translate("Environment variables", "DYNPROMPT"), dynPrompt)
 
@@ -415,25 +415,25 @@ class QadDSETTINGSDialog(QDialog, QObject, qad_dsettings_ui.Ui_DSettings_Dialog)
    # Funzioni generiche
    def eventFilter(self, obj, event):
       if event is not None:
-         if event.type() == QEvent.FocusOut:
+         if event.type() == QEvent.Type.FocusOut:
             if obj == self.lineEdit_ProgrDistance:
                return not self.lineEdit_ProgrDistance_Validation()
             elif obj == self.comboBox_increment_angle:
-               return not self.comboBox_increment_angle_Validation()            
+               return not self.comboBox_increment_angle_Validation()
 
       # standard event processing
       return QObject.eventFilter(self, obj, event);
 
 
    def ButtonBOX_Accepted(self):
-      self.accept_osnap_tab() # salvo i valori del tab "object snap"
-      self.accept_polar_tab() # salvo i valori del tab "polar tracking"
-      self.accept_dynamic_input_tab() # salvo i valori del tab "dynamic input"
-      
+      self.accept_osnap_tab() # save the tab values for "object snap"
+      self.accept_polar_tab() # save the tab values for "polar tracking"
+      self.accept_dynamic_input_tab() # save the tab values for "dynamic input"
+
       QadVariables.save()
 
       self.plugIn.dsettingsLastUsedTabIndex = self.tabWidget.currentIndex()
-      
+
       QDialog.accept(self)
 
 
@@ -442,7 +442,7 @@ class QadDSETTINGSDialog(QDialog, QObject, qad_dsettings_ui.Ui_DSettings_Dialog)
 
 
 #######################################################################################
-# Classe che gestisce l'interfaccia grafica dei settaggi dell'input di quota
+# Class that manages the graphical interface of the height input settings
 class QadDIMINPUTDialog(QDialog, QObject, qad_dimensioninput_settings_ui.Ui_DimInput_Settings_Dialog):
    def __init__(self, plugIn, parent):
       self.plugIn = plugIn
@@ -452,13 +452,13 @@ class QadDIMINPUTDialog(QDialog, QObject, qad_dimensioninput_settings_ui.Ui_DimI
 
       self.setupUi(self)
       self.setWindowTitle(QadMsg.getQADTitle() + " - " + self.windowTitle())
-      
+
       # Inizializzazione della finestra
       self.init()
 
-      
+
    def init(self):
-      # Memorizzo il valore di DYNDIVIS = Controlla il numero di quote dinamiche visualizzate durante la modifica dello stiramento dei grip
+      # I store the value of DYNDIVIS = Controls the number of dynamic dimensions displayed when modifying the grip stretching
       dynDiVis = QadVariables.get(QadMsg.translate("Environment variables", "DYNDIVIS"))
       if dynDiVis == 0:
          self.radioShow1Dim.setChecked(True)
@@ -472,8 +472,8 @@ class QadDIMINPUTDialog(QDialog, QObject, qad_dimensioninput_settings_ui.Ui_DimI
          self.radioShow1Dim.setChecked(False)
          self.radioShow2Dim.setChecked(False)
          self.radioShowMoreDim.setChecked(True)
-         
-      # Memorizzo il valore di DYNDIGRIP = Controlla la visualizzazione delle quote dinamiche durante la modifica dello stiramento dei grip
+
+      # I store the value of DYNDIGRIP = Controls the display of dynamic dimensions when modifying the grip stretching
       dynDiGrip = QadVariables.get(QadMsg.translate("Environment variables", "DYNDIGRIP"))
       if dynDiGrip & 1:
          self.checkResultingDim.setChecked(True)
@@ -483,12 +483,12 @@ class QadDIMINPUTDialog(QDialog, QObject, qad_dimensioninput_settings_ui.Ui_DimI
          self.checkAbsoluteAngle.setChecked(True)
       if dynDiGrip & 8:
          self.checkAngleChange.setChecked(True)
-         
+
       self.radioShowMoreDimChecked()
 
 
    def refreshOnRadioShowDimChecked(self):
-      value = True if self.radioShowMoreDim.isChecked() else False 
+      value = True if self.radioShowMoreDim.isChecked() else False
       self.checkResultingDim.setEnabled(value)
       self.checkLengthChange.setEnabled(value)
       self.checkAbsoluteAngle.setEnabled(value)
@@ -508,17 +508,17 @@ class QadDIMINPUTDialog(QDialog, QObject, qad_dimensioninput_settings_ui.Ui_DimI
 
 
    def ButtonBOX_Accepted(self):
-      # Memorizzo il valore di DYNDIVIS = Controlla il numero di quote dinamiche visualizzate durante la modifica dello stiramento dei grip
+      # I store the value of DYNDIVIS = Controls the number of dynamic dimensions displayed when modifying the grip stretching
       if self.radioShow1Dim.isChecked():
          dynDiVis = 0
       elif self.radioShow2Dim.isChecked():
          dynDiVis = 1
       elif self.radioShowMoreDim.isChecked():
          dynDiVis = 2
-      
+
       QadVariables.set(QadMsg.translate("Environment variables", "DYNDIVIS"), dynDiVis)
 
-      # Memorizzo il valore di DYNDIGRIP = Controlla la visualizzazione delle quote dinamiche durante la modifica dello stiramento dei grip
+      # I store the value of DYNDIGRIP = Controls the display of dynamic dimensions when modifying the grip stretching
       dynDiGrip = 0
       if self.checkResultingDim.checkState() == Qt.Checked:
          dynDiGrip = dynDiGrip + 1
@@ -529,7 +529,7 @@ class QadDIMINPUTDialog(QDialog, QObject, qad_dimensioninput_settings_ui.Ui_DimI
       if self.checkAngleChange.checkState() == Qt.Checked:
          dynDiGrip = dynDiGrip + 8
       QadVariables.set(QadMsg.translate("Environment variables", "DYNDIGRIP"), dynDiGrip)
-      
+
       QadVariables.save()
       QDialog.accept(self)
 
@@ -539,7 +539,7 @@ class QadDIMINPUTDialog(QDialog, QObject, qad_dimensioninput_settings_ui.Ui_DimI
 
 
 #######################################################################################
-# Classe che gestisce l'interfaccia grafica dei settaggi dell'input di quota
+# Class that manages the graphical interface of the height input settings
 class QadPOINTERINPUTDialog(QDialog, QObject, qad_pointerinput_settings_ui.Ui_PointerInput_Settings_Dialog):
    def __init__(self, plugIn, parent):
       self.plugIn = plugIn
@@ -549,13 +549,13 @@ class QadPOINTERINPUTDialog(QDialog, QObject, qad_pointerinput_settings_ui.Ui_Po
 
       self.setupUi(self)
       self.setWindowTitle(QadMsg.getQADTitle() + " - " + self.windowTitle())
-      
+
       # Inizializzazione della finestra
       self.init()
 
 
    def init(self):
-      # Memorizzo il valore di DYNPIFORMAT = Determina se l'input del puntatore utilizza un formato polare o cartesiano per le coordinate
+      # I store the value of DYNPIFORMAT = Determines whether the pointer input uses a polar or Cartesian format for coordinates
       dynPiFormat = QadVariables.get(QadMsg.translate("Environment variables", "DYNPIFORMAT"))
       if dynPiFormat == 0:
          self.radioPolarFmt.setChecked(True)
@@ -563,8 +563,8 @@ class QadPOINTERINPUTDialog(QDialog, QObject, qad_pointerinput_settings_ui.Ui_Po
       elif dynPiFormat == 1:
          self.radioPolarFmt.setChecked(False)
          self.radioCartesianFmt.setChecked(True)
-         
-      # Memorizzo il valore di DYNPICOORDS = Determina se l'input del puntatore utilizza un formato relativo o assoluto per le coordinate
+
+      # I store the value of DYNPICOORDS = Determines whether the pointer input uses a relative or absolute format for coordinates
       dynPiCoords = QadVariables.get(QadMsg.translate("Environment variables", "DYNPICOORDS"))
       if dynPiCoords == 0:
          self.radioRelativeCoord.setChecked(True)
@@ -573,7 +573,7 @@ class QadPOINTERINPUTDialog(QDialog, QObject, qad_pointerinput_settings_ui.Ui_Po
          self.radioRelativeCoord.setChecked(False)
          self.radioAbsoluteCoord.setChecked(True)
 
-      # Memorizzo il valore di DYNPIVIS = Controlla quando è visualizzato l'input puntatore
+      # I store the value of DYNPIVIS = Controls when pointer input is displayed
       dynPiVis = QadVariables.get(QadMsg.translate("Environment variables", "DYNPIVIS"))
       if dynPiVis == 0:
          # caso da implementare
@@ -588,27 +588,27 @@ class QadPOINTERINPUTDialog(QDialog, QObject, qad_pointerinput_settings_ui.Ui_Po
 
 
    def ButtonBOX_Accepted(self):
-      # Memorizzo il valore di DYNPIFORMAT = Determina se l'input del puntatore utilizza un formato polare o cartesiano per le coordinate
+      # I store the value of DYNPIFORMAT = Determines whether the pointer input uses a polar or Cartesian format for coordinates
       if self.radioPolarFmt.isChecked():
          dynPiFormat = 0
       elif self.radioCartesianFmt.isChecked():
          dynPiFormat = 1
       QadVariables.set(QadMsg.translate("Environment variables", "DYNPIFORMAT"), dynPiFormat)
 
-      # Memorizzo il valore di DYNPICOORDS = Determina se l'input del puntatore utilizza un formato relativo o assoluto per le coordinate
+      # I store the value of DYNPICOORDS = Determines whether the pointer input uses a relative or absolute format for coordinates
       if self.radioRelativeCoord.isChecked():
          dynPiCoords = 0
       elif self.radioAbsoluteCoord.isChecked():
          dynPiCoords = 1
       QadVariables.set(QadMsg.translate("Environment variables", "DYNPICOORDS"), dynPiCoords)
 
-      # Memorizzo il valore di DYNPIVIS = Controlla quando è visualizzato l'input puntatore
+      # I store the value of DYNPIVIS = Controls when pointer input is displayed
       if self.radioVisWhenAsksPt.isChecked():
          dynPiVis = 1
       elif self.radioVisAlways.isChecked():
          dynPiVis = 2
       QadVariables.set(QadMsg.translate("Environment variables", "DYNPIVIS"), dynPiVis)
-      
+
       QadVariables.save()
       QDialog.accept(self)
 
@@ -618,24 +618,24 @@ class QadPOINTERINPUTDialog(QDialog, QObject, qad_pointerinput_settings_ui.Ui_Po
 
 
 #######################################################################################
-# Classe che gestisce l'interfaccia grafica dei settaggi dell'aspetto dei tooltip
+# Class that manages the graphical interface of tooltip appearance settings
 class QadTOOLTIPAPPEARANCEDialog(QDialog, QObject, qad_tooltip_appearance_ui.Ui_ToolTipAppearance_Dialog):
    def __init__(self, plugIn, parent):
       self.plugIn = plugIn
       self.iface = self.plugIn.iface.mainWindow()
       self.preview = None
-      self.ColorVariables = [] # lista delle variabili di ambiente modificate dalla finestra QadWindowColorDialog
+      self.ColorVariables = [] # list of environment variables modified by the QadWindowColorDialog window
 
       QDialog.__init__(self, parent)
 
       self.setupUi(self)
       self.setWindowTitle(QadMsg.getQADTitle() + " - " + self.windowTitle())
-      
+
       # Inizializzazione della finestra
       self.init()
 
-      # aggiungo il QWidget chiamato QadPreview
-      # che eredita la posizione di widget_Preview (che viene nascosto)
+      # add the QWidget called QadPreview
+      # which inherits the position of widget_Preview (which is hidden)
       self.widget_Preview.setHidden(True)
       self.preview = QadPreview(self.plugIn, self.widget_Preview.parent(), \
                                 qad_utils.str2int(self.edit_size.text()), \
@@ -645,7 +645,7 @@ class QadTOOLTIPAPPEARANCEDialog(QDialog, QObject, qad_tooltip_appearance_ui.Ui_
 
 
    def init(self):
-      # Memorizzo il valore di TOOLTIPSIZE = dimensione del testo di tooltip.
+      # I store the value of TOOLTIPSIZE = tooltip text size.
       var = QadVariables.getVariable(QadMsg.translate("Environment variables", "TOOLTIPSIZE"))
       self.edit_size.setText(str(var.value))
       self.edit_size.setValidator(QIntValidator(self.edit_size))
@@ -653,8 +653,8 @@ class QadTOOLTIPAPPEARANCEDialog(QDialog, QObject, qad_tooltip_appearance_ui.Ui_
       self.slider_size.setMinimum(var.minNum)
       self.slider_size.setMaximum(var.maxNum)
       self.slider_size.setValue(var.value)
-      
-      # Memorizzo il valore di TOOLTIPTRANSPARENCY = Imposta la trasparenza della finestra di input dinamico.
+
+      # I store the value of TOOLTIPTRANSPARENCY = Set the transparency of the dynamic input window.
       var = QadVariables.getVariable(QadMsg.translate("Environment variables", "TOOLTIPTRANSPARENCY"))
       self.edit_transparency.setText(str(var.value))
       self.edit_transparency.setValidator(QIntValidator(self.edit_transparency))
@@ -662,8 +662,8 @@ class QadTOOLTIPAPPEARANCEDialog(QDialog, QObject, qad_tooltip_appearance_ui.Ui_
       self.slider_transparency.setMinimum(var.minNum)
       self.slider_transparency.setMaximum(var.maxNum)
       self.slider_transparency.setValue(var.value)
-         
-      # Memorizzo il valore di DYNTOOLTIPS = Determina su quali tooltip hanno effetto le impostazioni dell'aspetto delle descrizioni.
+
+      # I store the value of DYNTOOLTIPS = Determines which tooltips the tooltip appearance settings affect.
       dynTooltips = QadVariables.get(QadMsg.translate("Environment variables", "DYNTOOLTIPS"))
       if dynTooltips == 0:
          self.radio_for_all_tooltips.setChecked(False)
@@ -675,20 +675,20 @@ class QadTOOLTIPAPPEARANCEDialog(QDialog, QObject, qad_tooltip_appearance_ui.Ui_
    def slider_size_moved(self):
       self.edit_size.setText(str(self.slider_size.value()))
       if self.preview is not None:
-         self.preview.refresh(self.slider_size.value(), qad_utils.str2int(self.edit_transparency.text())) # forzo il disegno del preview
-      
+         self.preview.refresh(self.slider_size.value(), qad_utils.str2int(self.edit_transparency.text())) # I force the drawing of the preview
+
 
    def edit_size_textChanged(self):
       value = qad_utils.str2int(self.edit_size.text())
       if value is not None:
          self.slider_size.setValue(value)
          if self.preview is not None:
-            self.preview.refresh(value, qad_utils.str2int(self.edit_transparency.text())) # forzo il disegno del preview
+            self.preview.refresh(value, qad_utils.str2int(self.edit_transparency.text())) # I force the drawing of the preview
 
 
    def lineEdit_TOOLTIPSIZE_Validation(self):
       varName = QadMsg.translate("Environment variables", "TOOLTIPSIZE")
-      var = QadVariables.getVariable(QadMsg.translate("Environment variables", varName))      
+      var = QadVariables.getVariable(QadMsg.translate("Environment variables", varName))
       return qad_utils.intLineEditWidgetValidation(self.edit_size, \
                                                    var, \
                                                    QadMsg.translate("Options_Dialog", "Invalid tooltip size"))
@@ -697,20 +697,20 @@ class QadTOOLTIPAPPEARANCEDialog(QDialog, QObject, qad_tooltip_appearance_ui.Ui_
    def slider_transparency_moved(self):
       self.edit_transparency.setText(str(self.slider_transparency.value()))
       if self.preview is not None:
-         self.preview.refresh(qad_utils.str2int(self.edit_size.text()), self.slider_transparency.value()) # forzo il disegno del preview
+         self.preview.refresh(qad_utils.str2int(self.edit_size.text()), self.slider_transparency.value()) # I force the drawing of the preview
 
-      
+
    def edit_transparency_textChanged(self):
       value = qad_utils.str2int(self.edit_transparency.text())
       if value is not None:
          self.slider_transparency.setValue(value)
          if self.preview is not None:
-            self.preview.refresh(qad_utils.str2int(self.edit_size.text()), value) # forzo il disegno del preview
+            self.preview.refresh(qad_utils.str2int(self.edit_size.text()), value) # I force the drawing of the preview
 
-   
+
    def lineEdit_TOOLTIPTRANSPARENCY_Validation(self):
       varName = QadMsg.translate("Environment variables", "TOOLTIPTRANSPARENCY")
-      var = QadVariables.getVariable(QadMsg.translate("Environment variables", varName))      
+      var = QadVariables.getVariable(QadMsg.translate("Environment variables", varName))
       return qad_utils.intLineEditWidgetValidation(self.edit_transparency, \
                                                    var, \
                                                    QadMsg.translate("Options_Dialog", "Invalid transparency value"))
@@ -718,7 +718,7 @@ class QadTOOLTIPAPPEARANCEDialog(QDialog, QObject, qad_tooltip_appearance_ui.Ui_
 
    def eventFilter(self, obj, event):
       if event is not None:
-         if event.type() == QEvent.FocusOut:
+         if event.type() == QEvent.Type.FocusOut:
             if obj == self.edit_size:
                return not self.lineEdit_TOOLTIPSIZE_Validation()
             elif obj == self.edit_transparency:
@@ -730,19 +730,19 @@ class QadTOOLTIPAPPEARANCEDialog(QDialog, QObject, qad_tooltip_appearance_ui.Ui_
 
    def Button_TooltipColors_Pressed(self):
       Form = QadWindowColorDialog(self.plugIn, self, QadColorContextEnum.MODEL_SPACE_2D, QadColorElementEnum.DI_COMMAND_DESCR)
-      
-      if Form.exec_() == QDialog.Accepted:
-         # copio i valori dei colori in QadVariables
+
+      if Form.exec() == QDialog.DialogCode.Accepted:
+         # copy color values to QadVariables
          self.ColorVariables = Form.getSysVariableList()
 
-   
+
    # ============================================================================
    # getSysVariableList
    # ============================================================================
    def getSysVariableList(self):
-      # ritorna una lista di variabili gestite da questa finestra
-      variables = list(self.ColorVariables) # copio la lista ColorVariables
-      
+      # returns a list of variables managed by this window
+      variables = list(self.ColorVariables) # I copy the ColorVariables list
+
       variable = QadVariables.getVariable(QadMsg.translate("Environment variables", "TOOLTIPSIZE"))
       varValue = qad_utils.str2int(self.edit_size.text())
       variables.append(QadVariable(variable.name, varValue, variable.typeValue))
@@ -759,14 +759,14 @@ class QadTOOLTIPAPPEARANCEDialog(QDialog, QObject, qad_tooltip_appearance_ui.Ui_
 
       return variables
 
-   
+
    def ButtonBOX_Accepted(self):
-      variables = self.getSysVariableList() # lista delle variabili modificate
+      variables = self.getSysVariableList() # list of modified variables
       for variable in variables:
          QadVariables.set(variable.name, variable.value)
-            
+
       QadVariables.save()
-      
+
       QDialog.accept(self)
 
 
@@ -778,22 +778,22 @@ class QadTOOLTIPAPPEARANCEDialog(QDialog, QObject, qad_tooltip_appearance_ui.Ui_
 # QadPreview class.
 # ===============================================================================
 class QadPreview(QWidget):
-   def __init__(self, plugIn, parent, size, transparency, windowFlags = Qt.Widget):
+   def __init__(self, plugIn, parent, size, transparency, windowFlags = Qt.WindowType.Widget):
       self.plugIn = plugIn
       self.size = size
       self.transparency = transparency
       QWidget.__init__(self, parent, windowFlags)
-      
+
       self.edit1 = QTextEdit(self)
       self.edit1.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
       self.edit1.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
       self.edit1.insertPlainText("12.3456")
       self.edit1.setReadOnly(True)
-      
+
       self.edit2 = QTextEdit(self)
       self.edit2.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
       self.edit2.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-      self.edit2.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)      
+      self.edit2.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
       self.edit2.insertPlainText("78.9012")
       self.edit2.setReadOnly(True)
 
@@ -801,7 +801,7 @@ class QadPreview(QWidget):
    def refresh(self, size, transparency):
       self.size = size
       self.transparency = transparency
-      self.update() # forzo il disegno del preview
+      self.update() # I force the drawing of the preview
 
 
    def paintEvent(self, event):
@@ -810,15 +810,15 @@ class QadPreview(QWidget):
 
    def setEdit(self, editWidget, foregroundColor, backGroundColor, borderColor, \
                selectionColor, selectionBackGroundColor, opacity):
-      # se i colori sono None allora non vengono alterati
-      # caso particolare per borderColor = "" non viene disegnato
-      # opacity = 0-100      
+      # if the colors are None then they are not altered
+      # special case for borderColor = "" is not drawn
+      # opacity = 0-100
       oldFmt = self.styleSheet().split(";")
       fmt = "rgba({0},{1},{2},{3}%)"
-      
+
       c = QColor(foregroundColor)
       rgbStrForeColor = "color: " + fmt.format(str(c.red()), str(c.green()), str(c.blue()), str(opacity)) + ";"
-            
+
       c = QColor(backGroundColor)
       rgbStrBackColor = "background-color: " + fmt.format(str(c.red()), str(c.green()), str(c.blue()), str(opacity)) + ";"
 
@@ -833,7 +833,7 @@ class QadPreview(QWidget):
       rgbStrSelectionBackColor = "selection-background-color: " + fmt.format(str(c.red()), str(c.green()), str(c.blue()), str(opacity)) + ";"
 
       fontSize = 8 + self.size
-      
+
       fmt = rgbStrForeColor + \
             rgbStrBackColor + \
             fmtBorder + \
@@ -841,37 +841,37 @@ class QadPreview(QWidget):
             rgbStrSelectionColor + \
             rgbStrSelectionBackColor + \
             "font-size: " + str(fontSize) + "pt;"
-            
+
       editWidget.setStyleSheet(fmt)
-      
-      
+
+
    def paint_preview(self):
       rect = self.rect()
       painter = QPainter(self)
       painter.fillRect(rect, self.plugIn.canvas.canvasColor())
-      painter.setRenderHint(QPainter.Antialiasing)
-      
+      painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
       foregroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITFORECOLOR")))
       backGroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBACKCOLOR")))
-      borderColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBORDERCOLOR")))      
+      borderColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBORDERCOLOR")))
       opacity = 100 - self.transparency
       font_size = 8 + self.size
       height = font_size + 15
 
-      selectionColor = QColor(Qt.white)
-      selectionBackGroundColor = QColor(51, 153, 255) # azzurro (R=51 G=153 B=255)
+      selectionColor = QColor(Qt.GlobalColor.white)
+      selectionBackGroundColor = QColor(51, 153, 255) # light blue (R=51 G=153 B=255)
       self.setEdit(self.edit1, foregroundColor, backGroundColor, borderColor, selectionColor, selectionBackGroundColor, opacity)
       fm = QFontMetrics(self.edit1.currentFont())
-      width1 = fm.width(self.edit1.toPlainText() + "__") + 2
+      width1 = fm.horizontalAdvance(self.edit1.toPlainText() + "__") + 2
 
       self.edit1.resize(width1, height)
-      self.edit1.selectAll() # seleziono tutto il testo
+      self.edit1.selectAll() # I select all the text
 
       self.setEdit(self.edit2, foregroundColor, backGroundColor, borderColor, backGroundColor, foregroundColor, opacity)
       fm = QFontMetrics(self.edit2.currentFont())
-      width2 = fm.width(self.edit2.toPlainText() + "__") + 2
+      width2 = fm.horizontalAdvance(self.edit2.toPlainText() + "__") + 2
       self.edit2.resize(width2, height)
-      
+
       offset = int(height / 3)
       x = int((rect.width() - (width1 + offset + width2)) / 2)
       y = int((rect.height() - height) / 2)

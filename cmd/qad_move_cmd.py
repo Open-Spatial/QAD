@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin ok
 
- comando MOVE per spostare oggetti
- 
+ MOVE command to move objects
+
                               -------------------
         begin                : 2013-09-27
         copyright            : iiiii
@@ -41,13 +41,13 @@ from .. import qad_layer
 from ..qad_dim import QadDimStyles, QadDimEntity, appendDimEntityIfNotExisting
 from ..qad_multi_geom import fromQadGeomToQgsGeom
 
-# Classe che gestisce il comando MOVE
+# Class that manages the MOVE command
 class QadMOVECommandClass(QadCommandClass):
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadMOVECommandClass(self.plugIn)
-   
+
    def getName(self):
       return QadMsg.translate("Command_list", "MOVE")
 
@@ -61,9 +61,9 @@ class QadMOVECommandClass(QadCommandClass):
       return QIcon(":/plugins/qad/icons/move.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando      
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_MOVE", "Moves the selected objects.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
       self.SSGetClass = QadSSGetClass(plugIn)
@@ -74,9 +74,9 @@ class QadMOVECommandClass(QadCommandClass):
    def __del__(self):
       QadCommandClass.__del__(self)
       del self.SSGetClass
-      
+
    def getPointMapTool(self, drawMode = QadGetPointDrawModeEnum.NONE):
-      if self.step == 0: # quando si é in fase di selezione entità
+      if self.step == 0: # when you are in the entity selection phase
          return self.SSGetClass.getPointMapTool()
       else:
          if (self.plugIn is not None):
@@ -88,7 +88,7 @@ class QadMOVECommandClass(QadCommandClass):
 
 
    def getCurrentContextualMenu(self):
-      if self.step == 0: # quando si é in fase di selezione entità
+      if self.step == 0: # when you are in the entity selection phase
          return None # return self.SSGetClass.getCurrentContextualMenu()
       else:
          return self.contextualMenu
@@ -98,185 +98,185 @@ class QadMOVECommandClass(QadCommandClass):
    # move
    # ============================================================================
    def move(self, entity, offsetX, offsetY):
-      # verifico se l'entità appartiene ad uno stile di quotatura
+      # check if the entity belongs to a dimensioning style
       if entity.whatIs() == "ENTITY":
-         # sposto la geometria dell'entità
-         qadGeom = entity.getQadGeom().copy() # la copio
+         # I move the geometry of the entity
+         qadGeom = entity.getQadGeom().copy() # I copy it
          qadGeom.move(offsetX, offsetY)
          f = entity.getFeature()
          f.setGeometry(fromQadGeomToQgsGeom(qadGeom, entity.layer))
-         # plugIn, layer, feature, refresh, check_validity
+         # plugin, layer, feature, refresh, check_validity
          if qad_layer.updateFeatureToLayer(self.plugIn, entity.layer, f, False, False) == False:
             return False
       elif entity.whatIs() == "DIMENTITY":
-         if entity.deleteToLayers(self.plugIn) == False: return False # cancello vecchia quota 
-         newDimEntity = QadDimEntity(entity) # la copio
-         if newDimEntity.move(offsetX, offsetY) == False: return False # sposto la quota
-         if newDimEntity.addToLayers(self.plugIn) == False: # ricreo nuva quota
-            return False             
-            
+         if entity.deleteToLayers(self.plugIn) == False: return False # old dimension
+         newDimEntity = QadDimEntity(entity) # I copy it
+         if newDimEntity.move(offsetX, offsetY) == False: return False # I move the dimension
+         if newDimEntity.addToLayers(self.plugIn) == False: # recreate a new dimension
+            return False
+
       return True
 
 
    # ============================================================================
    # moveGeoms
    # ============================================================================
-   def moveGeoms(self, newPt):      
+   def moveGeoms(self, newPt):
       offsetX = newPt.x() - self.basePt.x()
       offsetY = newPt.y() - self.basePt.y()
-      
+
       self.plugIn.beginEditCommand("Feature moved", self.cacheEntitySet.getLayerList())
-      
-      dimElaboratedList = [] # lista delle quotature già elaborate
+
+      dimElaboratedList = [] # list of dimensions already processed
       entityIterator = QadCacheEntitySetIterator(self.cacheEntitySet)
-      
+
       for entity in entityIterator:
-         qadGeom = entity.getQadGeom() # così inizializzo le info qad
-         # verifico se l'entità appartiene ad uno stile di quotatura
-         dimEntity = QadDimStyles.getDimEntity(entity)         
+         qadGeom = entity.getQadGeom() # this is how I initialize the qad info
+         # check if the entity belongs to a dimensioning style
+         dimEntity = QadDimStyles.getDimEntity(entity)
          if dimEntity is not None:
-            if appendDimEntityIfNotExisting(dimElaboratedList, dimEntity) == False: # quota già elaborata
+            if appendDimEntityIfNotExisting(dimElaboratedList, dimEntity) == False: # dimension already processed
                continue
             entity = dimEntity
 
          if self.move(entity, offsetX, offsetY) == False:
             self.plugIn.destroyEditCommand()
             return
-               
+
       self.plugIn.endEditCommand()
-      
+
 
    def run(self, msgMapTool = False, msg = None):
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
-            
+         return True # end command
+
       # =========================================================================
-      # RICHIESTA SELEZIONE OGGETTI
-      if self.step == 0: # inizio del comando
+      # OBJECT SELECTION REQUEST
+      if self.step == 0: # start of command
          if self.SSGetClass.run(msgMapTool, msg) == True:
-            # selezione terminata
+            # selection completed
             self.step = 1
-            self.getPointMapTool().refreshSnapType() # aggiorno lo snapType che può essere variato dal maptool di selezione entità                    
+            self.getPointMapTool().refreshSnapType() # update the snapType which can be varied from the entity selection map tool
             return self.run(msgMapTool, msg)
-      
+
       # =========================================================================
       # SPOSTA OGGETTI
       elif self.step == 1:
          if self.SSGetClass.entitySet.count() == 0:
-            return True # fine comando
+            return True # end command
          self.cacheEntitySet.appendEntitySet(self.SSGetClass.entitySet)
 
-         # imposto il map tool
+         # set the map tool
          self.getPointMapTool().cacheEntitySet = self.cacheEntitySet
-         self.getPointMapTool().setMode(Qad_move_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_BASE_PT)                                
-   
+         self.getPointMapTool().setMode(Qad_move_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_BASE_PT)
+
          keyWords = QadMsg.translate("Command_MOVE", "Displacement")
          prompt = QadMsg.translate("Command_MOVE", "Specify base point or [{0}] <{0}>: ").format(keyWords)
-         
+
          englishKeyWords = "Displacement"
          keyWords += "_" + englishKeyWords
-         # si appresta ad attendere un punto o enter o una parola chiave         
-         # msg, inputType, default, keyWords, nessun controllo
+         # is preparing to wait for a point or Enter or a keyword
+         # msg, inputType, default, keyWords, no check
          self.waitFor(prompt, \
                       QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS, \
                       None, \
-                      keyWords, QadInputModeEnum.NONE)      
-         self.step = 2      
+                      keyWords, QadInputModeEnum.NONE)
+         self.step = 2
          return False
-         
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA PUNTO BASE (da step = 1)
-      elif self.step == 2: # dopo aver atteso un punto o un numero reale si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
+      # RESPONSE TO THE BASE POINT REQUEST (from step = 1)
+      elif self.step == 2: # after waiting for a point or a real number the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
                   pass # opzione di default "spostamento"
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if value is None or type(value) == unicode:
             self.basePt.set(0, 0)
             self.getPointMapTool().basePt = self.basePt
-            self.getPointMapTool().setMode(Qad_move_maptool_ModeEnum.BASE_PT_KNOWN_ASK_FOR_MOVE_PT)                                
-            # si appresta ad attendere un punto
+            self.getPointMapTool().setMode(Qad_move_maptool_ModeEnum.BASE_PT_KNOWN_ASK_FOR_MOVE_PT)
+            # is preparing to wait for a point
             msg = QadMsg.translate("Command_MOVE", "Specify the displacement fom the origin point 0,0 <{0}, {1}>: ")
-            # msg, inputType, default, keyWords, nessun controllo
+            # msg, inputType, default, keyWords, no check
             self.waitFor(msg.format(str(self.plugIn.lastOffsetPt.x()), str(self.plugIn.lastOffsetPt.y())), \
                          QadInputTypeEnum.POINT2D, \
                          self.plugIn.lastOffsetPt, \
-                         "", QadInputModeEnum.NONE)                                      
-            self.step = 4           
-         elif type(value) == QgsPointXY: # se é stato inserito il punto base
+                         "", QadInputModeEnum.NONE)
+            self.step = 4
+         elif type(value) == QgsPointXY: # if the base point has been entered
             self.basePt.set(value.x(), value.y())
 
-            # imposto il map tool
+            # set the map tool
             self.getPointMapTool().basePt = self.basePt
-            self.getPointMapTool().setMode(Qad_move_maptool_ModeEnum.BASE_PT_KNOWN_ASK_FOR_MOVE_PT)                                
-            
-            # si appresta ad attendere un punto o enter o una parola chiave         
-            # msg, inputType, default, keyWords, nessun controllo
+            self.getPointMapTool().setMode(Qad_move_maptool_ModeEnum.BASE_PT_KNOWN_ASK_FOR_MOVE_PT)
+
+            # is preparing to wait for a point or Enter or a keyword
+            # msg, inputType, default, keyWords, no check
             self.waitFor(QadMsg.translate("Command_MOVE", "Specify the second point or <use first point as displacement from the origin point 0,0>: "), \
                          QadInputTypeEnum.POINT2D, \
                          None, \
-                         "", QadInputModeEnum.NONE)      
-            self.step = 3      
-         
-         return False 
-         
+                         "", QadInputModeEnum.NONE)
+            self.step = 3
+
+         return False
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA SECONDO PUNTO PER SPOSTAMENTO (da step = 2)
-      elif self.step == 3: # dopo aver atteso un punto o un numero reale si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE SECOND POINT REQUEST FOR MOVEMENT (from step = 2)
+      elif self.step == 3: # after waiting for a point or a real number the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if value is None:
             newPt = QgsPointXY(self.basePt.x() * 2, self.basePt.y() * 2)
             self.moveGeoms(newPt)
-         elif type(value) == QgsPointXY: # se é stato inserito lo spostamento con un punto
+         elif type(value) == QgsPointXY: # if the movement with a point has been inserted
             self.moveGeoms(value)
-            
-         return True # fine comando
-               
+
+         return True # end command
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL PUNTO DI SPOSTAMENTO (da step = 2)
-      elif self.step == 4: # dopo aver atteso un punto o un numero reale si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE MOVEMENT POINT REQUEST (from step = 2)
+      elif self.step == 4: # after waiting for a point or a real number the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          self.plugIn.setLastOffsetPt(value)
@@ -284,15 +284,15 @@ class QadMOVECommandClass(QadCommandClass):
          return True
 
 
-# Classe che gestisce il comando MOVE per i grip
+# Class that manages the MOVE command for grips
 class QadGRIPMOVECommandClass(QadCommandClass):
 
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadGRIPMOVECommandClass(self.plugIn)
 
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
       self.cacheEntitySet = QadCacheEntitySet()
@@ -301,7 +301,7 @@ class QadGRIPMOVECommandClass(QadCommandClass):
       self.copyEntities = False
       self.nOperationsToUndo = 0
 
-   
+
    def __del__(self):
       QadCommandClass.__del__(self)
 
@@ -319,12 +319,12 @@ class QadGRIPMOVECommandClass(QadCommandClass):
    # setSelectedEntityGripPoints
    # ============================================================================
    def setSelectedEntityGripPoints(self, entitySetGripPoints):
-      # lista delle entityGripPoint con dei grip point selezionati
+      # list of entityGripPoints with selected grip points
       self.cacheEntitySet.clear()
 
       for entityGripPoints in entitySetGripPoints.entityGripPoints:
          self.cacheEntitySet.appendEntity(entityGripPoints.entity)
-         
+
       self.getPointMapTool().cacheEntitySet = self.cacheEntitySet
 
 
@@ -332,33 +332,33 @@ class QadGRIPMOVECommandClass(QadCommandClass):
    # move
    # ============================================================================
    def move(self, entity, offsetX, offsetY, openForm = True):
-      # verifico se l'entità appartiene ad uno stile di quotatura
+      # check if the entity belongs to a dimensioning style
       if entity.whatIs() == "ENTITY":
-         # sposto la geometria dell'entità
-         qadGeom = entity.getQadGeom().copy() # la copio
+         # I move the geometry of the entity
+         qadGeom = entity.getQadGeom().copy() # I copy it
          qadGeom.move(offsetX, offsetY)
          f = entity.getFeature()
          f.setGeometry(fromQadGeomToQgsGeom(qadGeom, entity.layer))
          if self.copyEntities == False:
-            # plugIn, layer, feature, refresh, check_validity
+            # plugin, layer, feature, refresh, check_validity
             if qad_layer.updateFeatureToLayer(self.plugIn, entity.layer, f, False, False) == False:
                return False
          else:
-            # plugIn, layer, features, coordTransform, refresh, check_validity
+            # plugin, layer, features, coordTransform, refresh, check_validity
             if qad_layer.addFeatureToLayer(self.plugIn, entity.layer, f, None, False, False, openForm) == False:
                return False
       elif entity.whatIs() == "DIMENTITY":
-         # stiro la quota
+         # stretch the dimension
          if self.copyEntities == False:
             if entity.deleteToLayers(self.plugIn) == False:
-               return False                      
-         newDimEntity = QadDimEntity(entity) # la copio
+               return False
+         newDimEntity = QadDimEntity(entity) # I copy it
          newDimEntity.move(offsetX, offsetY)
          if newDimEntity.addToLayers(self.plugIn) == False:
-            return False             
+            return False
 
       return True
-      
+
 
    # ============================================================================
    # moveFeatures
@@ -366,40 +366,40 @@ class QadGRIPMOVECommandClass(QadCommandClass):
    def moveFeatures(self, newPt):
       offsetX = newPt.x() - self.basePt.x()
       offsetY = newPt.y() - self.basePt.y()
-      
+
       self.plugIn.beginEditCommand("Feature moved", self.cacheEntitySet.getLayerList())
 
-      dimElaboratedList = [] # lista delle quotature già elaborate
+      dimElaboratedList = [] # list of dimensions already processed
       entityIterator = QadCacheEntitySetIterator(self.cacheEntitySet)
       openForm = True if self.cacheEntitySet.count() == 1 else False
-      
+
       for entity in entityIterator:
-         qadGeom = entity.getQadGeom() # così inizializzo le info qad
-         # verifico se l'entità appartiene ad uno stile di quotatura
-         dimEntity = QadDimStyles.getDimEntity(entity)         
+         qadGeom = entity.getQadGeom() # this is how I initialize the qad info
+         # check if the entity belongs to a dimensioning style
+         dimEntity = QadDimStyles.getDimEntity(entity)
          if dimEntity is not None:
-            if appendDimEntityIfNotExisting(dimElaboratedList, dimEntity) == False: # quota già elaborata
+            if appendDimEntityIfNotExisting(dimElaboratedList, dimEntity) == False: # dimension already processed
                continue
             entity = dimEntity
 
          if self.move(entity, offsetX, offsetY, openForm) == False:
             self.plugIn.destroyEditCommand()
             return
-               
+
       self.plugIn.endEditCommand()
       self.nOperationsToUndo = self.nOperationsToUndo + 1
-                           
-                           
+
+
    # ============================================================================
    # waitForMovePoint
    # ============================================================================
    def waitForMovePoint(self):
       self.step = 1
       self.plugIn.setLastPoint(self.basePt)
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().basePt = self.basePt
       self.getPointMapTool().setMode(Qad_move_maptool_ModeEnum.BASE_PT_KNOWN_ASK_FOR_MOVE_PT)
-      
+
       keyWords = QadMsg.translate("Command_GRIPMOVE", "Base point") + "/" + \
                  QadMsg.translate("Command_GRIPMOVE", "Copy") + "/" + \
                  QadMsg.translate("Command_GRIPMOVE", "Undo") + "/" + \
@@ -409,22 +409,22 @@ class QadGRIPMOVECommandClass(QadCommandClass):
 
       englishKeyWords = "Base point" + "/" + "Copy" + "/" + "Undo" + "/" + "eXit"
       keyWords += "_" + englishKeyWords
-      # si appresta ad attendere un punto o enter o una parola chiave         
-      # msg, inputType, default, keyWords, nessun controllo
+      # is preparing to wait for a point or Enter or a keyword
+      # msg, inputType, default, keyWords, no check
       self.waitFor(prompt, QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS, \
                    None, \
-                   keyWords, QadInputModeEnum.NONE)      
+                   keyWords, QadInputModeEnum.NONE)
 
 
    # ============================================================================
    # waitForBasePt
    # ============================================================================
    def waitForBasePt(self):
-      self.step = 2   
-      # imposto il map tool
+      self.step = 2
+      # set the map tool
       self.getPointMapTool().setMode(Qad_move_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_BASE_PT)
 
-      # si appresta ad attendere un punto
+      # is preparing to wait for a point
       self.waitForPoint(QadMsg.translate("Command_GRIPMOVE", "Specify base point: "))
 
 
@@ -434,60 +434,60 @@ class QadGRIPMOVECommandClass(QadCommandClass):
    def run(self, msgMapTool = False, msg = None):
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
-     
+         return True # end command
+
       # =========================================================================
-      # RICHIESTA SELEZIONE OGGETTI
-      if self.step == 0: # inizio del comando
-         if self.cacheEntitySet.isEmpty(): # non ci sono oggetti da spostare
+      # OBJECT SELECTION REQUEST
+      if self.step == 0: # start of command
+         if self.cacheEntitySet.isEmpty(): # there are no objects to move
             return True
          self.showMsg(QadMsg.translate("Command_GRIPMOVE", "\n** MOVE **\n"))
-         # si appresta ad attendere un punto di spostamento
+         # is preparing to wait for a moving point
          self.waitForMovePoint()
          return False
-      
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DI UN PUNTO DI SPOSTAMENTO
+      # RESPONSE TO REQUEST FOR A MOVEMENT POINT
       elif self.step == 1:
          ctrlKey = False
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
                   value = None
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
             else:
                value = self.getPointMapTool().point
 
             ctrlKey = self.getPointMapTool().ctrlKey
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == unicode:
             if value == QadMsg.translate("Command_GRIPMOVE", "Base point") or value == "Base point":
-               # si appresta ad attendere il punto base
+               # is preparing to wait for the base point
                self.waitForBasePt()
             elif value == QadMsg.translate("Command_GRIPMOVE", "Copy") or value == "Copy":
-               # Copia entità lasciando inalterate le originali
-               self.copyEntities = True                     
-               # si appresta ad attendere un punto di spostamento
+               # Copy entities leaving the originals unchanged
+               self.copyEntities = True
+               # is preparing to wait for a moving point
                self.waitForMovePoint()
             elif value == QadMsg.translate("Command_GRIPMOVE", "Undo") or value == "Undo":
-               if self.nOperationsToUndo > 0: 
+               if self.nOperationsToUndo > 0:
                   self.nOperationsToUndo = self.nOperationsToUndo - 1
                   self.plugIn.undoEditCommand()
                else:
-                  self.showMsg(QadMsg.translate("QAD", "\nThe command has been canceled."))                  
-               # si appresta ad attendere un punto di spostamento
+                  self.showMsg(QadMsg.translate("QAD", "\nThe command has been canceled."))
+               # is preparing to wait for a moving point
                self.waitForMovePoint()
             elif value == QadMsg.translate("Command_GRIPMOVE", "eXit") or value == "eXit":
-               return True # fine comando
-         elif type(value) == QgsPointXY: # se é stato selezionato un punto
+               return True # end command
+         elif type(value) == QgsPointXY: # if a point has been selected
             if ctrlKey:
                self.copyEntities = True
 
@@ -495,42 +495,42 @@ class QadGRIPMOVECommandClass(QadCommandClass):
 
             if self.copyEntities == False:
                return True
-            # si appresta ad attendere un punto di stiramento
+            # is preparing to wait for a stretching point
             self.waitForMovePoint()
-          
+
          else:
             if self.copyEntities == False:
                self.skipToNextGripCommand = True
-            return True # fine comando
-                                          
-         return False 
+            return True # end command
 
-              
+         return False
+
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA PUNTO BASE (da step = 1)
-      elif self.step == 2: # dopo aver atteso un punto
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
+      # RESPONSE TO THE BASE POINT REQUEST (from step = 1)
+      elif self.step == 2: # after waiting for a point
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
                   pass # opzione di default "spostamento"
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
-         if type(value) == QgsPointXY: # se é stato inserito il punto base
+         if type(value) == QgsPointXY: # if the base point has been entered
             self.basePt.set(value.x(), value.y())
-            # imposto il map tool
+            # set the map tool
             self.getPointMapTool().basePt = self.basePt
-            
-         # si appresta ad attendere un punto di spostamento
+
+         # is preparing to wait for a moving point
          self.waitForMovePoint()
 
          return False

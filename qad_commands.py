@@ -4,8 +4,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per gestire i comandi
- 
+ class to manage commands
+
                               -------------------
         begin                : 2013-05-22
         copyright            : iiiii
@@ -38,6 +38,7 @@ from .qad_variables import QadVariables
 
 from .qad_getpoint import *
 from .qad_utils import decriptPlainText, getQADPath, getMacAddress
+from .qad_geometry_capture import QadGeometryCaptureResult
 from .cmd.qad_generic_cmd import QadCommandClass
 from .cmd.qad_id_cmd import QadIDCommandClass
 from .cmd.qad_setcurrlayerbygraph_cmd import QadSETCURRLAYERBYGRAPHCommandClass, QadSETCURRUPDATEABLELAYERBYGRAPHCommandClass
@@ -80,18 +81,18 @@ from .cmd.qad_measure_cmd import QadMEASURECommandClass
 from .cmd.qad_ellipse_cmd import QadELLIPSECommandClass
 
 
-# Classe che gestisce i comandi di Qad
+# Class that handles Qad commands
 class QadCommandsClass():
-   # quando si aggiunge un nuovo comando bisogna
-   # 1) aggiungerlo nella lista __cmdObjs nella funzione __init__ 
-   # 2) se il comando può essere richiamato da menu o da toolbar vedere la funzione Qad::initGui (qad.py)
-   #    e ricordarsi di inserire l'icona in resources.qrc e di ricompilare le risorse
-   # 3) aggiungere funzione per l'avvio del comando "run<nome_comando>Command"
-   
-   def __init__(self, plugIn):   
+   # when adding a new command you must
+   # 1) add it to the __cmdObjs list in the __init__ function
+   # 2) if the command can be called from the menu or toolbar, see the Qad::initGui function (qad.py)
+   #    and remember to insert the icon into resources.qrc and recompile the resources
+   # 3) add function to start the "run<command_name>Command" command
+
+   def __init__(self, plugIn):
       self.plugIn = plugIn
-      
-      self.__cmdObjs = [] # lista interna degli oggetti comandi
+
+      self.__cmdObjs = [] # internal list of command objects
       self.__cmdObjs.append(QadIDCommandClass(self.plugIn)) # ID
       self.__cmdObjs.append(QadSETVARCommandClass(self.plugIn)) # SETVAR
       self.__cmdObjs.append(QadPLINECommandClass(self.plugIn)) # PLINE
@@ -142,21 +143,24 @@ class QadCommandsClass():
       self.__cmdObjs.append(QadELLIPSECommandClass(self.plugIn)) # ELLIPSE
       self.__cmdObjs.append(QadSUPPORTERSCommandClass(self.plugIn)) # SUPPORTERS
 
-      self.actualCommand = None  # Comando in corso di esecuzione
-   
-      # scarto gli alias che hanno lo stesso nome dei comandi
+      self.actualCommand = None  # Command in progress
+      self.geometryCaptureCallback = None
+      self.geometryCaptureCommandName = None
+      self.geometryCaptureTargetWkbType = None
+
+      # I discard aliases that have the same name as commands
       exceptionList = []
       for cmdObj in self.__cmdObjs:
          exceptionList.append(cmdObj.getName())
          exceptionList.append("_" + cmdObj.getEnglishName())
-         
+
       # carico alias dei comandi
       self.commandAliases = QadCommandAliasesClass()
       self.commandAliases.load("", exceptionList)
-      
+
       self.usedCmdNames = QadUsedCmdNamesClass()
-      
-      
+
+
    def isValidCommand(self, command):
       cmd = self.getCommandObj(command)
       if cmd:
@@ -167,17 +171,17 @@ class QadCommandsClass():
 
 
    def isValidEnvVariable(self, variable):
-      # verifico se è una variabile di sistema
+      # check if it is a system variable
       if QadVariables.get(variable) is not None:
          return True
       else:
          return False
-   
-   
+
+
    def showCommandPrompt(self):
       if self.plugIn is not None:
-         self.plugIn.showInputMsg() # visualizza prompt standard per richiesta comando 
-   
+         self.plugIn.showInputMsg() # displays standard prompt for command request
+
    def showMsg(self, msg, displayPromptAfterMsg = False):
       if self.plugIn is not None:
          self.plugIn.showMsg(msg, displayPromptAfterMsg)
@@ -198,10 +202,10 @@ class QadCommandsClass():
       upperCommand = cmdName.upper()
       if upperCommand[0] == "_":
          englishName = True
-         upperCommand = upperCommand[1:] # salto il primo carattere di "_"
+         upperCommand = upperCommand[1:] # I skip the first character of "_"
       else:
-         englishName = False 
-      
+         englishName = False
+
       for cmd in self.__cmdObjs:
          if englishName:
             if upperCommand == cmd.getEnglishName(): # in inglese
@@ -209,7 +213,7 @@ class QadCommandsClass():
          else:
             if upperCommand == cmd.getName(): # in lingua locale
                return cmd.instantiateNewCmd()
-      
+
       if cmdName == "MACRO_RUNNER":
          return QadMacroRunnerCommandClass(self.plugIn)
       else:
@@ -218,126 +222,167 @@ class QadCommandsClass():
             return self.getCommandObj(command, False)
          else:
             return None
-      
-      
+
+
    # ============================================================================
    # getCommandNames
    # ============================================================================
    def getCommandNames(self):
-      """ Return a list of pairs : [(<local cmd name>, <english cmd name>)...]"""     
+      """ Return a list of pairs : [(<local cmd name>, <english cmd name>)...]"""
       cmdNames = []
-      # ricavo la lista dei nomi dei comandi
+      # I get the list of command names
       for cmd in self.__cmdObjs:
          cmdNames.append([cmd.getName(), cmd.getEnglishName]) # in lingua locale, in inglese
-      # aggiungo gli alias
+      # add the aliases
       for alias in self.commandAliases.getCommandAliasDict().keys():
          cmdNames.append([alias, alias])
-         
+
       return cmdNames
-         
-   
+
+
    # ============================================================================
    # run
    # ============================================================================
    def run(self, command, param = None):
       try:
-         # se c'é un comando attivo
+         # if there is an active command
          if self.actualCommand is not None:
             return
 
          if command != QadMsg.translate("Command_list", "SUPPORTERS"):
             if incrementDailyCmdCounter() > self.plugIn.maxDailyCmdCounter:
                if QMessageBox.question(None, "QAD", QadMsg.translate("QAD", "QAD lets you run 200 commands per day free of popups. Donations help us to fund software development, documentation, translation and bug-fixing efforts. Do you want to donate ?"), \
-                                       QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
+                                       QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
                   command = "_SUPPORTERS";
 #                if QMessageBox.critical(None, "QAD", QadMsg.translate("QAD", "You have run out of daily commands available for this version of QAD, your reasonable donation will allow us to adapt the product to your needs. Do you want to donate ?"), \
-#                                        QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
+#                                        QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
 #                   command = "_SUPPORTERS";
 #                else:
 #                   return
-               
-         # eccezione per comando virtuale "QadVirtualSelCommandClass" che in realtà non è un comando
-         # ma è usato per selezionare oggetti quando nessun comando è attivo
+
+         # exception for virtual command "QadVirtualSelCommandClass" which is not actually a command
+         # but it is used to select objects when no command is active
          if command == "QadVirtualSelCommandClass":
             self.actualCommand = QadVirtualSelCommandClass(self.plugIn)
-            # param è la posizione corrente del mouse
-            if self.actualCommand.run(False, param) == True: # comando terminato
+            # param is the current position of the mouse
+            if self.actualCommand.run(False, param) == True: # command finished
                self.clearCommand()
             return
-   
-         # eccezione per comando virtuale "QadVirtualGripCommandsClass" che in realtà non è un comando
-         # ma è usato per modificare gli oggetti selezionati da grip points
+
+         # exception for virtual command "QadVirtualGripCommandsClass" which is not actually a command
+         # but it is used to modify objects selected by grip points
          if command == "QadVirtualGripCommandsClass":
             self.actualCommand = QadVirtualGripCommandsClass(self.plugIn)
-            # param è una lista in cui:
-            # il primo elemento è il codice del comando da eseguire
-            # il secondo elemento è entitySetGripPoints
-            # il terzo elemento è il punto del grip corrente
+            # param is a list where:
+            # the first element is the code of the command to execute
+            # the second element is entitySetGripPoints
+            # the third element is the current grip point
             self.actualCommand.entitySetGripPoints = param[1]
             self.actualCommand.basePt = param[2]
             self.actualCommand.initStartCommand(param[0])
-            if self.actualCommand.run(False) == True: # comando terminato
+            if self.actualCommand.run(False) == True: # command finished
                self.clearCommand()
             return
-         
+
          self.actualCommand = self.getCommandObj(command)
          if self.actualCommand is None:
-            # verifico se è una variabile di sistema
+            # check if it is a system variable
             if QadVariables.get(command) is not None:
                self.showMsg("\n")
-               # lancio comando SETVAR per settare la variabile
+               # launch SETVAR command to set the variable
                args = [QadMsg.translate("Command_list", "SETVAR"), command]
                return self.runMacro(args)
-               
+
             msg = QadMsg.translate("QAD", "\nInvalid command \"{0}\".")
             self.showErr(msg.format(command))
             return
-   
+
          self.usedCmdNames.setUsed(command)
          self.plugIn.clearEntityGripPoints() # pulisco i grip points correnti
-         if self.actualCommand.run() == True: # comando terminato
+         if self.actualCommand.run() == True: # command finished
             self.clearCommand()
 
       except Exception as e:
-         self.abortCommand()
+         self.abortCommand("failed", str(e))
          displayError(e)
-          
-         
+
+   def runGeometryCapture(self, command, callback, target_wkb_type = None, *, prompts = None, finish_on_point_count = None, selection_steps = None):
+      try:
+         if callback is None or callable(callback) == False:
+            return False
+         if self.actualCommand is not None:
+            callback(QadGeometryCaptureResult(command, "failed", [], "Another QAD command is already active."))
+            return False
+
+         self.actualCommand = self.getCommandObj(command)
+         if self.actualCommand is None:
+            callback(QadGeometryCaptureResult(command, "failed", [], "Invalid command \"{0}\".".format(command)))
+            return False
+         if self.actualCommand.getEnglishName() not in ("LINE", "PLINE", "MPOLYGON"):
+            callback(QadGeometryCaptureResult(command, "failed", [], "Geometry capture supports LINE, PLINE and MPOLYGON only."))
+            self.actualCommand = None
+            return False
+
+         self.geometryCaptureCallback = callback
+         self.geometryCaptureCommandName = self.actualCommand.getEnglishName()
+         self.geometryCaptureTargetWkbType = target_wkb_type
+         self.actualCommand.virtualCmd = True
+         set_prompts = getattr(self.actualCommand, "setCapturePrompts", None)
+         if callable(set_prompts):
+            set_prompts(prompts)
+         set_finish_count = getattr(self.actualCommand, "setCaptureFinishOnPointCount", None)
+         if callable(set_finish_count):
+            set_finish_count(finish_on_point_count)
+         set_selection_steps = getattr(self.actualCommand, "setCaptureSelectionSteps", None)
+         if callable(set_selection_steps):
+            set_selection_steps(selection_steps)
+         self.usedCmdNames.setUsed(command)
+         self.plugIn.clearEntityGripPoints()
+         if self.actualCommand.run() == True:
+            self.clearCommand()
+         return True
+
+      except Exception as e:
+         self.abortCommand("failed", str(e))
+         displayError(e)
+         return False
+
+
    # ============================================================================
    # runMacro
    # ============================================================================
    def runMacro(self, args):
       try:
-         # se non c'é alcun comando attivo
+         # if there is no active command
          if self.actualCommand is not None:
             return
 
          if args[0] != QadMsg.translate("Command_list", "SUPPORTERS"):
             if incrementDailyCmdCounter() > self.plugIn.maxDailyCmdCounter:
                if QMessageBox.question(None, "QAD", QadMsg.translate("QAD", "QAD lets you run 200 commands per day free of popups. Donations help us to fund software development, documentation, translation and bug-fixing efforts. Do you want to donate ?"), \
-                                       QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
-                  args[0] = "_SUPPORTERS";               
+                                       QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
+                  args[0] = "_SUPPORTERS";
 #                if QMessageBox.critical(None, "QAD", QadMsg.translate("QAD", "You have run out of daily commands available for this version of QAD, your reasonable donation will allow us to adapt the product to your needs. Do you want to donate ?"), \
-#                                        QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes:
+#                                        QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
 #                   args[0] = "_SUPPORTERS";
 #                else:
 #                   return
-         
+
          self.actualCommand = self.getCommandObj("MACRO_RUNNER")
          if self.actualCommand is None:
             msg = QadMsg.translate("QAD", "\nInvalid command \"{0}\".")
             self.showErr(msg.format(command))
             return
-   
+
          self.plugIn.clearEntityGripPoints() # pulisco i grip points correnti
          self.actualCommand.setCmdAndOptionsToRun(args)
-         
-         self.showMsg(args[0]) # visualizzo il nome del comando in macro
-         if self.actualCommand.run() == True: # comando terminato
+
+         self.showMsg(args[0]) # I display the command name in macro
+         if self.actualCommand.run() == True: # command finished
             self.clearCommand()
 
       except Exception as e:
-         self.abortCommand()
+         self.abortCommand("failed", str(e))
          displayError(e)
 
 
@@ -346,24 +391,24 @@ class QadCommandsClass():
    # ============================================================================
    def continueCommandFromMapTool(self):
       try:
-         # se non c'é alcun comando attivo
+         # if there is no active command
          if self.actualCommand is None:
             return
          msg = None
-         # se é stato premuto il tasto destro del mouse valuto cosa é stato inserito nella finestra di testo
+         # if the right mouse button was pressed I evaluate what was inserted in the text window
          if self.actualCommand.getPointMapTool().rightButton == True:
             msg = self.actualCommand.getCurrMsgFromTxtWindow()
             if (msg is not None) and len(msg) > 0:
                self.actualCommand.showEvaluateMsg()
             else:
-               if self.actualCommand.run(True) == True: # comando terminato
+               if self.actualCommand.run(True) == True: # command finished
                   self.clearCommand()
          else:
-            if self.actualCommand.run(True) == True: # comando terminato
+            if self.actualCommand.run(True) == True: # command finished
                self.clearCommand()
 
       except Exception as e:
-         self.abortCommand()
+         self.abortCommand("failed", str(e))
          displayError(e)
 
 
@@ -372,70 +417,109 @@ class QadCommandsClass():
    # ============================================================================
    def continueCommandFromTextWindow(self, msg):
       try:
-         # se non c'é alcun comando attivo
+         # if there is no active command
          if self.actualCommand is None:
             return
-         if self.actualCommand.run(False, msg) == True: # comando terminato
+         if self.actualCommand.run(False, msg) == True: # command finished
             self.clearCommand()
 
       except Exception as e:
          self.abortCommand()
          displayError(e)
 
-            
+
    # ============================================================================
    # abortCommand
    # ============================================================================
-   def abortCommand(self):
-      # se non c'é alcun comando attivo
+   def abortCommand(self, geometry_capture_status = "cancelled", geometry_capture_message = ""):
+      # if there is no active command
       if self.actualCommand is None:
-         self.showCommandPrompt() # visualizza prompt standard per richiesta comando 
+         self.emitGeometryCaptureResult(geometry_capture_status, geometry_capture_message)
+         self.showCommandPrompt() # displays standard prompt for command request
          self.plugIn.setStandardMapTool()
-         self.plugIn.getCurrentMapTool() 
+         self.plugIn.getCurrentMapTool()
       else:
          self.showMsg(QadMsg.translate("QAD", "*Canceled*"))
-         self.clearCommand()
-         # pulisco le entità selezionate e i grip points correnti
+         self.clearCommand(geometry_capture_status, geometry_capture_message)
+         # I clean the selected entities and the current grip points
          self.plugIn.clearCurrentObjsSelection()
 
 
    # ============================================================================
    # clearCommand
    # ============================================================================
-   def clearCommand(self):
+   def clearCommand(self, geometry_capture_status = "completed", geometry_capture_message = ""):
       if self.actualCommand is None:
+         self.emitGeometryCaptureResult(geometry_capture_status, geometry_capture_message)
          return
-      
-      # eccezione per comando virtuale "QadVirtualGripCommandsClass" che in realtà non è un comando
-      # ma è usato per modificare gli oggetti selezionati da grip points
+
+      # exception for virtual command "QadVirtualGripCommandsClass" which is not actually a command
+      # but it is used to modify objects selected by grip points
       if self.actualCommand.getName() == "QadVirtualGripCommandsClass":
          # ridisegno i grip point nelle nuove posizioni resettando quelli selezionati
          self.plugIn.tool.clearEntityGripPoints()
          self.plugIn.tool.refreshEntityGripPoints()
       else:
-         # eccezione per comando virtuale "QadVirtualSelCommandClass" che in realtà non è un comando
-         # ma è usato per selezionare oggetti quando nessun comando è attivo
+         # exception for virtual command "QadVirtualSelCommandClass" which is not actually a command
+         # but it is used to select objects when no command is active
          if self.actualCommand.getName() != "QadVirtualSelCommandClass":
             qad_utils.deselectAll(self.plugIn.canvas.layers())
-         
+
+      self.emitGeometryCaptureResult(geometry_capture_status, geometry_capture_message, self.actualCommand)
+
       del self.actualCommand
       self.actualCommand = None
       self.plugIn.setStandardMapTool()
       self.plugIn.tool.getDynamicInput().show(False)
-      self.showCommandPrompt() # visualizza prompt standard per richiesta comando 
+      self.showCommandPrompt() # displays standard prompt for command request
+
+   def emitGeometryCaptureResult(self, status, message = "", command = None):
+      callback = self.geometryCaptureCallback
+      if callback is None:
+         return
+
+      self.geometryCaptureCallback = None
+      command_name = self.geometryCaptureCommandName or ""
+      target_wkb_type = self.geometryCaptureTargetWkbType
+      self.geometryCaptureCommandName = None
+      self.geometryCaptureTargetWkbType = None
+
+      geometries = []
+      selections = []
+      final_status = status
+      final_message = message or ""
+      if final_status == "completed" and command is not None:
+         try:
+            get_geometries = getattr(command, "capturedGeometries", None)
+            if callable(get_geometries):
+               geometries = [geom for geom in get_geometries(target_wkb_type) if geom is not None]
+            get_selections = getattr(command, "capturedSelections", None)
+            if callable(get_selections):
+               selections = [selection for selection in get_selections() if selection is not None]
+         except Exception as ex:
+            final_status = "failed"
+            geometries = []
+            selections = []
+            final_message = str(ex)
+      if final_status == "completed" and len(geometries) == 0 and len(selections) == 0:
+         final_status = "cancelled"
+      try:
+         callback(QadGeometryCaptureResult(command_name, final_status, geometries, final_message, selections))
+      except Exception:
+         pass
 
 
    # ============================================================================
    # getActualCommandPointMapTool
    # ============================================================================
    def getActualCommandPointMapTool(self):
-      # se non c'é alcun comando attivo
+      # if there is no active command
       if self.actualCommand is None:
          return None
-      # se non c'é un maptool del comando attuale
+      # if there is no map tool of the current command
       if self.actualCommand.getPointMapTool() is None:
          return None
-      # se il maptool del comando attuale se non é attivo
+      # if the map tool of the current command is not active
       if self.plugIn.canvas.mapTool() != self.actualCommand.getPointMapTool():
          self.actualCommand.setMapTool(self.actualCommand.getPointMapTool())
       return self.actualCommand.getPointMapTool()
@@ -469,7 +553,7 @@ class QadCommandsClass():
       if pointMapTool is None:
          return None
       return pointMapTool.tmpPoint
-      
+
 
    # ============================================================================
    # refreshCommandMapToolSnapType
@@ -479,8 +563,8 @@ class QadCommandsClass():
       if pointMapTool is None:
          return
       pointMapTool.refreshSnapType()
-      
-      
+
+
    # ============================================================================
    # refreshCommandMapToolOrthoMode
    # ============================================================================
@@ -489,8 +573,8 @@ class QadCommandsClass():
       if pointMapTool is None:
          return
       pointMapTool.refreshOrthoMode()
-      
-      
+
+
    # ============================================================================
    # refreshCommandMapToolAutoSnap
    # ============================================================================
@@ -506,7 +590,7 @@ class QadCommandsClass():
    # ============================================================================
    def refreshCommandMapToolDynamicInput(self):
       self.plugIn.tool.getDynamicInput().refreshOnEnvVariables()
-            
+
       pointMapTool = self.getActualCommandPointMapTool()
       if pointMapTool is not None:
          pointMapTool.getDynamicInput().refreshOnEnvVariables()
@@ -518,7 +602,7 @@ class QadCommandsClass():
          if self.plugIn.tool.getDynamicInput().isActive() == False:
             self.plugIn.tool.getDynamicInput().show(False)
          else:
-            if self.plugIn.tool.getDynamicInput().resStr != "": # solo se forniva già un risultato
+            if self.plugIn.tool.getDynamicInput().resStr != "": # only if it already provided a result
                self.plugIn.tool.getDynamicInput().show(True)
 
 
@@ -528,13 +612,13 @@ class QadCommandsClass():
    def getMoreUsedCmd(self, filter):
       upperFilter = filter.upper()
       cmdName, qty = self.usedCmdNames.getMoreUsed(upperFilter)
-      if cmdName == "": # nessun comando
+      if cmdName == "": # no command
          if upperFilter[0] == "_":
             englishName = True
-            upperFilter = upperFilter[1:] # salto il primo carattere di "_"
+            upperFilter = upperFilter[1:] # I skip the first character of "_"
          else:
-            englishName = False 
-         
+            englishName = False
+
          for cmd in self.__cmdObjs:
             if englishName:
                if cmd.getEnglishName().startswith(upperFilter): # in inglese
@@ -549,10 +633,10 @@ class QadCommandsClass():
 # QadMacroRunnerCommandClass
 # ===============================================================================
 class QadMacroRunnerCommandClass(QadCommandClass):
-   # Classe che gestisce l'esecuzione di altri comandi
+   # Class that manages the execution of other commands
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadMacroRunnerCommandClass(self.plugIn)
 
    def getName(self):
@@ -566,11 +650,11 @@ class QadMacroRunnerCommandClass(QadCommandClass):
 
    def connectQAction(self, action):
       action.triggered.connect(self.plugIn.runREDOCommand)
-      
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
       self.command = None
-      self.args = [] # lista degli argomenti
+      self.args = [] # list of topics
       self.argsIndex = -1
 
    def __del__(self):
@@ -593,11 +677,11 @@ class QadMacroRunnerCommandClass(QadCommandClass):
 
 
    def setCmdAndOptionsToRun(self, CmdAndArglist):
-      # primo elemento della lista = nome comando
-      # gli altri elementi sono gli argomenti del comando None = input dell'utente
+      # first element of the list = command name
+      # the other elements are the arguments of the command None = user input
       cmdName = CmdAndArglist[0]
-      self.args = CmdAndArglist[1:] # copio la lista saltando il primo elemento
-      
+      self.args = CmdAndArglist[1:] # I copy the list skipping the first element
+
       self.command = self.plugIn.getCommandObj(cmdName)
 
       if self.command is None:
@@ -607,15 +691,15 @@ class QadMacroRunnerCommandClass(QadCommandClass):
       self.plugIn.updateCmdsHistory(cmdName)
       return True
 
-            
+
    def run(self, msgMapTool = False, msg = None):
-      
+
       if self.command.run(msgMapTool, msg) == True:
          return True
-      
-      # se l'input precedente era valido
+
+      # if the previous input was valid
       if self.command.isValidPreviousInput == True:
-         # al comando passo la prossima opzione
+         # to the command I pass the next option
          self.argsIndex = self.argsIndex + 1
          if self.argsIndex < len(self.args):
             arg = self.args[self.argsIndex]
@@ -626,13 +710,13 @@ class QadMacroRunnerCommandClass(QadCommandClass):
 
 
 # ===============================================================================
-# QadUsedCmdNamesClass usata per contare quante volte sono stati usati i comandi
+# QadUsedCmdNamesClass used to count how many times commands have been used
 # ===============================================================================
 
 
 class QadUsedCmdNamesClass():
    def __init__(self):
-      self.__nUsedCmdNames = [] # lista interna di item composti da (nome comando o alias, n. di volte che è stato usato)
+      self.__nUsedCmdNames = [] # internal list of items composed of (command name or alias, number of times it has been used)
 
    def __del__(self):
       del self.__nUsedCmdNames[:]
@@ -656,7 +740,7 @@ class QadUsedCmdNamesClass():
             return _cmdName[1]
 
       return 0
-   
+
    def getMoreUsed(self, filter):
       moreUsedCmd = ""
       nUsedCmd = 0
@@ -667,7 +751,7 @@ class QadUsedCmdNamesClass():
                nUsedCmd = _cmdName[1]
 
       return moreUsedCmd, nUsedCmd
-   
+
 
 def displayError(exception = None):
    exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -676,37 +760,37 @@ def displayError(exception = None):
    for s in format_exception:
       if s != "Traceback (most recent call last):\n":
          stk = s + stk
-   if exception is not None and exception.__doc__ is not None: 
+   if exception is not None and exception.__doc__ is not None:
       stk = exception.__doc__ + "\n" + stk
    stk = QadMsg.translate("QAD", "Well, this is embarrassing !\n\n") + stk
    QMessageBox.critical(None, "QAD", stk)
-   
+
 
 def incrementDailyCmdCounter():
    key = '/qgis/digitizing/qad_daily_cmd_counter'
    today = date.today().strftime('%Y-%m-%d')
    value = QSettings().value(key, today + ";0")
-   
+
    if type(value) != str:
       QSettings().setValue(key, today + ";1")
       return 1
-   
+
    res = value.split(";")
    if len(res) != 2:
       QSettings().setValue(key, today + ";1")
       return 1
-   
+
    if res[0] != today:
       QSettings().setValue(key, today + ";1")
       return 1
-   
+
    n = qad_utils.str2int(res[1])
    if n is None:
       n = 0
 
-   n = n + 1   
+   n = n + 1
    QSettings().setValue(key, today + ";" + str(n))
-   return n   
+   return n
 
 
 def getMaxDailyCmdCounter():
@@ -719,5 +803,5 @@ def getMaxDailyCmdCounter():
          return 999999
    except:
       pass
-      
+
    return 200

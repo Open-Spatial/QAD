@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- comando MEASURE per creare oggetti puntuali ad intervalli definiti lungo il perimetro o la lunghezza di un oggetto ok
- 
+ MEASURE command to create point objects at defined intervals along the perimeter or length of an object
+
                               -------------------
         begin                : 2016-09-12
         copyright            : iiiii
@@ -45,19 +45,19 @@ from ..qad_geom_relations import getQadGeomClosestPart
 # QadMEASURECommandClassStepEnum class.
 # ===============================================================================
 class QadMEASURECommandClassStepEnum():
-   ASK_FOR_ENT        = 1 # richiede la selezione di un oggetto (0 è l'inizio del comando)
+   ASK_FOR_ENT        = 1 # requires selection of an object (0 is the start of the command)
    ASK_FOR_ALIGNMENT  = 2 # richiede l'allineamento
-   ASK_SEGMENT_LENGTH = 3 # richiede la lunghezza dei segmenti
-   
+   ASK_SEGMENT_LENGTH = 3 # requires the length of the segments
 
 
-# Classe che gestisce il comando MEASURE
+
+# Class that manages the MEASURE command
 class QadMEASURECommandClass(QadCommandClass):
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadMEASURECommandClass(self.plugIn)
-   
+
    def getName(self):
       return QadMsg.translate("Command_list", "MEASURE")
 
@@ -71,9 +71,9 @@ class QadMEASURECommandClass(QadCommandClass):
       return QIcon(":/plugins/qad/icons/measure.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_MEASURE", "Creates punctual objects at measured intervals along the length or perimeter of an object.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
       self.entSelClass = None
@@ -89,14 +89,14 @@ class QadMEASURECommandClass(QadCommandClass):
 
 
    def getPointMapTool(self, drawMode = QadGetPointDrawModeEnum.NONE):
-      if self.step == QadMEASURECommandClassStepEnum.ASK_SEGMENT_LENGTH: # quando si é in fase di richiesta distanza
+      if self.step == QadMEASURECommandClassStepEnum.ASK_SEGMENT_LENGTH: # when you are in the distance request phase
          return self.GetDistClass.getPointMapTool()
       else:
          return QadCommandClass.getPointMapTool(self, drawMode)
-      
+
 
    def getCurrentContextualMenu(self):
-      if self.step == QadMEASURECommandClassStepEnum.ASK_SEGMENT_LENGTH: # quando si é in fase di richiesta distanza
+      if self.step == QadMEASURECommandClassStepEnum.ASK_SEGMENT_LENGTH: # when you are in the distance request phase
          return self.GetDistClass.getCurrentContextualMenu()
       else:
          return self.contextualMenu
@@ -111,7 +111,7 @@ class QadMEASURECommandClass(QadCommandClass):
       self.step = QadMEASURECommandClassStepEnum.ASK_FOR_ENT
       self.entSelClass = QadEntSelClass(self.plugIn)
       self.entSelClass.msg = QadMsg.translate("Command_MEASURE", "Select object to measure: ")
-      # scarto la selezione di punti
+      # I discard the selection of points
       self.entSelClass.checkPointLayer = False
       self.entSelClass.checkLineLayer = True
       self.entSelClass.checkPolygonLayer = True
@@ -130,27 +130,27 @@ class QadMEASURECommandClass(QadCommandClass):
       keyWords = QadMsg.translate("QAD", "Yes") + "/" + QadMsg.translate("QAD", "No")
       self.defaultValue = QadMsg.translate("QAD", "Yes")
       prompt = QadMsg.translate("Command_MEASURE", "Align with object ? [{0}] <{1}>: ").format(keyWords, self.defaultValue)
-      
+
       englishKeyWords = "Yes" + "/" + "No"
       keyWords += "_" + englishKeyWords
 
-      # msg, inputType, default, keyWords, nessun controllo
+      # msg, inputType, default, keyWords, no check
       self.waitFor(prompt, \
                    QadInputTypeEnum.KEYWORDS, \
                    self.defaultValue, \
                    keyWords, QadInputModeEnum.NONE)
 
-   
+
    # ============================================================================
    # waitForSegmentLength
    # ============================================================================
    def waitForSegmentLength(self):
       self.step = QadMEASURECommandClassStepEnum.ASK_SEGMENT_LENGTH
-      
+
       if self.GetDistClass is not None:
          del self.GetDistClass
       self.GetDistClass = QadGetDistClass(self.plugIn)
-      
+
       self.GetDistClass.msg = QadMsg.translate("Command_MEASURE", "Enter the length of segment: ")
       self.GetDistClass.run()
 
@@ -162,18 +162,18 @@ class QadMEASURECommandClass(QadCommandClass):
       transformedPoint = self.mapToLayerCoordinates(layer, insPt)
       g = QgsGeometry.fromPointXY(transformedPoint)
       f = QgsVectorLayerUtils.createFeature(layer, g, {}, layer.createExpressionContext())
-      
-      # se la scala dipende da un campo 
+
+      # if the scale depends on a field
       scaleFldName = qad_layer.get_symbolScaleFieldName(layer)
       if len(scaleFldName) > 0:
          f.setAttribute(scaleFldName, 1.0)
-      
-      # se la rotazione dipende da un campo
+
+      # if the rotation depends on a field
       rotFldName = qad_layer.get_symbolRotationFieldName(layer)
       if len(rotFldName) > 0:
          f.setAttribute(rotFldName, qad_utils.toDegrees(rot))
-      
-      return qad_layer.addFeatureToLayer(self.plugIn, layer, f, None, True, False, openForm)               
+
+      return qad_layer.addFeatureToLayer(self.plugIn, layer, f, None, True, False, openForm)
 
 
    # ============================================================================
@@ -181,32 +181,32 @@ class QadMEASURECommandClass(QadCommandClass):
    # ============================================================================
    def doMeasure(self, dstLayer):
       qadGeom = self.entSelClass.entity.getQadGeom()
-      # la funzione ritorna una lista con 
-      # (<minima distanza>
-      # <punto più vicino>
-      # <indice della geometria più vicina>
-      # <indice della sotto-geometria più vicina>
-      # se geometria chiusa è tipo polyline la lista contiene anche
-      # <indice della parte della sotto-geometria più vicina>
-      # <"a sinistra di" se il punto é alla sinista della parte (< 0 -> sinistra, > 0 -> destra)
+      # the function returns a list with
+      # (<minimum distance>
+      # <nearest point>
+      # <nearest geometry index>
+      # <index of the nearest sub-geometry>
+      # if closed geometry is polyline type the list also contains
+      # <index of the closest sub-geometry part>
+      # <"to the left of" if the point is to the left of the part (< 0 -> left, > 0 -> right)
       dummy = getQadGeomClosestPart(qadGeom, self.entSelClass.point)
-      # ritorna la sotto-geometria
+      # returns the sub-geometry
       pathPolyline = getQadGeomAt(qadGeom, dummy[2], dummy[3])
-      
+
       self.plugIn.beginEditCommand("Feature measured", dstLayer)
-      
+
       i = 1
       distanceFromStart = self.segmentLength
       length = pathPolyline.length()
       openForm = True if length / distanceFromStart < 2 else False
-      
+
       while distanceFromStart <= length:
          pt, rot = pathPolyline.getPointFromStart(distanceFromStart)
          if self.addFeature(dstLayer, pt, rot if self.objectAlignment else 0, openForm) == False:
             self.plugIn.destroyEditCommand()
             return False
          i = i + 1
-         distanceFromStart = distanceFromStart + self.segmentLength 
+         distanceFromStart = distanceFromStart + self.segmentLength
 
       self.plugIn.endEditCommand()
       return True
@@ -214,61 +214,61 @@ class QadMEASURECommandClass(QadCommandClass):
    def run(self, msgMapTool = False, msg = None):
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
-      
+         return True # end command
+
       currLayer, errMsg = qad_layer.getCurrLayerEditable(self.plugIn.canvas, QgsWkbTypes.PointGeometry)
       if currLayer is None:
          self.showErr(errMsg)
-         return True # fine comando
+         return True # end command
 
       if qad_layer.isSymbolLayer(currLayer) == False :
          errMsg = QadMsg.translate("QAD", "\nCurrent layer is not a symbol layer.")
          errMsg = errMsg + QadMsg.translate("QAD", "\nA symbol layer is a vector punctual layer without label.\n")
          self.showErr(errMsg)
-         return True # fine comando
-      
+         return True # end command
+
       if  len(QadDimStyles.getDimListByLayer(currLayer)) > 0:
          errMsg = QadMsg.translate("QAD", "\nThe current layer belongs to a dimension style.\n")
          self.showErr(errMsg)
-         return True # fine comando
+         return True # end command
 
-      if self.step == 0:     
+      if self.step == 0:
          self.waitForEntsel(msgMapTool, msg)
          return False # continua
 
 
       # =========================================================================
-      # RISPOSTA ALLA SELEZIONE DI UN'ENTITA' (da step = 0)
+      # RESPONSE TO THE SELECTION OF AN ENTITY (from step = 0)
       elif self.step == QadMEASURECommandClassStepEnum.ASK_FOR_ENT:
          if self.entSelClass.run(msgMapTool, msg) == True:
             if self.entSelClass.entity.isInitialized():
-               # se il layer di destinazione è di tipo simbolo
+               # if the destination layer is of symbol type
                if qad_layer.isSymbolLayer(currLayer) == True:
-                  # se il simbolo può essere ruotato
+                  # whether the symbol can be rotated
                   if len(qad_layer.get_symbolRotationFieldName(currLayer)) >0:
                      self.waitForAlignmentObjs()
                   else:
                      self.waitForSegmentLength()
                return False
             else:
-               if self.entSelClass.canceledByUsr == True: # fine comando
+               if self.entSelClass.canceledByUsr == True: # end command
                   return True
                self.showMsg(QadMsg.translate("QAD", "No geometries in this position."))
                self.waitForEntsel(msgMapTool, msg)
          return False # continua
-      
+
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DI ALLINEARE GLI OGGETTI (da step = ASK_FOR_ENT)
-      elif self.step == QadMEASURECommandClassStepEnum.ASK_FOR_ALIGNMENT: # dopo aver atteso una parola chiave si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-               value = self.defaultValue 
+      # RESPONSE TO THE REQUEST TO ALIGN OBJECTS (from step = ASK_FOR_ENT)
+      elif self.step == QadMEASURECommandClassStepEnum.ASK_FOR_ALIGNMENT: # after waiting for a keyword the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+               value = self.defaultValue
             else:
-               self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+               self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                return False
          else:
-            # la parola chiave arriva come parametro della funzione
+            # the keyword comes as a function parameter
             value = msg
 
          if type(value) == unicode:
@@ -278,21 +278,21 @@ class QadMEASURECommandClass(QadCommandClass):
                self.objectAlignment = False
 
             self.waitForSegmentLength()
-         
-         return False 
+
+         return False
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DELLA LUNGHEZZA DEL SEGMENTO (da step = ASK_FOR_ALIGNMENT)
+      # RESPONSE TO THE SEGMENT LENGTH REQUEST (from step = ASK_FOR_ALIGNMENT)
       # =========================================================================
-      elif self.step == QadMEASURECommandClassStepEnum.ASK_SEGMENT_LENGTH: # dopo aver atteso un numero reale si riavvia il comando
+      elif self.step == QadMEASURECommandClassStepEnum.ASK_SEGMENT_LENGTH: # after waiting for a real number the command is restarted
          if self.GetDistClass.run(msgMapTool, msg) == True:
-            self.getPointMapTool().refreshSnapType() # aggiorno lo snapType che può essere variato da altri maptool
+            self.getPointMapTool().refreshSnapType() # update the snapType which can be varied by other map tools
             if self.GetDistClass.dist is not None:
                self.segmentLength = self.GetDistClass.dist
                self.doMeasure(currLayer)
 
             del self.GetDistClass
-            return True # fine comando
+            return True # end command
          else:
             return False

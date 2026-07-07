@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per gestire il map tool di richiesta di un punto in ambito del comando arco
- 
+ class to manage the point request map tool for the arc command
+
                               -------------------
         begin                : 2013-05-22
         copyright            : iiiii
@@ -40,57 +40,57 @@ from ..qad_entity import QadEntity
 # Qad_arc_maptool_ModeEnum class.
 # ===============================================================================
 class Qad_arc_maptool_ModeEnum():
-   # noto niente si richiede il primo punto
-   NONE_KNOWN_ASK_FOR_START_PT = 1     
-   # noto il punto iniziale dell'arco si richiede il secondo punto
-   START_PT_KNOWN_ASK_FOR_SECOND_PT = 2     
-   # noti il punto iniziale e il secondo punto dell'arco si richiede il punto finale
-   START_SECOND_PT_KNOWN_ASK_FOR_END_PT = 3     
-   # noto il punto iniziale dell'arco si richiede il centro
-   START_PT_KNOWN_ASK_FOR_CENTER_PT = 4     
-   # noti il punto iniziale e il centro dell'arco si richiede il punto finale
-   START_CENTER_PT_KNOWN_ASK_FOR_END_PT = 5     
-   # noti il punto iniziale e il centro dell'arco si richiede l'angolo inscritto
-   START_CENTER_PT_KNOWN_ASK_FOR_ANGLE = 6     
-   # noti il punto iniziale e il centro dell'arco si richiede la lunghezza della corda
+   # if nothing is known, the first point is required
+   NONE_KNOWN_ASK_FOR_START_PT = 1
+   # Once the initial point of the arc is known, the second point is required
+   START_PT_KNOWN_ASK_FOR_SECOND_PT = 2
+   # once the starting point and the second point of the arc are known, the final point is required
+   START_SECOND_PT_KNOWN_ASK_FOR_END_PT = 3
+   # Once the initial point of the arc is known, the center is required
+   START_PT_KNOWN_ASK_FOR_CENTER_PT = 4
+   # once the starting point and the center of the arc are known, the final point is required
+   START_CENTER_PT_KNOWN_ASK_FOR_END_PT = 5
+   # once the starting point and the center of the arc are known, the inscribed angle is required
+   START_CENTER_PT_KNOWN_ASK_FOR_ANGLE = 6
+   # once the starting point and the center of the arc are known, the length of the string is required
    START_CENTER_PT_KNOWN_ASK_FOR_CHORD = 7
-   # noto il punto iniziale dell'arco si richiede il punto finale
-   START_PT_KNOWN_ASK_FOR_END_PT = 8     
-   # noti il punto iniziale e finale dell'arco si richiede il centro
+   # Once the initial point of the arc is known, the final point is required
+   START_PT_KNOWN_ASK_FOR_END_PT = 8
+   # note the starting and ending points of the arc, the center is required
    START_END_PT_KNOWN_ASK_FOR_CENTER = 9
-   # noti il punto iniziale e finale dell'arco si richiede l'angolo inscritto
+   # once the initial and final points of the arc are known, the inscribed angle is required
    START_END_PT_KNOWN_ASK_FOR_ANGLE = 10
-   # noti il punto iniziale e finale dell'arco si richiede la direzione della tangente al punto iniziale
+   # once the initial and final points of the arc are known, the direction of the tangent to the initial point is required
    START_END_PT_KNOWN_ASK_FOR_TAN = 11
-   # noti il punto iniziale e finale dell'arco si richiede il raggio
-   START_END_PT_KNOWN_ASK_FOR_RADIUS = 12        
-   # noto niente si richiede il centro
+   # once you know the starting and ending points of the arc, the radius is required
+   START_END_PT_KNOWN_ASK_FOR_RADIUS = 12
+   # I know nothing, the center is required
    NONE_KNOWN_ASK_FOR_CENTER_PT = 13
-   # noto il centro dell'arco si richiede il punto iniziale
-   CENTER_PT_KNOWN_ASK_FOR_START_PT = 14      
-   # noti il punto iniziale e la tangente al punto iniziale si richiede il punto finale
+   # Once the center of the arc is known, the starting point is required
+   CENTER_PT_KNOWN_ASK_FOR_START_PT = 14
+   # once the starting point and the tangent to the starting point are known, the final point is required
    START_PT_TAN_KNOWN_ASK_FOR_END_PT = 15
-   # noto il punto iniziale dell'arco si richiede l'angolo inscritto
-   START_PT_KNOWN_ASK_FOR_ANGLE = 16     
-   # noti il punto iniziale e l'angolo inscritto dell'arco si richiede il punto finale
-   START_PT_ANGLE_KNOWN_ASK_FOR_END_PT = 17     
-   # noti il punto iniziale e l'angolo inscritto dell'arco si richiede il centro
+   # Once the initial point of the arc is known, the inscribed angle is required
+   START_PT_KNOWN_ASK_FOR_ANGLE = 16
+   # once the starting point and the inscribed angle of the arc are known, the final point is required
+   START_PT_ANGLE_KNOWN_ASK_FOR_END_PT = 17
+   # once the starting point and the inscribed angle of the arc are known, the center is required
    START_PT_ANGLE_KNOWN_ASK_FOR_CENTER_PT = 18
-   # noti il punto iniziale e l'angolo inscritto dell'arco si richiede il raggio
+   # once the starting point and the inscribed angle of the arc are known, the radius is required
    START_PT_ANGLE_KNOWN_ASK_FOR_RADIUS = 19
-   # noti il punto iniziale e l'angolo inscritto dell'arco si richiede il secondo punto per misurare il raggio
+   # once the initial point and the inscribed angle of the arc are known, the second point is required to measure the radius
    START_PT_ANGLE_KNOWN_ASK_FOR_SECONDPTRADIUS = 20
-   # noti il punto iniziale, l'angolo inscritto e il raggio dell'arco si richiede la direzione della corda
+   # once the starting point, the inscribed angle and the radius of the arc are known, the direction of the chord is required
    START_PT_ANGLE_RADIUS_KNOWN_ASK_FOR_CHORDDIRECTION = 21
-   # noti il punto iniziale e il raggio dell'arco si richiede il punto finale
-   START_PT_RADIUS_KNOWN_ASK_FOR_END_PT = 22        
+   # once the starting point and the radius of the arc are known, the final point is required
+   START_PT_RADIUS_KNOWN_ASK_FOR_END_PT = 22
 
 
 # ===============================================================================
 # Qad_arc_maptool class
 # ===============================================================================
 class Qad_arc_maptool(QadGetPoint):
-    
+
    def __init__(self, plugIn, asToolForMPolygon = False):
       QadGetPoint.__init__(self, plugIn)
       self.arcStartPt = None
@@ -102,14 +102,14 @@ class Qad_arc_maptool(QadGetPoint):
       self.arcStartPtForRadius = None
       self.arcRadius = None
       self.__rubberBand = QadRubberBand(self.canvas)
- 
-      self.asToolForMPolygon = asToolForMPolygon # se True significa che è usato per disegnare un poligono
+
+      self.asToolForMPolygon = asToolForMPolygon # if True means it is used to draw a polygon
       if self.asToolForMPolygon:
          self.__polygonRubberBand = QadRubberBand(self.plugIn.canvas, True)
-         self.endVertex = None # punta al vertice iniziale e finale del poligono di QadPLINECommandClass
+         self.endVertex = None # points to the starting and ending vertex of the QadPLINECommandClass polygon
       else:
          self.__polygonRubberBand = None
-         
+
       self.layer = None
 
 
@@ -117,25 +117,25 @@ class Qad_arc_maptool(QadGetPoint):
       QadGetPoint.hidePointMapToolMarkers(self)
       self.__rubberBand.hide()
       if self.__polygonRubberBand is not None: self.__polygonRubberBand.hide()
- 
+
    def showPointMapToolMarkers(self):
       QadGetPoint.showPointMapToolMarkers(self)
       self.__rubberBand.show()
       if self.__polygonRubberBand is not None: self.__polygonRubberBand.show()
-                                   
+
    def clear(self):
       QadGetPoint.clear(self)
       self.__rubberBand.reset()
       if self.__polygonRubberBand is not None: self.__polygonRubberBand.reset()
       self.mode = None
 
-      
+
    # ============================================================================
    # removeItems
    # ============================================================================
    def removeItems(self):
       QadGetPoint.removeItems(self)
-      # prima lo stacco dal canvas altrimenti non si rimuove perchè usato da canvas
+      # first detach it from the canvas otherwise it will not be removed because it is used by canvas
       if self.__rubberBand is not None:
          del self.__rubberBand
          self.__rubberBand = None
@@ -144,99 +144,99 @@ class Qad_arc_maptool(QadGetPoint):
          del self.__polygonRubberBand
          self.__polygonRubberBand = None
 
-      
+
    def canvasMoveEvent(self, event):
       QadGetPoint.canvasMoveEvent(self, event)
-      
+
       self.__rubberBand.reset()
       if self.__polygonRubberBand is not None: self.__polygonRubberBand.reset()
-      
+
       result = False
-      arc = QadArc()    
-       
-      # noti il primo e il secondo punto dell'arco si richiede il terzo punto
+      arc = QadArc()
+
+      # once the first and second points of the arc are known, the third point is required
       if self.mode == Qad_arc_maptool_ModeEnum.START_SECOND_PT_KNOWN_ASK_FOR_END_PT:
          result = arc.fromStartSecondEndPts(self.arcStartPt, self.arcSecondPt, self.tmpPoint)
-      # noti il primo punto e il centro dell'arco si richiede il punto finale
+      # note the first point and the center of the arc, the final point is required
       elif self.mode == Qad_arc_maptool_ModeEnum.START_CENTER_PT_KNOWN_ASK_FOR_END_PT:
          result = arc.fromStartCenterEndPts(self.arcStartPt, self.arcCenterPt, self.tmpPoint)
-         if result == True and self.tmpCtrlKey: # inverto angolo iniziale-finale
+         if result == True and self.tmpCtrlKey: # I invert the initial-final angle
             arc.inverseAngles()
-      # noti il primo punto e il centro dell'arco si richiede l'angolo inscritto
+      # note the first point and the center of the arc, the inscribed angle is required
       elif self.mode == Qad_arc_maptool_ModeEnum.START_CENTER_PT_KNOWN_ASK_FOR_ANGLE:
          angle = qad_utils.getAngleBy2Pts(self.arcCenterPt, self.tmpPoint)
          result = arc.fromStartCenterPtsAngle(self.arcStartPt, self.arcCenterPt, angle)
-         if result == True and self.tmpCtrlKey: # inverto angolo iniziale-finale
+         if result == True and self.tmpCtrlKey: # I invert the initial-final angle
             arc.inverseAngles()
-      # noti il primo punto e il centro dell'arco si richiede la lunghezza della corda
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_CENTER_PT_KNOWN_ASK_FOR_CHORD:     
+      # note the first point and the center of the arc, the length of the string is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_CENTER_PT_KNOWN_ASK_FOR_CHORD:
          chord = qad_utils.getDistance(self.arcStartPt, self.tmpPoint)
          result = arc.fromStartCenterPtsChord(self.arcStartPt, self.arcCenterPt, chord)
-         if result == True and self.tmpCtrlKey: # inverto angolo iniziale-finale
+         if result == True and self.tmpCtrlKey: # I invert the initial-final angle
             arc.inverseAngles()
-      # noti il punto iniziale e finale dell'arco si richiede il centro
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_CENTER:     
+      # note the starting and ending points of the arc, the center is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_CENTER:
          result = arc.fromStartCenterEndPts(self.arcStartPt, self.tmpPoint, self.arcEndPt)
-         if result == True and self.tmpCtrlKey: # inverto angolo iniziale-finale
+         if result == True and self.tmpCtrlKey: # I invert the initial-final angle
             arc.inverseAngles()
-      # noti il punto iniziale e finale dell'arco si richiede l'angolo inscritto
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_ANGLE:     
+      # once the initial and final points of the arc are known, the inscribed angle is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_ANGLE:
          angle = qad_utils.getAngleBy2Pts(self.arcStartPt, self.tmpPoint)
          result = arc.fromStartEndPtsAngle(self.arcStartPt, self.arcEndPt, angle)
-         if result == True and self.tmpCtrlKey: # inverto angolo iniziale-finale
+         if result == True and self.tmpCtrlKey: # I invert the initial-final angle
             arc.inverseAngles()
-      # noti il punto iniziale e finale dell'arco si richiede la direzione della tangente
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_TAN:     
+      # once you know the starting and ending points of the arc, you need the direction of the tangent
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_TAN:
          tan = qad_utils.getAngleBy2Pts(self.arcStartPt, self.tmpPoint)
          result = arc.fromStartEndPtsTan(self.arcStartPt, self.arcEndPt, tan)
-         if result == True and self.tmpCtrlKey: # inverto angolo iniziale-finale
+         if result == True and self.tmpCtrlKey: # I invert the initial-final angle
             arc.inverseAngles()
-      # noti il punto iniziale e finale dell'arco si richiede il raggio
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_RADIUS:     
+      # once you know the starting and ending points of the arc, the radius is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_RADIUS:
          radius = qad_utils.getDistance(self.arcEndPt, self.tmpPoint)
          result = arc.fromStartEndPtsRadius(self.arcStartPt, self.arcEndPt, radius)
-         if result == True and self.tmpCtrlKey: # inverto angolo iniziale-finale
+         if result == True and self.tmpCtrlKey: # I invert the initial-final angle
             arc.inverseAngles()
-      # noti il punto iniziale e la tangente al punto iniziale si richiede il punto finale
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_TAN_KNOWN_ASK_FOR_END_PT:     
-         result = arc.fromStartEndPtsTan(self.arcStartPt, self.tmpPoint, self.arcTanOnStartPt)         
-         if result == True and self.tmpCtrlKey: # inverto angolo iniziale-finale
+      # once the starting point and the tangent to the starting point are known, the final point is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_TAN_KNOWN_ASK_FOR_END_PT:
+         result = arc.fromStartEndPtsTan(self.arcStartPt, self.tmpPoint, self.arcTanOnStartPt)
+         if result == True and self.tmpCtrlKey: # I invert the initial-final angle
             arc.inverseAngles()
-      # noti il punto iniziale e l'angolo inscritto dell'arco si richiede il punto finale
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_KNOWN_ASK_FOR_END_PT:     
+      # once the starting point and the inscribed angle of the arc are known, the final point is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_KNOWN_ASK_FOR_END_PT:
          result = arc.fromStartEndPtsAngle(self.arcStartPt, self.tmpPoint, self.arcAngle)
-         if result == True and self.tmpCtrlKey: # inverto angolo iniziale-finale
+         if result == True and self.tmpCtrlKey: # I invert the initial-final angle
             arc.inverseAngles()
-      # noti il punto iniziale e l'angolo inscritto dell'arco si richiede il centro
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_KNOWN_ASK_FOR_CENTER_PT:     
+      # once the starting point and the inscribed angle of the arc are known, the center is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_KNOWN_ASK_FOR_CENTER_PT:
          result = arc.fromStartCenterPtsAngle(self.arcStartPt, self.tmpPoint, self.arcAngle)
-         if result == True and self.tmpCtrlKey: # inverto angolo iniziale-finale
+         if result == True and self.tmpCtrlKey: # I invert the initial-final angle
             arc.inverseAngles()
-      # noti il punto iniziale, l'angolo inscritto e il raggio dell'arco si richiede la direzione della corda
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_RADIUS_KNOWN_ASK_FOR_CHORDDIRECTION:     
+      # once the starting point, the inscribed angle and the radius of the arc are known, the direction of the chord is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_RADIUS_KNOWN_ASK_FOR_CHORDDIRECTION:
          chordDirection = qad_utils.getAngleBy2Pts(self.arcStartPt, self.tmpPoint)
          result = arc.fromStartPtAngleRadiusChordDirection(self.arcStartPt, self.arcAngle, \
                                                            self.arcRadius, chordDirection)
-         if result == True and self.tmpCtrlKey: # inverto angolo iniziale-finale
+         if result == True and self.tmpCtrlKey: # I invert the initial-final angle
             arc.inverseAngles()
-      # noti il punto iniziale e il raggio dell'arco si richiede il punto finale
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_RADIUS_KNOWN_ASK_FOR_END_PT:     
+      # once the starting point and the radius of the arc are known, the final point is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_RADIUS_KNOWN_ASK_FOR_END_PT:
          result = arc.fromStartEndPtsRadius(self.arcStartPt, self.tmpPoint, self.arcRadius)
-         if result == True and self.tmpCtrlKey: # inverto angolo iniziale-finale
+         if result == True and self.tmpCtrlKey: # I invert the initial-final angle
             arc.inverseAngles()
-      
+
       if result == True:
-         if self.__polygonRubberBand is None: # significa che NON è usato per disegnare un poligono
+         if self.__polygonRubberBand is None: # means it is NOT used to draw a polygon
             if self.layer is not None:
                g = arc.asGeom(self.layer.wkbType())
             else:
-               g = arc.asGeom(QgsWkbTypes.CompoundCurve) # è un arco virtuale che non verrà salvato da questo comando
+               g = arc.asGeom(QgsWkbTypes.CompoundCurve) # is a virtual arc that will not be saved by this command
 
-            if g is not None: self.__rubberBand.setGeometry(g) 
-         else: # significa che è usato per disegnare un poligono
+            if g is not None: self.__rubberBand.setGeometry(g)
+         else: # means it is used to draw a polygon
             pline = QadPolyline()
             pline.append(arc)
-            
+
             if self.endVertex is not None:
                line = QadLine()
                line.set(arc.getEndPt(), self.endVertex)
@@ -248,31 +248,31 @@ class Qad_arc_maptool(QadGetPoint):
                line = QadLine()
                line.set(arc.getEndPt(), arc.getStartPt())
                pline.append(line)
-               
+
             if self.layer is not None:
                g = pline.asGeom(self.layer.wkbType())
             else:
-               g = pline.asGeom(QgsWkbTypes.CurvePolygon) # è un arco virtuale che non verrà salvato da questo comando            
-            
+               g = pline.asGeom(QgsWkbTypes.CurvePolygon) # is a virtual arc that will not be saved by this command
+
             self.__polygonRubberBand.setGeometry(g)
-                                 
+
 #          points = arc.asPolyline()
-#       
+#
 #          if points is not None:
 #             self.__rubberBand.setLine(points)
-#             if self.__polygonRubberBand is not None: # significa che è usato per disegnare un poligono
+#             if self.__polygonRubberBand is not None: # means it is used to draw a polygon
 #                if self.endVertex is not None:
 #                   points.insert(0, self.endVertex)
 #                   self.__polygonRubberBand.setPolygon(points)
 
-    
+
    def activate(self):
-      QadGetPoint.activate(self)            
+      QadGetPoint.activate(self)
       self.__rubberBand.show()
       if self.__polygonRubberBand is not None: self.__polygonRubberBand.show()
-      
+
    def deactivate(self):
-      try: # necessario perché se si chiude QGIS parte questo evento nonostante non ci sia più l'oggetto maptool !
+      try: # necessary because if you close QGIS this event starts even though the map tool object is no longer there!
          QadGetPoint.deactivate(self)
          self.__rubberBand.hide()
          if self.__polygonRubberBand is not None: self.__polygonRubberBand.hide()
@@ -281,99 +281,99 @@ class Qad_arc_maptool(QadGetPoint):
 
    def setMode(self, mode):
       self.mode = mode
-      # noto niente si richiede il primo punto
+      # if nothing is known, the first point is required
       if self.mode == Qad_arc_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_START_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
-      # noto il primo punto dell'arco si richiede il secondo punto
+      # once the first point of the arc is known, the second point is requested
       elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_KNOWN_ASK_FOR_SECOND_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcStartPt)
-      # noti il primo e il secondo punto dell'arco si richiede il terzo punto
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_SECOND_PT_KNOWN_ASK_FOR_END_PT:         
+      # once the first and second points of the arc are known, the third point is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_SECOND_PT_KNOWN_ASK_FOR_END_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcSecondPt)
-      # noto il primo punto dell'arco si richiede il centro         
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_KNOWN_ASK_FOR_CENTER_PT:     
+      # Once the first point of the arc is known, the center is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_KNOWN_ASK_FOR_CENTER_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcStartPt)
-      # noti il primo punto e il centro dell'arco si richiede il punto finale
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_CENTER_PT_KNOWN_ASK_FOR_END_PT:     
+      # note the first point and the center of the arc, the final point is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_CENTER_PT_KNOWN_ASK_FOR_END_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcCenterPt)
-      # noti il primo punto e il centro dell'arco si richiede l'angolo inscritto
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_CENTER_PT_KNOWN_ASK_FOR_ANGLE:     
+      # note the first point and the center of the arc, the inscribed angle is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_CENTER_PT_KNOWN_ASK_FOR_ANGLE:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcCenterPt)
-      # noti il primo punto e il centro dell'arco si richiede la lunghezza della corda
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_CENTER_PT_KNOWN_ASK_FOR_CHORD:     
+      # note the first point and the center of the arc, the length of the string is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_CENTER_PT_KNOWN_ASK_FOR_CHORD:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcStartPt)
-      # noto il punto iniziale dell'arco si richiede il punto finale
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_KNOWN_ASK_FOR_END_PT:     
+      # Once the initial point of the arc is known, the final point is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_KNOWN_ASK_FOR_END_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcStartPt)
-      # noti il punto iniziale e finale dell'arco si richiede il centro
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_CENTER:     
+      # note the starting and ending points of the arc, the center is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_CENTER:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
-      # noti il punto iniziale e finale dell'arco si richiede l'angolo inscritto
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_ANGLE:     
+      # once the initial and final points of the arc are known, the inscribed angle is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_ANGLE:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcStartPt)
-      # noti il punto iniziale e finale dell'arco si richiede la direzione della tangente
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_TAN:     
+      # once you know the starting and ending points of the arc, you need the direction of the tangent
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_TAN:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcStartPt)
-      # noti il punto iniziale e finale dell'arco si richiede il raggio
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_RADIUS:     
-         self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)                  
+      # once you know the starting and ending points of the arc, the radius is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_END_PT_KNOWN_ASK_FOR_RADIUS:
+         self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcEndPt)
-      # noto niente si richiede il centro
-      elif self.mode == Qad_arc_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_CENTER_PT:     
+      # I know nothing, the center is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_CENTER_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
-      # noto il centro dell'arco si richiede il punto iniziale
-      elif self.mode == Qad_arc_maptool_ModeEnum.CENTER_PT_KNOWN_ASK_FOR_START_PT:     
-         self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)                  
+      # Once the center of the arc is known, the starting point is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.CENTER_PT_KNOWN_ASK_FOR_START_PT:
+         self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcCenterPt)
-      # noti il punto iniziale e la tangente al punto iniziale si richiede il punto finale
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_TAN_KNOWN_ASK_FOR_END_PT:     
-         self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)                  
+      # once the starting point and the tangent to the starting point are known, the final point is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_TAN_KNOWN_ASK_FOR_END_PT:
+         self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcStartPt)
-      # noto il punto iniziale dell'arco si richiede l'angolo inscritto
+      # Once the initial point of the arc is known, the inscribed angle is required
       elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_KNOWN_ASK_FOR_ANGLE:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcStartPt)
-      # noti il punto iniziale e l'angolo inscritto dell'arco si richiede il punto finale
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_KNOWN_ASK_FOR_END_PT:     
+      # once the starting point and the inscribed angle of the arc are known, the final point is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_KNOWN_ASK_FOR_END_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcStartPt)
-      # noti il punto iniziale e l'angolo inscritto dell'arco si richiede il centro
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_KNOWN_ASK_FOR_CENTER_PT:     
+      # once the starting point and the inscribed angle of the arc are known, the center is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_KNOWN_ASK_FOR_CENTER_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
-      # noti il punto iniziale e l'angolo inscritto dell'arco si richiede il raggio
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_KNOWN_ASK_FOR_RADIUS:     
+      # once the starting point and the inscribed angle of the arc are known, the radius is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_KNOWN_ASK_FOR_RADIUS:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
-      # noti il punto iniziale e l'angolo inscritto dell'arco si richiede il secondo punto per misurare il raggio
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_KNOWN_ASK_FOR_SECONDPTRADIUS:     
+      # once the initial point and the inscribed angle of the arc are known, the second point is required to measure the radius
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_KNOWN_ASK_FOR_SECONDPTRADIUS:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcStartPtForRadius)
-      # noti il punto iniziale, l'angolo inscritto e il raggio dell'arco si richiede la direzione della corda
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_RADIUS_KNOWN_ASK_FOR_CHORDDIRECTION:     
+      # once the starting point, the inscribed angle and the radius of the arc are known, the direction of the chord is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_ANGLE_RADIUS_KNOWN_ASK_FOR_CHORDDIRECTION:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcStartPt)
-      # noti il punto iniziale e il raggio dell'arco si richiede il punto finale
-      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_RADIUS_KNOWN_ASK_FOR_END_PT:     
+      # once the starting point and the radius of the arc are known, the final point is required
+      elif self.mode == Qad_arc_maptool_ModeEnum.START_PT_RADIUS_KNOWN_ASK_FOR_END_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.arcStartPt)
-         
+
 
 
 # ===============================================================================
 # Qad_scale_maptool_ModeEnum class.
 # ===============================================================================
 class Qad_gripChangeArcRadius_maptool_ModeEnum():
-   # si richiede il punto base
-   ASK_FOR_BASE_PT = 1     
-   # noto il punto base si richiede il secondo punto per il raggio
+   # the base point is required
+   ASK_FOR_BASE_PT = 1
+   # once the base point is known, the second point for the radius is required
    BASE_PT_KNOWN_ASK_FOR_RADIUS_PT = 2
 
 
@@ -381,13 +381,13 @@ class Qad_gripChangeArcRadius_maptool_ModeEnum():
 # Qad_gripChangeArcRadius_maptool class
 # ===============================================================================
 class Qad_gripChangeArcRadius_maptool(QadGetPoint):
-    
+
    def __init__(self, plugIn):
       QadGetPoint.__init__(self, plugIn)
-                        
+
       self.basePt = None
       self.entity = None
-      self.arc = None 
+      self.arc = None
       self.coordTransform = None
       self.__highlight = QadHighlight(self.canvas)
 
@@ -398,7 +398,7 @@ class Qad_gripChangeArcRadius_maptool(QadGetPoint):
    def showPointMapToolMarkers(self):
       QadGetPoint.showPointMapToolMarkers(self)
       self.__highlight.show()
-                             
+
    def clear(self):
       QadGetPoint.clear(self)
       self.__highlight.reset()
@@ -406,7 +406,7 @@ class Qad_gripChangeArcRadius_maptool(QadGetPoint):
 
    def setEntity(self, entity):
       self.entity = QadEntity(entity)
-      self.arc = self.entity.getQadGeom() # arco in map coordinate
+      self.arc = self.entity.getQadGeom() # arc in map coordinates
       self.basePt = self.arc.center
       self.coordTransform = QgsCoordinateTransform(self.canvas.mapSettings().destinationCrs(), \
                                                    entity.layer.crs(), \
@@ -418,49 +418,48 @@ class Qad_gripChangeArcRadius_maptool(QadGetPoint):
    # ============================================================================
    def changeRadius(self, radius):
       self.__highlight.reset()
-      # radius = nuovo raggio dell'arco
-      # tolerance2ApproxCurve = tolleranza per ricreare le curve
+      # radius = new radius of the arc
+      # tolerance2ApproxCurve = tolerance to recreate curves
       self.arc.radius = radius
       points = self.arc.asPolyline()
       if points is None:
          return False
-      
+
       g = QgsGeometry.fromPolylineXY(points)
-      # trasformo la geometria nel crs del layer
-      g.transform(self.coordTransform)      
+      # I transform the geometry into the layer crs
+      g.transform(self.coordTransform)
       self.__highlight.addGeometry(g, self.entity.layer)
-            
-      
+
+
    def canvasMoveEvent(self, event):
       QadGetPoint.canvasMoveEvent(self, event)
 
-      # noto il punto base si richiede il secondo punto per il raggio
+      # once the base point is known, the second point for the radius is required
       if self.mode == Qad_gripChangeArcRadius_maptool_ModeEnum.BASE_PT_KNOWN_ASK_FOR_RADIUS_PT:
          radius = qad_utils.getDistance(self.basePt, self.tmpPoint)
-         self.changeRadius(radius)                           
-         
-    
+         self.changeRadius(radius)
+
+
    def activate(self):
-      QadGetPoint.activate(self)            
+      QadGetPoint.activate(self)
       self.__highlight.show()
 
    def deactivate(self):
-      try: # necessario perché se si chiude QGIS parte questo evento nonostante non ci sia più l'oggetto maptool !
+      try: # necessary because if you close QGIS this event starts even though the map tool object is no longer there!
          QadGetPoint.deactivate(self)
          self.__highlight.hide()
       except:
          pass
-      
-      
+
+
    def setMode(self, mode):
       self.mode = mode
-      # noto niente si richiede il punto base
+      # known nothing, the base point is required
       if self.mode == Qad_gripChangeArcRadius_maptool_ModeEnum.ASK_FOR_BASE_PT:
          self.clear()
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
          self.__highlight.reset()
-      # noto il punto base si richiede il secondo punto per il raggio
+      # once the base point is known, the second point for the radius is required
       elif self.mode == Qad_gripChangeArcRadius_maptool_ModeEnum.BASE_PT_KNOWN_ASK_FOR_RADIUS_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.basePt)
-      

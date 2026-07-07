@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin ok
 
- comando MBUFFER per creare oggetti originati da buffer su altri oggetti
- 
+ MBUFFER command to create objects generated from buffers on other objects
+
                               -------------------
         begin                : 2013-09-19
         copyright            : iiiii
@@ -43,13 +43,13 @@ from ..qad_mbuffer_fun import buffer
 from ..qad_multi_geom import fromQadGeomToQgsGeom
 
 
-# Classe che gestisce il comando MBUFFER
+# Class that manages the MBUFFER command
 class QadMBUFFERCommandClass(QadCommandClass):
-   
+
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadMBUFFERCommandClass(self.plugIn)
-   
+
    def getName(self):
       return QadMsg.translate("Command_list", "MBUFFER")
 
@@ -63,20 +63,20 @@ class QadMBUFFERCommandClass(QadCommandClass):
       return QIcon(":/plugins/qad/icons/mbuffer.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_MBUFFER", "Creates polygons by buffering selected objects.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
-      # se questo flag = True il comando serve all'interno di un altro comando per disegnare un buffer
-      # che non verrà salvato su un layer
+      # if this flag = True the command is used within another command to draw a buffer
+      # which will not be saved on a layer
       self.virtualCmd = False
       self.rubberBandBorderColor = None
-      self.rubberBandFillColor = None      
+      self.rubberBandFillColor = None
       self.SSGetClass = QadSSGetClass(plugIn)
       self.entitySet = QadEntitySet()
       self.width = 0
-      self.segments = self.plugIn.segments # il numero di segmenti per l'approssimazione delle curve
+      self.segments = self.plugIn.segments # the number of segments for curve approximation
 
    def __del__(self):
       QadCommandClass.__del__(self)
@@ -84,7 +84,7 @@ class QadMBUFFERCommandClass(QadCommandClass):
 
 
    def getPointMapTool(self, drawMode = QadGetPointDrawModeEnum.NONE):
-      if self.step == 0: # quando si é in fase di selezione entità
+      if self.step == 0: # when you are in the entity selection phase
          return self.SSGetClass.getPointMapTool()
       else:
          if (self.plugIn is not None):
@@ -97,12 +97,12 @@ class QadMBUFFERCommandClass(QadCommandClass):
 
 
    def getCurrentContextualMenu(self):
-      if self.step == 0: # quando si é in fase di selezione entità
+      if self.step == 0: # when you are in the entity selection phase
          return None # return self.SSGetClass.getCurrentContextualMenu()
       else:
          return self.contextualMenu
 
-   
+
    def setRubberBandColor(self, rubberBandBorderColor, rubberBandFillColor):
       self.rubberBandBorderColor = rubberBandBorderColor
       self.rubberBandFillColor = rubberBandFillColor
@@ -112,55 +112,55 @@ class QadMBUFFERCommandClass(QadCommandClass):
 
    def AddGeoms(self, currLayer):
       bufferGeoms = []
-            
+
       for layerEntitySet in self.entitySet.layerEntitySetList:
          entityIterator = QadLayerEntitySetIterator(layerEntitySet)
          for entity in entityIterator:
             bufferedQadGeom = buffer(entity.getQadGeom(), self.width)
             if bufferedQadGeom is not None:
-               # trasformo la geometria nel crs del layer
+               # I transform the geometry into the layer crs
                bufferGeoms.append(fromQadGeomToQgsGeom(bufferedQadGeom, currLayer))
 
       self.plugIn.beginEditCommand("Feature buffered", currLayer)
-      
-      # filtro le features per tipo
+
+      # filter features by type
       pointGeoms, lineGeoms, polygonGeoms = qad_utils.filterGeomsByType(bufferGeoms, \
                                                                         currLayer.geometryType())
-      # aggiungo le geometrie del tipo corretto
+      # add the geometries of the correct type
       if currLayer.geometryType() == QgsWkbTypes.LineGeometry:
          polygonToLines = []
-         # Riduco le geometrie in linee
+         # I reduce geometries into lines
          for g in polygonGeoms:
             lines = qad_utils.asPointOrPolyline(g)
             for l in lines:
                if l.type() == QgsWkbTypes.LineGeometry:
                    polygonToLines.append(l)
-         # plugIn, layer, geoms, coordTransform , refresh, check_validity
+         # plugin, layer, geoms, coordTransform, refresh, check_validity
          if qad_layer.addGeomsToLayer(self.plugIn, currLayer, polygonToLines, None, False, False) == False:
             self.plugIn.destroyEditCommand()
             return
-            
-         del polygonGeoms[:] # svuoto la lista
 
-      # plugIn, layer, geoms, coordTransform , refresh, check_validity
-      if qad_layer.addGeomsToLayer(self.plugIn, currLayer, bufferGeoms, None, False, False) == False:  
+         del polygonGeoms[:] # I empty the list
+
+      # plugin, layer, geoms, coordTransform, refresh, check_validity
+      if qad_layer.addGeomsToLayer(self.plugIn, currLayer, bufferGeoms, None, False, False) == False:
          self.plugIn.destroyEditCommand()
          return
 
       if pointGeoms is not None and len(pointGeoms) > 0:
          PointTempLayer = qad_layer.createQADTempLayer(self.plugIn, QgsWkbTypes.PointGeometry)
          self.plugIn.addLayerToLastEditCommand("Feature buffered", PointTempLayer)
-      
+
       if lineGeoms is not None and len(lineGeoms) > 0:
          LineTempLayer = qad_layer.createQADTempLayer(self.plugIn, QgsWkbTypes.LineGeometry)
          self.plugIn.addLayerToLastEditCommand("Feature buffered", LineTempLayer)
-         
+
       if polygonGeoms is not None and len(polygonGeoms) > 0:
          PolygonTempLayer = qad_layer.createQADTempLayer(self.plugIn, QgsWkbTypes.PolygonGeometry)
          self.plugIn.addLayerToLastEditCommand("Feature buffered", PolygonTempLayer)
 
-      # aggiungo gli scarti nei layer temporanei di QAD
-      # trasformo la geometria in quella dei layer temporanei 
+      # add the waste in the temporary layers of QAD
+      # I transform the geometry into that of temporary layers
       # plugIn, pointGeoms, lineGeoms, polygonGeoms, coord, refresh
       if qad_layer.addGeometriesToQADTempLayers(self.plugIn, pointGeoms, lineGeoms, polygonGeoms, \
                                                 currLayer.crs(), False) == False:
@@ -173,17 +173,17 @@ class QadMBUFFERCommandClass(QadCommandClass):
    def run(self, msgMapTool = False, msg = None):
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
+         return True # end command
 
       currLayer = None
-      if self.virtualCmd == False: # se si vuole veramente salvare la polylinea in un layer   
-         # il layer corrente deve essere editabile e di tipo linea o poligono
+      if self.virtualCmd == False: # if you really want to save the polyline in a layer
+         # the current layer must be editable and of type line or polygon
          currLayer, errMsg = qad_layer.getCurrLayerEditable(self.plugIn.canvas, [QgsWkbTypes.LineGeometry, QgsWkbTypes.PolygonGeometry])
          if currLayer is None:
             self.showErr(errMsg)
-            return True # fine comando
-         
-         # il layer corrente non deve appartenere a quotature
+            return True # end command
+
+         # the current layer must not belong to dimensions
          dimStyleList = QadDimStyles.getDimListByLayer(currLayer)
          if len(dimStyleList) > 0:
             dimStyleNames = ""
@@ -191,107 +191,107 @@ class QadMBUFFERCommandClass(QadCommandClass):
                if i > 0:
                   dimStyleNames += ", "
                dimStyleNames += dimStyleList[i].name
-            errMsg = QadMsg.translate("QAD", "\nCurrent layer is a layer referenced to {0} dimension style and it is not valid.\n")                        
+            errMsg = QadMsg.translate("QAD", "\nCurrent layer is a layer referenced to {0} dimension style and it is not valid.\n")
             self.showErr(errMsg.format(dimStyleNames))
-            return True # fine comando
-            
+            return True # end command
+
       # =========================================================================
-      # RICHIESTA SELEZIONE OGGETTI
-      if self.step == 0: # inizio del comando
+      # OBJECT SELECTION REQUEST
+      if self.step == 0: # start of command
          if self.SSGetClass.run(msgMapTool, msg) == True:
-            # selezione terminata
+            # selection completed
             self.step = 1
-            self.getPointMapTool().refreshSnapType() # aggiorno lo snapType che può  essere variato dal maptool di selezione entità                     
+            self.getPointMapTool().refreshSnapType() # update the snapType which can be varied from the entity selection map tool
             return self.run(msgMapTool, msg)
-      
+
       # =========================================================================
       # BUFFER OGGETTI
       elif self.step == 1:
          self.entitySet.set(self.SSGetClass.entitySet)
-         
-         if self.entitySet.count() == 0:
-            return True # fine comando
 
-         # imposto il map tool
+         if self.entitySet.count() == 0:
+            return True # end command
+
+         # set the map tool
          self.getPointMapTool().setMode(Qad_mbuffer_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_FIRST_PT)
          if currLayer is not None:
-            self.getPointMapTool().geomType = QgsWkbTypes.LineGeometry if currLayer.geometryType() == QgsWkbTypes.LineGeometry else QgsWkbTypes.PolygonGeometry                          
-        
-         # si appresta ad attendere un punto o un numero reale         
-         # msg, inputType, default, keyWords, valori positivi
+            self.getPointMapTool().geomType = QgsWkbTypes.LineGeometry if currLayer.geometryType() == QgsWkbTypes.LineGeometry else QgsWkbTypes.PolygonGeometry
+
+         # is preparing to wait for a point or a real number
+         # msg, inputType, default, keyWords, positive values
          msg = QadMsg.translate("Command_MBUFFER", "Specify the buffer length <{0}>: ")
          self.waitFor(msg.format(str(self.plugIn.lastRadius)), \
                       QadInputTypeEnum.POINT2D | QadInputTypeEnum.FLOAT, \
                       self.plugIn.lastRadius, "", \
                       QadInputModeEnum.NOT_NULL | QadInputModeEnum.NOT_ZERO | QadInputModeEnum.NOT_NEGATIVE)
-                  
-         self.step = 2     
+
+         self.step = 2
          return False
-         
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA LARGHEZZA (da step = 1)
-      elif self.step == 2: # dopo aver atteso un punto o un numero reale si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE WIDTH REQUEST (from step = 1)
+      elif self.step == 2: # after waiting for a point or a real number the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == QgsPointXY:
             self.startPtForBufferWidth = value
-            
-            # imposto il map tool
+
+            # set the map tool
             self.getPointMapTool().startPtForBufferWidth = self.startPtForBufferWidth
             self.getPointMapTool().entitySet.set(self.entitySet)
             self.getPointMapTool().segments = self.segments
             self.getPointMapTool().setMode(Qad_mbuffer_maptool_ModeEnum.FIRST_PT_ASK_FOR_BUFFER_WIDTH)
-         
-            # si appresta ad attendere un punto
+
+            # is preparing to wait for a point
             self.waitForPoint(QadMsg.translate("Command_MBUFFER", "Specify second point: "), None, QadInputModeEnum.NOT_NULL)
             self.step = 3
-            return False            
+            return False
          else:
             self.width = value
             self.plugIn.setLastRadius(self.width)
 
-            if self.virtualCmd == False: # se si vuole veramente salvare i buffer in un layer
-               self.AddGeoms(currLayer)           
+            if self.virtualCmd == False: # if you really want to save buffers in a layer
+               self.AddGeoms(currLayer)
 
-            return True # fine comando
+            return True # end command
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA SECONDO PUNTO DELLA LARGHEZZA BUFFER (da step = 2)
-      elif self.step == 3: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE SECOND POINT REQUEST OF THE BUFFER WIDTH (from step = 2)
+      elif self.step == 3: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          self.width = qad_utils.getDistance(self.startPtForBufferWidth, value)
-         self.plugIn.setLastRadius(self.width)     
+         self.plugIn.setLastRadius(self.width)
 
-         if self.virtualCmd == False: # se si vuole veramente salvare i buffer in un layer
-            self.AddGeoms(currLayer)               
+         if self.virtualCmd == False: # if you really want to save buffers in a layer
+            self.AddGeoms(currLayer)
 
-         return True # fine comando
+         return True # end command

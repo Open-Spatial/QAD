@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- funzioni per join tra elementi lineari
- 
+ functions for joining linear elements
+
                               -------------------
         begin                : 2019-09-04
         copyright            : iiiii
@@ -42,131 +42,130 @@ from .qad_polyline import *
 # join2polyline
 # ============================================================================
 def join2polyline(polyline, polylineToJoinTo, toleranceDist = None, mode = 1):
-   """
-   la funzione unisce la polilinea <polyline> con un'altra polilinea <polylineToJoinTo> secondo la modalità <mode>.
-   In caso di successo ritorna True altrimenti False.
-   <polyline> = polilinea da unire (sarà modificata)
-   <polylineToJoinTo> = polilinea con cui unirsi
-   <toleranceDist> = distanza di tolleranza perché 2 punti siano considerati coincidenti  
-   <mode> = Imposta il metodo di unione (usato se toleranceDist > 0):
-            1 -> Estendi;  Consente di unire polilinee selezionate estendendo o tagliando 
-                           i segmenti nei punti finali più vicini.
-            2 -> Aggiungi; Consente di unire polilinee selezionate aggiungendo un segmento 
-                           retto tra i punti finali più vicini.
-            3 -> Entrambi;Consente di unire polilinee selezionate estendendo o tagliando, se possibile.
-                 In caso contrario, consente di unire polilinee selezionate aggiungendo 
-                 un segmento retto tra i punti finali più vicini. 
+   """the function joins the polyline <polyline> with another polyline <polylineToJoinTo> according to the <mode> mode.
+      If successful it returns True otherwise False.
+      <polyline> = polyline to join (will be modified)
+      <polylineToJoinTo> = polyline to join with
+      <toleranceDist> = tolerance distance for 2 points to be considered coincident
+      <mode> = Set the merge method (used if toleranceDist > 0):
+               1 -> Extend;  Allows you to join selected polylines by extending or cutting
+                              the segments at the closest endpoints.
+               2 -> Add; Allows you to join selected polylines by adding a segment
+                              straight line between the closest endpoints.
+               3 -> Both; Allows you to join selected polylines by extending or cutting, if possible.
+                    Otherwise, it allows you to join selected polylines by adding
+                    a straight segment between the closest endpoints.
    """
    if toleranceDist is None:
       myToleranceDist = QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2COINCIDENT"))
    else:
       myToleranceDist = toleranceDist
-      
-   # cerco il punto più vicino al punto iniziale della polilinea
+
+   # I look for the point closest to the starting point of the polyline
    ptToJoin = polyline.getStartPt()
    isStartPt = True
    minDist = sys.float_info.max
-   # considero il punto iniziale della polilinea a cui unirsi
+   # I consider the starting point of the polyline to join
    dist = qad_utils.getDistance(ptToJoin, polylineToJoinTo.getStartPt())
    if dist < minDist:
       isStartPtToJoinTo = True
       minDist = dist
-   # considero il punto finale della polilinea a cui unirsi
+   # I consider the final point of the polyline to join
    dist = qad_utils.getDistance(ptToJoin, polylineToJoinTo.getEndPt())
    if dist < minDist:
       isStartPtToJoinTo = False
       minDist = dist
 
-   # cerco il punto più vicino al punto finale della polilinea
+   # I look for the point closest to the final point of the polyline
    ptToJoin = polyline.getEndPt()
-   # considero il punto iniziale della polilinea a cui unirsi
+   # I consider the starting point of the polyline to join
    dist = qad_utils.getDistance(ptToJoin, polylineToJoinTo.getStartPt())
    if dist < minDist:
       isStartPt = False
       isStartPtToJoinTo = True
       minDist = dist
-   # considero il punto finale della polilinea a cui unirsi
+   # I consider the final point of the polyline to join
    dist = qad_utils.getDistance(ptToJoin, polylineToJoinTo.getEndPt())
    if dist < minDist:
       isStartPt = False
       isStartPtToJoinTo = False
       minDist = dist
 
-   if minDist <= myToleranceDist: # trovato un punto
-      # se il punto iniziale della polilinea da unire é uguale a quello iniziale della polilinea a cui unirsi
-      if isStartPt == True and isStartPtToJoinTo == True:            
+   if minDist <= myToleranceDist: # found a point
+      # if the starting point of the polyline to be joined is the same as the starting point of the polyline to be joined
+      if isStartPt == True and isStartPtToJoinTo == True:
          part1 = polyline.getLinearObjectAt(0).copy()
          part1.reverse()
          part2 = polylineToJoinTo.getLinearObjectAt(0).copy()
          part2.reverse()
-                     
+
          res = joinEndPtsLinearParts(part1, part2, mode)
          if res is not None:
-            # elimino la prima parte
+            # delete the first part
             polyline.remove(0)
             res.reverse()
             polyline.insertPolyline(0, res)
-            
-            # aggiungo le parti di <polylineToJoinTo> tranne la prima
+
+            # add the parts of <polylineToJoinTo> except the first one
             i = 1
             tot = polylineToJoinTo.qty()
             while i < tot:
                polyline.insert(0, polylineToJoinTo.getLinearObjectAt(i).copy().reverse())
                i = i + 1
             return True
-         
-      # se il punto iniziale della polilinea da unire é uguale a quello finale della polilinea a cui unirsi
+
+      # if the starting point of the polyline to be joined is equal to the final point of the polyline to be joined
       elif isStartPt == True and isStartPtToJoinTo == False:
          part1 = polyline.getLinearObjectAt(0).copy()
          part1.reverse()
          part2 = polylineToJoinTo.getLinearObjectAt(-1)
-         
+
          res = joinEndPtsLinearParts(part1, part2, mode)
          if res is not None:
-            # elimino la prima parte
+            # delete the first part
             polyline.remove(0)
             res.reverse()
             polyline.insertPolyline(0, res)
-            
-            # aggiungo le parti di <polylineToJoinTo> tranne l'ultima
+
+            # add the parts of <polylineToJoinTo> except the last one
             i = polylineToJoinTo.qty() - 2
             while i >= 0:
                polyline.insert(0, polylineToJoinTo.getLinearObjectAt(i))
                i = i - 1
             return True
 
-      # se il punto finale della polilinea da unire é uguale a quello iniziale della polilinea a cui unirsi
+      # if the final point of the polyline to be joined is equal to the initial point of the polyline to be joined
       elif isStartPt == False and isStartPtToJoinTo == True:
          part1 = polyline.getLinearObjectAt(-1)
          part2 = polylineToJoinTo.getLinearObjectAt(0).copy()
          part2.reverse()
-         
+
          res = joinEndPtsLinearParts(part1, part2, mode)
-         if res is not None:              
-            # elimino l'ultima parte
+         if res is not None:
+            # delete the last part
             polyline.remove(-1)
             polyline.appendPolyline(res)
 
-            # aggiungo le parti di <polylineToJoinTo> tranne la prima
+            # add the parts of <polylineToJoinTo> except the first one
             i = 1
             tot = polylineToJoinTo.qty()
             while i < tot:
                polyline.append(polylineToJoinTo.getLinearObjectAt(i))
                i = i + 1
             return True
-         
-      # se il punto finale della polilinea da unire é uguale a quello finale della polilinea a cui unirsi         
+
+      # if the final point of the polyline to be joined is the same as the final point of the polyline to be joined
       elif isStartPt == False and isStartPtToJoinTo == False:
          part1 = polyline.getLinearObjectAt(-1)
          part2 = polylineToJoinTo.getLinearObjectAt(-1)
-         
+
          res = joinEndPtsLinearParts(part1, part2, mode)
-         if res is not None:            
-            # elimino l'ultima parte
+         if res is not None:
+            # delete the last part
             polyline.remove(-1)
             polyline.appendPolyline(res)
 
-            # aggiungo le parti di <polylineToJoinTo> tranne l'ultima
+            # add the parts of <polylineToJoinTo> except the last one
             i = polylineToJoinTo.qty() - 2
             while i >= 0:
                polyline.append(polylineToJoinTo.getLinearObjectAt(i).reverse())
@@ -180,40 +179,39 @@ def join2polyline(polyline, polylineToJoinTo, toleranceDist = None, mode = 1):
 # joinEndPtsLinearParts
 # ===============================================================================
 def joinEndPtsLinearParts(part1, part2, mode):
-   """
-   la funzione effettua il join (unione) tra 2 parti lineari di base considerando il punto finale di part1
-   e il punto iniziale di part2.
-   La funzione riceve:
-   <part1> = prima parte lineare  
-   <part2> = seconda parte parte lineare  
-   <mode> = Imposta il metodo di unione:
-            1 -> Estendi;  Consente di unire polilinee selezionate estendendo o tagliando 
-                           i segmenti nei punti finali più vicini.
-            2 -> Aggiungi; Consente di unire polilinee selezionate aggiungendo un segmento 
-                           retto tra i punti finali più vicini.
-            3 -> Entrambi; Consente di unire polilinee selezionate estendendo o tagliando, se possibile.
-                           In caso contrario, consente di unire polilinee selezionate aggiungendo 
-                           un segmento retto tra i punti finali più vicini. 
-   La funzione restituisce una QadPolyline che comprende:
-   part1 (eventualmente modificata nel punto finale) + 
-   eventuale segmento + 
-   part2 (eventualmente modificata nel punto finale)
-   oppure restituisce None se non é possibile l'unione delle parti
+   """the function performs the join (union) between 2 basic linear parts considering the final point of part1
+      and the starting point of part2.
+      The function receives:
+      <part1> = first linear part
+      <part2> = second part linear part
+      <mode> = Set the merge method:
+               1 -> Extend;  Allows you to join selected polylines by extending or cutting
+                              the segments at the closest endpoints.
+               2 -> Add; Allows you to join selected polylines by adding a segment
+                              straight line between the closest endpoints.
+               3 -> Both; Allows you to join selected polylines by extending or cutting, if possible.
+                              Otherwise, it allows you to join selected polylines by adding
+                              a straight segment between the closest endpoints.
+      The function returns a QadPolyline that includes:
+      part1 (possibly modified at the final point) +
+      possible segment +
+      part2 (possibly modified in the final point)
+      or returns None if the union of the parts is not possible
    """
    polyline = QadPolyline()
    endPt1 = part1.getEndPt()
    endPt2 = part2.getEndPt()
-   
-   if qad_utils.ptNear(endPt1, endPt2): # le 2 parti sono già  unite
+
+   if qad_utils.ptNear(endPt1, endPt2): # the 2 parts are already joined
       polyline.append(part1.copy())
       p = part2.copy()
       p.reverse()
       polyline.append(p)
       return polyline
 
-   if mode == 1: # Estendi/Taglia
+   if mode == 1: # Extend/Trim
       IntPtList = QadIntersections.twoBasicGeomObjects(part1, part2)
-      if len(IntPtList) > 0: # Taglia
+      if len(IntPtList) > 0: # Trim
          polyline.append(part1.copy())
          polyline.getLinearObjectAt(-1).setEndPt(IntPtList[0])
          p = part2.copy()
@@ -221,29 +219,29 @@ def joinEndPtsLinearParts(part1, part2, mode):
          polyline.append(p)
          polyline.getLinearObjectAt(-1).setStartPt(IntPtList[0])
          return polyline
-      else: # estendi
+      else: # extend
          IntPtList = QadIntersections.twoBasicGeomObjectExtensions(part1, part2)
-         # considero solo i punti oltre l'inizio delle parti
+         # I only consider the points beyond the beginning of the parts
          for i in range(len(IntPtList) - 1, -1, -1):
             if part1.getDistanceFromStart(IntPtList[i]) < 0 or \
                part2.getDistanceFromStart(IntPtList[i]) < 0:
-               del IntPtList[i]               
-               
+               del IntPtList[i]
+
          if len(IntPtList) > 0:
-            IntPt = IntPtList[0]   
+            IntPt = IntPtList[0]
             polyline.append(part1.copy())
             polyline.getLinearObjectAt(-1).setEndPt(IntPtList[0])
             p = part2.copy()
-            p.reverse()           
+            p.reverse()
             polyline.append(p)
             polyline.getLinearObjectAt(-1).setStartPt(IntPtList[0])
             return polyline
-   
-   if mode == 2 or mode == 3: # Aggiungi
+
+   if mode == 2 or mode == 3: # Add
       polyline.append(part1.copy())
       polyline.append([endPt1, endPt2])
       p = part2.copy()
-      p.reverse()     
+      p.reverse()
       polyline.append(p)
       return polyline
 
@@ -255,103 +253,102 @@ def joinEndPtsLinearParts(part1, part2, mode):
 # ============================================================================
 def joinFeatureInVectorLayer(featureIdToJoin, vectorLayer, tolerance2ApproxCurve, toleranceDist = None, \
                              mode = 2):
-   """
-   la funzione effettua il join (unione) di una polilinea con un gruppo di altre polilinee.
-   Non sono ammesse geometrie multiLineString.
-   Il layer deve essere in modifica (startEditing) e in una transazione (beginEditCommand)
-   La funzione riceve:
-   <featureIdToJoin> = un ID della feature da unire 
-   <vectorLayer> = un QgsVectorLayer che deve contenere le feature da unire
-                   (si usano gli indici spaziali del vettore x essere più veloci).
-   <toleranceDist> = distanza di tolleranza perché 2 punti siano considerati coincidenti  
-   <tolerance2ApproxCurve> = tolleranza di approssimazione per le curve (usato se toleranceDist > 0)
-   <mode> = Imposta il metodo di unione (usato se toleranceDist > 0):
-            1 -> Estendi;  Consente di unire polilinee selezionate estendendo o tagliando 
-                           i segmenti nei punti finali più vicini.
-            2 -> Aggiungi; Consente di unire polilinee selezionate aggiungendo un segmento 
-                           retto tra i punti finali più vicini.
-            3 -> Entrambi;Consente di unire polilinee selezionate estendendo o tagliando, se possibile.
-                 In caso contrario, consente di unire polilinee selezionate aggiungendo 
-                 un segmento retto tra i punti finali più vicini. 
-   La funzione modifica il <vectorLayer> modificando la feature da unire e cancellando 
-   quelle unite a featureIdToJoin . Ritorna la lista di features cancellate.
+   """the function performs the join (union) of a polyline with a group of other polylines.
+      MultiLineString geometries are not allowed.
+      The layer must be editing (startEditing) and in a transaction (beginEditCommand)
+      The function receives:
+      <featureIdToJoin> = an ID of the feature to join
+      <vectorLayer> = a QgsVectorLayer that must contain the features to merge
+                      (the spatial indices of the vector x are used to be faster).
+      <toleranceDist> = tolerance distance for 2 points to be considered coincident
+      <tolerance2ApproxCurve> = approximation tolerance for curves (used if toleranceDist > 0)
+      <mode> = Set the merge method (used if toleranceDist > 0):
+               1 -> Extend;  Allows you to join selected polylines by extending or cutting
+                              the segments at the closest endpoints.
+               2 -> Add; Allows you to join selected polylines by adding a segment
+                              straight line between the closest endpoints.
+               3 -> Both; Allows you to join selected polylines by extending or cutting, if possible.
+                    Otherwise, it allows you to join selected polylines by adding
+                    a straight segment between the closest endpoints.
+      The function modifies the <vectorLayer> by modifying the feature to be merged and deleting
+      those joined with featureIdToJoin . The list of deleted features returns.
    """
    if toleranceDist is None:
       myToleranceDist = QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2COINCIDENT"))
    else:
       myToleranceDist = toleranceDist
-   
+
    featureToJoin = qad_utils.getFeatureById(vectorLayer, featureIdToJoin)
    if featureToJoin is None:
       return []
-   
+
    g = QgsGeometry(featureToJoin.geometry())
    polyline = QadPolyline()
    polyline.fromPolyline(g.asPolyline())
-   
+
    polylineToJoinTo = QadPolyline()
-   
+
    deleteFeatures = []
    feature = QgsFeature()
-   
-   # Unisco usando il punto iniziale finché trovo feature da unire
+
+   # I join using the starting point until I find features to join
    ptToJoin = polyline.getStartPt()
    found = True
    while found == True:
       found = False
       if ptToJoin is None: # test
          fermati = True
-      # cerco le features nel punto iniziale usando un micro rettangolo secondo <myToleranceDist>
+      # I searc for features at the starting point using a micro rectangle according to <myToleranceDist>
       selectRect = QgsRectangle(ptToJoin.x() - myToleranceDist, ptToJoin.y() - myToleranceDist, \
                                 ptToJoin.x() + myToleranceDist, ptToJoin.y() + myToleranceDist)
-      # cerco il punto più vicino al punto iniziale della polilinea
+      # I look for the point closest to the starting point of the polyline
       minDist = sys.float_info.max
-      # fetchAttributes, fetchGeometry, rectangle, useIntersect             
-      for feature in vectorLayer.getFeatures(qad_utils.getFeatureRequest([], True, selectRect, True)):                       
-         if feature.id() != featureIdToJoin: # salto la feature da unire
+      # fetchAttributes, fetchGeometry, rectangle, useIntersect
+      for feature in vectorLayer.getFeatures(qad_utils.getFeatureRequest([], True, selectRect, True)):
+         if feature.id() != featureIdToJoin: # I skip the feature to merge
             polylineToJoinTo.fromPolyline(feature.geometry().asPolyline())
-            
+
             if join2polyline(polyline, polylineToJoinTo, myToleranceDist, mode) == True:
                found = True
-               
+
                deleteFeatures.append(QgsFeature(feature))
                if vectorLayer.deleteFeature(feature.id()) == False:
                   return []
-               
+
                ptToJoin = polyline.getStartPt()
                pts = polyline.asPolyline(tolerance2ApproxCurve)
                featureToJoin.setGeometry(QgsGeometry.fromPolylineXY(pts))
                if vectorLayer.updateFeature(featureToJoin) == False:
                   return []
                break
-            
-   # Unisco usando il punto finale finché trovo feature da unire
+
+   # I join using the end point until I find features to join
    ptToJoin = polyline.getEndPt()
    found = True
    while found == True:
       found = False
-      # cerco le features nel punto finale usando un micro rettangolo secondo <myToleranceDist>
+      # I searc for features at the end point using a micro rectangle according to <myToleranceDist>
       selectRect = QgsRectangle(ptToJoin.x() - myToleranceDist, ptToJoin.y() - myToleranceDist, \
                                 ptToJoin.x() + myToleranceDist, ptToJoin.y() + myToleranceDist)
-      # fetchAttributes, fetchGeometry, rectangle, useIntersect             
-      for feature in vectorLayer.getFeatures(qad_utils.getFeatureRequest([], True, selectRect, True)):                       
-         if feature.id() != featureIdToJoin: # salto la feature da unire
+      # fetchAttributes, fetchGeometry, rectangle, useIntersect
+      for feature in vectorLayer.getFeatures(qad_utils.getFeatureRequest([], True, selectRect, True)):
+         if feature.id() != featureIdToJoin: # I skip the feature to merge
             polylineToJoinTo.fromPolyline(feature.geometry().asPolyline())
 
             if join2polyline(polyline, polylineToJoinTo, myToleranceDist, mode) == True:
                found = True
-               
+
                deleteFeatures.append(QgsFeature(feature))
                if vectorLayer.deleteFeature(feature.id()) == False:
                   return []
-               
+
                ptToJoin = polyline.getEndPt()
                pts = polyline.asPolyline(tolerance2ApproxCurve)
                featureToJoin.setGeometry(QgsGeometry.fromPolylineXY(pts))
                if vectorLayer.updateFeature(featureToJoin) == False:
                   return []
                break
-   
+
    return deleteFeatures
 
 
@@ -359,9 +356,8 @@ def joinFeatureInVectorLayer(featureIdToJoin, vectorLayer, tolerance2ApproxCurve
 # polylineAsQgsFeatureList
 # ============================================================================
 def polylineAsQgsFeatureList(polyline, polylineMode):
-   """
-   la funzione restituisce una lista di feature.
-   Se polylineMode = True allora la lista degli oggetti lineari sarà considerata un'unica polilinea
+   """the function returns a list of features.
+      If polylineMode = True then the list of linear objects will be considered a single polyline
    """
    fList = []
    if polylineMode == False:
@@ -373,7 +369,7 @@ def polylineAsQgsFeatureList(polyline, polylineMode):
       f = QgsFeature()
       f.setGeometry(QgsGeometry.fromPolylineXY(polyline.asPolyline()))
       fList.append(f)
-   
+
    return fList
 
 
@@ -381,20 +377,19 @@ def polylineAsQgsFeatureList(polyline, polylineMode):
 # appendPolylineToTempQgsVectorLayer
 # ============================================================================
 def appendPolylineToTempQgsVectorLayer(polyline, vectorLayer, polylineMode, updateExtents = True):
-   """
-   la funzione inserisce gli oggetti lineari di una polyline in un QgsVectorLayer temporaneo già creato.
-   Se polylineMode = True allora la lista degli oggetti lineari sarà considerata un'unica polilinea
-   Ritorna la lista dei corrispettivi id di feature oppure None in caso di errore
+   """the function inserts the linear objects of a polyline into an already created temporary QgsVectorLayer.
+      If polylineMode = True then the list of linear objects will be considered a single polyline
+      Returns the list of corresponding feature ids or None in case of error
    """
    fList = polylineAsQgsFeatureList(polyline, polylineMode)
-   
+
    idList = []
    result = True
    if vectorLayer.startEditing() == False:
       return None
-      
+
    vectorLayer.beginEditCommand("Feature added")
-   
+
    for f in fList:
       if vectorLayer.addFeature(f):
          idList.append(f.id())
@@ -416,40 +411,39 @@ def appendPolylineToTempQgsVectorLayer(polyline, vectorLayer, polylineMode, upda
 # selfJoinPolyline
 # ============================================================================
 def selfJoinPolyline(polyline):
-   """
-   la funzione viene usata quando la polilinea contiene parti lineari non connesse tra loro come una vera polyline.
-   Restituisce una lista QadPolyline che contiene le polilinee
-   generate dall'unione degli oggetti lineari.
+   """the function is used when the polyline contains linear parts that are not connected to each other like a real polyline.
+      Returns a QadPolyline list containing the polylines
+      generated by the union of linear objects.
    """
    crs = qgis.utils.iface.mapCanvas().mapSettings().destinationCrs()
-   # creo un layer temporaneo in memoria   
+   # create a temporary layer in memory
    vectorLayer = createMemoryLayer("QAD_SelfJoinLines", "LineString", crs)
    provider = vectorLayer.dataProvider()
-              
-   # unisco le parti della polilinea
-   # inserisco nel layer i vari oggetti lineari
+
+   # I join the parts of the polyline
+   # insert the various linear objects into the layer
    idList = appendPolylineToTempQgsVectorLayer(polyline, vectorLayer, False)
    if idList is None:
       return []
    if provider.capabilities() & QgsVectorDataProvider.CreateSpatialIndex:
       provider.createSpatialIndex()
-   
+
    vectorLayer.beginEditCommand("selfJoin")
-   
+
    for featureIdToJoin in idList:
-      #                         featureIdToJoin, vectorLayer, tolerance2ApproxCurve, tomyToleranceDist   
-      joinFeatureInVectorLayer(featureIdToJoin, vectorLayer, QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2APPROXCURVE")))        
-        
+      #                         featureIdToJoin, vectorLayer, tolerance2ApproxCurve, tomyToleranceDist
+      joinFeatureInVectorLayer(featureIdToJoin, vectorLayer, QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2APPROXCURVE")))
+
    vectorLayer.endEditCommand()
    vectorLayer.commitChanges()
-   
+
    result = []
    feature = QgsFeature()
-   
-   # fetchAttributes, fetchGeometry, rectangle, useIntersect             
-   for feature in vectorLayer.getFeatures(qad_utils.getFeatureRequest([], True, None, False)):                       
+
+   # fetchAttributes, fetchGeometry, rectangle, useIntersect
+   for feature in vectorLayer.getFeatures(qad_utils.getFeatureRequest([], True, None, False)):
       polyline = QadPolyline()
       polyline.fromPolyline(feature.geometry().asPolyline())
       result.append(polyline)
- 
-   return result  
+
+   return result

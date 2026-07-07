@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- comando DSETTINGS per impostazione stili di quotatura
- 
+ DSETTINGS command for dimension style settings
+
                               -------------------
         begin                : 2015-05-19
         copyright            : iiiii
@@ -35,13 +35,13 @@ from .qad_generic_cmd import QadCommandClass
 from ..qad_msg import QadMsg
 
 
-# Classe che gestisce il comando DIMSTYLE
+# Class that manages the DIMSTYLE command
 class QadDIMSTYLECommandClass(QadCommandClass):
-   
+
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadDIMSTYLECommandClass(self.plugIn)
-   
+
    def getName(self):
       return QadMsg.translate("Command_list", "DIMSTYLE")
 
@@ -55,16 +55,16 @@ class QadDIMSTYLECommandClass(QadCommandClass):
       return QIcon(":/plugins/qad/icons/dimStyle.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_DIMSTYLE", "Creates new styles, sets the current style, modifies styles, sets overrides on the current style, and compares styles.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
-            
+
    def run(self, msgMapTool = False, msg = None):
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
+         return True # end command
       Form = QadDIMSTYLEDialog(self.plugIn)
-      Form.exec_()
+      Form.exec()
       return True

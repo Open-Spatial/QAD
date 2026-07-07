@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per la gestione delle multi geometrie (multipoligoni)
- 
+ class for managing multi-geometries (multipolygons)
+
                              -------------------
         begin                : 2019-03-15
         copyright            : iiiii
@@ -40,51 +40,50 @@ from .qad_layer import createMemoryLayer
 
 # ===============================================================================
 # QadLinearObject class
-# restituiesce un oggetto lineare linea, arco, arco di ellisse, polilinea ma anche
-# cerchio ed ellisse (impropriamente) perchè possono esistere in layer LINESTRING
+# returns a linear object line, arc, ellipse arc, polyline but also
+# circle and ellipse (incorrectly) because they can exist in LINESTRING layers
 # ===============================================================================
 class QadLinearObject():
-    
+
    def __init__(self):
       pass
 
-   
+
    # ============================================================================
    # fromPolyline
    # ============================================================================
    @staticmethod
    def fromPolyline(points):
-      """
-      la funzione restituisce un oggetto lineare che può essere: 
-      linea, arco, arco di ellisse, polilinea ma anche
-      cerchio ed ellisse (impropriamente) perchè possono esistere in layer LINESTRING
+      """the function returns a linear object which can be:
+            line, arc, ellipse arc, polyline but also
+            circle and ellipse (incorrectly) because they can exist in LINESTRING layers
       """
       tot_points = len(points)
       if tot_points == 0:
          return None
-      
+
       if tot_points == 2:
          line = QadLine()
          line.set(points[0], points[1])
          return line
-      
-      # verifico se è un cerchio
+
+      # check if it is a circle
       circle = QadCircle()
       if circle.fromPolyline(points): return circle
       del circle
-      # verifico se è una ellisse
+      # check if it is an ellipse
       ellipse = QadEllipse()
       if ellipse.fromPolyline(points): return ellipse
       del ellipse
-      # verifico se è una polilinea
+      # check if it is a polyline
       polyline = QadPolyline()
       if polyline.fromPolyline(points):
-         if polyline.qty() == 1: # se è composto da solo 1 oggetto
+         if polyline.qty() == 1: # if it is composed of only 1 object
             return polyline.getLinearObjectAt(0)
          else:
             return polyline
       del polyline
-   
+
       return None
 
 
@@ -93,20 +92,19 @@ class QadLinearObject():
    # ============================================================================
    @staticmethod
    def fromGeom(geom):
-      """
-      la funzione restituisce un oggetto lineare che può essere: 
-      linea, arco, arco di ellisse, polilinea ma anche
-      cerchio ed ellisse (impropriamente) perchè possono esistere in layer LINESTRING
+      """the function returns a linear object which can be:
+            line, arc, ellipse arc, polyline but also
+            circle and ellipse (incorrectly) because they can exist in LINESTRING layers
       """
       return QadLinearObject.fromPolyline(geom.asPolyline())
 
 
 # ===============================================================================
 # QadMultiPoint class
-# rappresenta una lista di oggetti puntuali
+# represents a list of point objects
 # ===============================================================================
 class QadMultiPoint():
-    
+
    def __init__(self, multiPoint=None):
       self.defList = []
       # deflist = (<point 1> <point 2>...)
@@ -120,7 +118,7 @@ class QadMultiPoint():
    def whatIs(self):
       return "MULTI_POINT"
 
-   
+
    # ============================================================================
    # isClosed
    # ============================================================================
@@ -139,15 +137,15 @@ class QadMultiPoint():
 
 
    def __eq__(self, multiPoint):
-      # obbligatoria
+      # required
       """self == other"""
       if multiPoint.whatIs() != "MULTI_POINT": return False
       if self.qty() != multiPoint.qty(): return False
       for i in range(0, self.qty()):
          if self.getPointAt(i) != multiPoint.getPointAt(i): return False
       return True
-  
-  
+
+
    def __ne__(self, multiPoint):
       """self != other"""
       return not self.__eq__(multiPoint)
@@ -157,9 +155,7 @@ class QadMultiPoint():
    # append
    # ============================================================================
    def append(self, point):
-      """
-      la funzione aggiunge un punto lineare in fondo alla lista.
-      """
+      """the function adds a linear point to the bottom of the list."""
       if point is None: return
       if type(point) == QgsPointXY:
          self.defList.append(QadPoint(point))
@@ -167,36 +163,32 @@ class QadMultiPoint():
          objectType = point.whatIs()
          if objectType != "POINT": return False
          self.defList.append(point.copy())
-         
+
       return True
 
-   
+
    # ============================================================================
    # insert
    # ============================================================================
    def insert(self, i, point):
-      """
-      la funzione aggiunge un punto nella posizione i-esima della lista dei punti.
-      """
+      """the function adds a point in the i-th position of the point list."""
       if i >= self.qty():
          return self.append(point)
-      else:         
+      else:
          if type(point) == QgsPointXY:
             self.defList.append(QadPoint(point))
          else:
             objectType = point.whatIs()
-            if objectType != "POINT": return False    
+            if objectType != "POINT": return False
             return self.defList.insert(i, point.copy())
-               
+
 
 
    # ============================================================================
    # remove
    # ============================================================================
    def remove(self, i):
-      """
-      la funzione cancella un punto nella posizione i-esima della lista.
-      """
+      """the function deletes a point in the i-th position of the list."""
       del self.defList[i]
 
 
@@ -204,9 +196,7 @@ class QadMultiPoint():
    # removeAll
    # ============================================================================
    def removeAll(self):
-      """
-      la funzione cancella i punti della lista.
-      """
+      """the function deletes the points in the list."""
       del self.defList[:]
 
 
@@ -214,9 +204,8 @@ class QadMultiPoint():
    # getPointAt
    # ============================================================================
    def getPointAt(self, i):
-      """
-      la funzione restituisce il punto alla posizione i-esima 
-      con numeri negativi parte dal fondo (es. -1 = ultima posizione)
+      """the function returns the point at the i-th position
+            with negative numbers it starts from the bottom (e.g. -1 = last position)
       """
       if self.qty() == 0 or i > self.qty() - 1:
          return None
@@ -227,23 +216,19 @@ class QadMultiPoint():
    # setPointAt
    # ============================================================================
    def setPointAt(self, pt, i):
-      """
-      la funzione setta il punto i-esimo
-      """
+      """the function sets the i-th point"""
       return self.getPointAt(i).set(pt)
-   
-   
+
+
    # ============================================================================
    # fromMultiPoint
    # ============================================================================
    def fromMultiPoint(self, pointList):
-      """
-      la funzione inizializza una lista di punti che compone il multiPoint passato in forma di lista di punti.
-      """
+      """the function initializes a list of points that makes up the multiPoint passed in the form of a list of points."""
       self.removeAll()
       for point in pointList:
          self.append(point)
-   
+
       if self.qty() == 0: return False
 
       return True
@@ -253,9 +238,7 @@ class QadMultiPoint():
    # fromGeom
    # ============================================================================
    def fromGeom(self, geom):
-      """
-      la funzione inizializza una lista di punti QgsPointXY che compone il multiPoint da un oggetto QgsGeometry.
-      """
+      """the function initializes a list of QgsPointXY points that composes the multiPoint from a QgsGeometry object."""
       return self.fromMultiPoint(geom.asMultiPoint())
 
 
@@ -263,23 +246,20 @@ class QadMultiPoint():
    # asMultiPoint
    # ===============================================================================
    def asMultiPoint(self):
-      """
-      la funzione ritorna una lista punti QgsPointXY che compongono un multiPoint.
-      """
+      """the function returns a list of QgsPointXY points that make up a multiPoint."""
       result = []
       for point in self.defList:
          result.append(QgsPointXY(point))
 
       return result
 
-   
+
    # ===============================================================================
    # asGeom
    # ===============================================================================
    def asGeom(self, wkbType = QgsWkbTypes.MultiPoint , tolerance2ApproxCurve = None, atLeastNSegment = None):
-      """
-      la funzione ritorna il multiPoint in forma di QgsGeometry.
-      wkbType, tolerance2ApproxCurve e atLeastNSegment sono dichiarati solo per compatibilità
+      """the function returns the multiPoint in the form of QgsGeometry.
+            wkbType, tolerance2ApproxCurve and atLeastNSegment are declared for compatibility only
       """
       return QgsGeometry.fromMultiPointXY(self.asMultiPoint())
 
@@ -288,17 +268,15 @@ class QadMultiPoint():
    # copy
    # ===============================================================================
    def copy(self):
-      # obbligatoria
+      # required
       return QadMultiPoint(self)
-   
+
 
    # ============================================================================
    # move
    # ============================================================================
    def move(self, offsetX, offsetY):
-      """
-      la funzione sposta i punti secondo un offset X e uno Y
-      """
+      """the function moves the points according to an X and a Y offset"""
       for point in self.defList:
          point.move(offsetX, offsetY)
 
@@ -331,32 +309,26 @@ class QadMultiPoint():
    # qty
    # ============================================================================
    def qty(self):
-      """
-      la funzione restituisce la quantità di punti che compongono il multipoint.
-      """
+      """the function returns the quantity of points that make up the multipoint."""
       return len(self.defList)
-         
-  
+
+
    # ===============================================================================
    # transform
    # ===============================================================================
    def transform(self, coordTransform):
-      """
-      la funzione restituisce un nuovo multipoint con le coordinate trasformate.
-      """
+      """the function returns a new multipoint with the transformed coordinates."""
       result = QadMultiPoint()
       for point in self.defList:
          result.append(point.transform(coordTransform))
       return result
-   
+
 
    # ===============================================================================
    # transformFromCRSToCRS
    # ===============================================================================
    def transformFromCRSToCRS(self, sourceCRS, destCRS):
-      """
-      la funzione trasforma le coordinate dei punti che compongono il multipoint.
-      """
+      """the function transforms the coordinates of the points that make up the multipoint."""
       return self.transform(QgsCoordinateTransform(sourceCRS, destCRS, QgsProject.instance()))
 
 
@@ -364,11 +336,10 @@ class QadMultiPoint():
    # closestPoint
    # ===============================================================================
    def closestPoint(pt):
-      """
-      la funzione ritorna una lista con 
-      (<minima distanza>
-       <punto più vicino>
-       <indice del punto più vicino>
+      """the function returns a list with
+            (<minimum distance>
+             <nearest point>
+             <nearest point index>
       """
       dist = sys.float_info.max
       index = 0
@@ -378,9 +349,9 @@ class QadMultiPoint():
             dist = d
             minDistPoint = point
             pointIndex = index
-         
+
          index = index + 1
-          
+
       return (dist, minDistPoint, pointIndex)
 
 
@@ -388,24 +359,22 @@ class QadMultiPoint():
    # getBoundingBox
    # ===============================================================================
    def getBoundingBox(self):
-      """
-      la funzione ritorna il rettangolo che racchiude i punti.
-      """
+      """the function returns the rectangle that encloses the points."""
       boundingBox = self.getPointAt(0).getBoundingBox()
       i = 1
       while i < self.qty():
          boundingBox.combineExtentWith(self.getPointAt(i).getBoundingBox())
          i = i + 1
-         
+
       return boundingBox
 
 
 # ===============================================================================
 # QadMultiLinearObject class
-# rappresenta una lista di oggetti lineari compreso cerchio ed ellisse (impropriamente) perchè possono esistere in layer LINESTRING
+# represents a list of linear objects including circle and ellipse (incorrectly) because they can exist in LINESTRING layers
 # ===============================================================================
 class QadMultiLinearObject():
-    
+
    def __init__(self, multiLinearObject=None):
       self.defList = []
       # deflist = (<obj 1> <obj 2>...)
@@ -431,15 +400,15 @@ class QadMultiLinearObject():
 
 
    def __eq__(self, multiLinearObject):
-      # obbligatoria
+      # required
       """self == other"""
       if multiLinearObject.whatIs() != "MULTI_LINEAR_OBJ": return False
       if self.qty() != multiLinearObject.qty(): return False
       for i in range(0, self.qty()):
          if self.getLinearObjectAt(i) != multiLinearObject.getLinearObjectAt(i): return False
       return True
-  
-  
+
+
    def __ne__(self, multiLinearObject):
       """self != other"""
       return not self.__eq__(multiLinearObject)
@@ -449,9 +418,7 @@ class QadMultiLinearObject():
    # append
    # ============================================================================
    def append(self, linearObject):
-      """
-      la funzione aggiunge un oggetto lineare in fondo alla lista.
-      """
+      """the function adds a linear object to the bottom of the list."""
       if linearObject is None: return
       objectType = linearObject.whatIs()
       if objectType != "LINE" and objectType != "ARC" and objectType != "ELLIPSE_ARC" and \
@@ -460,17 +427,15 @@ class QadMultiLinearObject():
       self.defList.append(linearObject.copy())
       return True
 
-   
+
    # ============================================================================
    # insert
    # ============================================================================
    def insert(self, i, linearObject):
-      """
-      la funzione aggiunge un pggetto lineare nella posizione i-esima della lista degli oggetti lineari.
-      """
+      """the function adds a linear object in the i-th position of the list of linear objects."""
       if i >= self.qty():
          return self.append(linearObject)
-      else:         
+      else:
          return self.defList.insert(i, linearObject.copy())
 
 
@@ -478,9 +443,7 @@ class QadMultiLinearObject():
    # remove
    # ============================================================================
    def remove(self, i):
-      """
-      la funzione cancella un oggetto lineare nella posizione i-esima della lista.
-      """
+      """the function deletes a linear object in the i-th position of the list."""
       del self.defList[i]
 
 
@@ -488,9 +451,7 @@ class QadMultiLinearObject():
    # removeAll
    # ============================================================================
    def removeAll(self):
-      """
-      la funzione cancella gli oggetti lineari della lista.
-      """
+      """the function deletes the linear objects in the list."""
       del self.defList[:]
 
 
@@ -498,39 +459,34 @@ class QadMultiLinearObject():
    # getLinearObjectAt
    # ============================================================================
    def getLinearObjectAt(self, i):
-      """
-      la funzione restituisce l'oggetto lineare alla posizione i-esima 
-      con numeri negativi parte dal fondo (es. -1 = ultima posizione)
+      """the function returns the linear object at the i-th position
+            with negative numbers it starts from the bottom (e.g. -1 = last position)
       """
       if self.qty() == 0 or i > self.qty() - 1:
          return None
       return self.defList[i]
-   
-   
+
+
    # ============================================================================
    # setLinearObjectAt
    # ============================================================================
    def setLinearObjectAt(self, linearObject, i):
-      """
-      la funzione setta l'oggetto lineare i-esimo
-      """
+      """the function sets the i-th linear object"""
       return self.getLinearObjectAt(i).set(linearObject)
-   
-   
+
+
    # ============================================================================
    # fromMultiLinearObject
    # ============================================================================
    def fromMultiLinearObject(self, linearObjectList):
-      """
-      la funzione inizializza una lista di oggetti lineari che compone il multiLinearObject passato in forma di lista di punti.
-      """
+      """the function initializes a list of linear objects that makes up the multiLinearObject passed in the form of a list of points."""
       self.removeAll()
-      
+
       for points in linearObjectList:
          linearObject = QadLinearObject.fromPolyline(points)
          if linearObject is not None:
             self.append(linearObject)
-   
+
       if self.qty() == 0: return False
       return True
 
@@ -539,9 +495,7 @@ class QadMultiLinearObject():
    # fromGeom
    # ============================================================================
    def fromGeom(self, geom):
-      """
-      la funzione inizializza una lista di oggetti lineari che compone il multiLinearObject da un oggetto QgsGeometry.
-      """
+      """the function initializes a list of linear objects that makes up the multiLinearObject from a QgsGeometry object."""
       return self.fromMultiLinearObject(geom.asMultiPolyline())
 
 
@@ -549,23 +503,19 @@ class QadMultiLinearObject():
    # asMultiPolyline
    # ===============================================================================
    def asMultiPolyline(self, tolerance2ApproxCurve = None, atLeastNSegment = None):
-      """
-      la funzione ritorna una lista di liste di liste di punti che compongono un multiLinearObject.
-      """
+      """the function returns a list of lists of lists of points that make up a multiLinearObject."""
       result = []
       for linearObject in self.defList:
          result.append(linearObject.asPolyline(tolerance2ApproxCurve, atLeastNSegment))
 
       return result
 
-   
+
    # ===============================================================================
    # asGeom
    # ===============================================================================
    def asGeom(self, wkbType = QgsWkbTypes.MultiLineString, tolerance2ApproxCurve = None, atLeastNSegment = None):
-      """
-      la funzione ritorna il multiLinearObject in forma di QgsGeometry.
-      """
+      """the function returns the multiLinearObject in the form of QgsGeometry."""
       flatType = QgsWkbTypes.flatType(wkbType)
 
       if flatType == QgsWkbTypes.MultiCurve:
@@ -573,7 +523,7 @@ class QadMultiLinearObject():
          for linearObject in self.defList:
             multiCurve.addGeometry(linearObject.asAbstractGeom(QgsWkbTypes.CompoundCurve, tolerance2ApproxCurve, atLeastNSegment))
          return QgsGeometry(multiCurve)
-            
+
       return QgsGeometry.fromMultiPolylineXY(self.asMultiPolyline(tolerance2ApproxCurve, atLeastNSegment))
 
 
@@ -581,17 +531,15 @@ class QadMultiLinearObject():
    # copy
    # ===============================================================================
    def copy(self):
-      # obbligatoria
+      # required
       return QadMultiLinearObject(self)
-   
+
 
    # ============================================================================
    # move
    # ============================================================================
    def move(self, offsetX, offsetY):
-      """
-      la funzione sposta il gli oggetti lineari secondo un offset X e uno Y
-      """
+      """the function moves the linear objects according to an X and a Y offset"""
       for linearObject in self.defList:
          linearObject.move(offsetX, offsetY)
 
@@ -624,19 +572,15 @@ class QadMultiLinearObject():
    # qty
    # ============================================================================
    def qty(self):
-      """
-      la funzione restituisce la quantità di oggetti lineari che compongono il multilinea.
-      """
+      """the function returns the quantity of linear objects that make up the multiline."""
       return len(self.defList)
-         
+
 
    # ============================================================================
    # getCentroid
    # ============================================================================
    def getCentroid(self, tolerance2ApproxCurve = None):
-      """
-      la funzione restituisce il punto centroide.
-      """
+      """the function returns the centroid point."""
       g = self.asGeom(QgsWkbTypes.LineString, tolerance2ApproxCurve)
       if g is not None:
          centroid = g.centroid()
@@ -645,27 +589,23 @@ class QadMultiLinearObject():
 
       return None
 
-   
+
    # ===============================================================================
    # transform
    # ===============================================================================
    def transform(self, coordTransform):
-      """
-      la funzione restituisce un nuovo multilinea con le coordinate trasformate.
-      """
+      """the function returns a new multiline with the transformed coordinates."""
       result = QadMultiLinearObject()
       for linearObject in self.defList:
          result.append(linearObject.transform(coordTransform))
       return result
-   
+
 
    # ===============================================================================
    # transformFromCRSToCRS
    # ===============================================================================
    def transformFromCRSToCRS(self, sourceCRS, destCRS):
-      """
-      la funzione trasforma le coordinate dei punti che compongono il multilinea.
-      """
+      """the function transforms the coordinates of the points that make up the multiline."""
       return self.transform(QgsCoordinateTransform(sourceCRS, destCRS, QgsProject.instance()))
 
 
@@ -673,15 +613,13 @@ class QadMultiLinearObject():
    # getBoundingBox
    # ===============================================================================
    def getBoundingBox(self):
-      """
-      la funzione ritorna il rettangolo che racchiude gli elementi lineari.
-      """
+      """the function returns the rectangle that encloses the linear elements."""
       boundingBox = self.getLinearObjectAt(0).getBoundingBox()
       i = 1
       while i < self.qty():
          boundingBox.combineExtentWith(self.getLinearObjectAt(i).getBoundingBox())
          i = i + 1
-         
+
       return boundingBox
 
 
@@ -689,24 +627,22 @@ class QadMultiLinearObject():
    # containsPt
    # ===============================================================================
    def containsPt(self, pt):
-      """
-      la funzione ritorna True se il punto è sulla multilinea altrimenti False.
-      """
+      """the function returns True if the point is on the multiline otherwise False."""
       for linearObject in self.defList:
          if linearObject.containsPt(pt): return True
-         
+
       return False
 
 
 # ===============================================================================
 # QadMultiPolygon class
-# rappresenta una lista di poligoni
+# represents a list of polygons
 # ===============================================================================
 class QadMultiPolygon():
-    
+
    def __init__(self, multiPolygon=None):
       self.defList = []
-      # deflist = (<poligono 1> <poligono 2>...)
+      # deflist = (<polygon 1> <polygon 2>...)
       if multiPolygon is not None:
          self.set(multiPolygon)
 
@@ -717,7 +653,7 @@ class QadMultiPolygon():
    def whatIs(self):
       return "MULTI_POLYGON"
 
-   
+
    # ============================================================================
    # isClosed
    # ============================================================================
@@ -736,15 +672,15 @@ class QadMultiPolygon():
 
 
    def __eq__(self, multiPolygon):
-      # obbligatoria
+      # required
       """self == other"""
       if multiPolygon.whatIs() != "MULTI_POLYGON": return False
       if self.qty() != multiPolygon.qty(): return False
       for i in range(0, self.qty()):
          if self.getPointAt(i) != multiPolygon.getPolygonAt(i): return False
       return True
-  
-  
+
+
    def __ne__(self, multiPolygon):
       """self != other"""
       return not self.__eq__(multiPolygon)
@@ -754,25 +690,21 @@ class QadMultiPolygon():
    # append
    # ============================================================================
    def append(self, polygon):
-      """
-      la funzione aggiunge un poligono in fondo alla lista.
-      """
+      """the function adds a polygon to the bottom of the list."""
       if polygon is None: return
       if polygon.whatIs() != "POLYGON": return False
       self.defList.append(polygon.copy())
       return True
 
-   
+
    # ============================================================================
    # insert
    # ============================================================================
    def insert(self, i, polygon):
-      """
-      la funzione aggiunge un poligono nella posizione i-esima della lista dei poligoni.
-      """
+      """the function adds a polygon in the i-th position of the polygon list."""
       if i >= self.qty():
          return self.append(polygon)
-      else:         
+      else:
          return self.defList.insert(i, polygon.copy())
 
 
@@ -780,9 +712,7 @@ class QadMultiPolygon():
    # remove
    # ============================================================================
    def remove(self, i):
-      """
-      la funzione cancella un poligono nella posizione i-esima della lista.
-      """
+      """the function deletes a polygon in the i-th position of the list."""
       del self.defList[i]
 
 
@@ -790,9 +720,7 @@ class QadMultiPolygon():
    # removeAll
    # ============================================================================
    def removeAll(self):
-      """
-      la funzione cancella i poligoni della lista.
-      """
+      """the function deletes the polygons in the list."""
       del self.defList[:]
 
 
@@ -800,40 +728,35 @@ class QadMultiPolygon():
    # getPolygonAt
    # ============================================================================
    def getPolygonAt(self, i):
-      """
-      la funzione restituisce il poligono alla posizione i-esima 
-      con numeri negativi parte dal fondo (es. -1 = ultima posizione)
+      """the function returns the polygon at the i-th position
+            with negative numbers it starts from the bottom (e.g. -1 = last position)
       """
       if self.qty() == 0 or i > self.qty() - 1:
          return None
       return self.defList[i]
-   
+
 
    # ============================================================================
    # setPolygonAt
    # ============================================================================
    def setPolygonAt(self, polygon, i):
-      """
-      la funzione setta il poligono i-esimo
-      """
+      """the function sets the i-th polygon"""
       return self.getPolygonAt(i).set(polygon)
 
-   
+
    # ============================================================================
    # fromMultiPolygon
    # ============================================================================
    def fromMultiPolygon(self, polygonList):
-      """
-      la funzione inizializza una lista di poligoni che compone il multipoligono passato in forma di lista di punti.
-      """
+      """the function initializes a list of polygons that makes up the multipolygon passed in the form of a list of points."""
       self.removeAll()
-      polygon = QadPolygon()      
-      
+      polygon = QadPolygon()
+
       for points in polygonList:
-         # verifico se è un poligono
+         # check if it is a polygon
          if polygon.fromPolygon(points):
             self.append(polygon)
-   
+
       if self.qty() == 0: return False
       return True
 
@@ -842,9 +765,7 @@ class QadMultiPolygon():
    # fromGeom
    # ============================================================================
    def fromGeom(self, geom):
-      """
-      la funzione inizializza il multipoligono da un oggetto QgsGeometry.
-      """
+      """the function initializes the multipolygon from a QgsGeometry object."""
       return self.fromMultiPolygon(geom.asMultiPolygon())
 
 
@@ -852,23 +773,19 @@ class QadMultiPolygon():
    # asMultiPolygon
    # ===============================================================================
    def asMultiPolygon(self, tolerance2ApproxCurve = None, atLeastNSegment = None):
-      """
-      la funzione ritorna una lista di liste di liste di punti che compongono un multipoligono.
-      """
+      """the function returns a list of lists of lists of points that make up a multipolygon."""
       result = []
       for polygon in self.defList:
          result.append(polygon.asPolygon(tolerance2ApproxCurve, atLeastNSegment))
 
       return result
 
-   
+
    # ===============================================================================
    # asGeom
    # ===============================================================================
    def asGeom(self, wkbType = QgsWkbTypes.LineString, tolerance2ApproxCurve = None, atLeastNSegment = None):
-      """
-      la funzione ritorna il multipoligono in forma di QgsGeometry.
-      """
+      """the function returns the multipolygon in the form of QgsGeometry."""
       flatType = QgsWkbTypes.flatType(wkbType)
 
       if flatType == QgsWkbTypes.MultiSurface: # Geometry that is combined from several Curvepolygons is called MultiSurface
@@ -876,25 +793,23 @@ class QadMultiPolygon():
          for polygon in self.defList:
             multiSurface.addGeometry(polygon.asAbstractGeom(QgsWkbTypes.CurvePolygon, tolerance2ApproxCurve, atLeastNSegment))
          return QgsGeometry(multiSurface)
-      
+
       return QgsGeometry.fromMultiPolygonXY(self.asMultiPolygon(tolerance2ApproxCurve, atLeastNSegment))
 
-   
+
    # ===============================================================================
    # copy
    # ===============================================================================
    def copy(self):
-      # obbligatoria
+      # required
       return QadMultiPolygon(self)
-   
+
 
    # ============================================================================
    # move
    # ============================================================================
    def move(self, offsetX, offsetY):
-      """
-      la funzione sposta i poligoni secondo un offset X e uno Y
-      """
+      """the function moves the polygons according to an X and a Y offset"""
       for polygon in self.defList:
          polygon.move(offsetX, offsetY)
 
@@ -927,19 +842,15 @@ class QadMultiPolygon():
    # qty
    # ============================================================================
    def qty(self):
-      """
-      la funzione restituisce la quantità di poligoni che compongono il multipoligono.
-      """
+      """the function returns the quantity of polygons that make up the multipolygon."""
       return len(self.defList)
-         
+
 
    # ============================================================================
    # getCentroid
    # ============================================================================
    def getCentroid(self, tolerance2ApproxCurve = None):
-      """
-      la funzione restituisce il punto centroide.
-      """
+      """the function returns the centroid point."""
       g = self.asGeom(QgsWkbTypes.LineString, tolerance2ApproxCurve)
       if g is not None:
          centroid = g.centroid()
@@ -948,27 +859,23 @@ class QadMultiPolygon():
 
       return None
 
-   
+
    # ===============================================================================
    # transform
    # ===============================================================================
    def transform(self, coordTransform):
-      """
-      la funzione restituisce un nuovo multipoligono con le coordinate trasformate.
-      """
+      """the function returns a new multipolygon with the transformed coordinates."""
       result = QadMultiPolygon()
       for polygon in self.defList:
          result.append(polygon.transform(coordTransform))
       return result
-   
+
 
    # ===============================================================================
    # transformFromCRSToCRS
    # ===============================================================================
    def transformFromCRSToCRS(self, sourceCRS, destCRS):
-      """
-      la funzione trasforma le coordinate dei punti che compongono il multipoligono.
-      """
+      """the function transforms the coordinates of the points that make up the multipolygon."""
       return self.transform(QgsCoordinateTransform(sourceCRS, destCRS, QgsProject.instance()))
 
 
@@ -976,15 +883,13 @@ class QadMultiPolygon():
    # getBoundingBox
    # ===============================================================================
    def getBoundingBox(self):
-      """
-      la funzione ritorna il rettangolo che racchiude il multi poligono.
-      """
+      """the function returns the rectangle that encloses the multipolygon."""
       boundingBox = self.getPolygonAt(0).getBoundingBox()
       i = 1
       while i < self.qty():
          boundingBox.combineExtentWith(self.getPolygonAt(i).getBoundingBox())
          i = i + 1
-         
+
       return boundingBox
 
 
@@ -992,12 +897,10 @@ class QadMultiPolygon():
    # containsPt
    # ===============================================================================
    def containsPt(self, pt):
-      """
-      la funzione ritorna True se il punto è sul multi poligono altrimenti False.
-      """
+      """the function returns True if the point is on the multi-polygon, otherwise False."""
       for polygon in self.defList:
          if polygon.containsPt(pt): return True
-         
+
       return False
 
 
@@ -1005,23 +908,22 @@ class QadMultiPolygon():
 # fromQgsGeomtoQadGeom
 # ===============================================================================
 def fromQgsGeomToQadGeom(QgsGeom, crs = None):
-   """
-   la funzione ritorna una geometria di QAD da una geometria di QGIS e il suo sistema di coordinate.
-   Le coordinate della geometria di QAD sono quelle del canvas per lavorare con coordinate piane xy
+   """the function returns a QAD geometry from a QGIS geometry and its coordinate system.
+      The coordinates of the QAD geometry are those of the canvas for working with xy plane coordinates
    """
    g = QgsGeometry(QgsGeom)
-   
+
    if crs is None:
       g = QgsGeom
    else:
-      # trasformo la geometria nel crs del canvas per lavorare con coordinate piane xy
+      # I transform the geometry in the canvas crs to work with xy plane coordinates
       canvasCrs = qgis.utils.iface.mapCanvas().mapSettings().destinationCrs()
       if crs != canvasCrs:
          coordTransform = QgsCoordinateTransform(crs, canvasCrs, QgsProject.instance())
          g.transform(coordTransform)
 
-   # commentato perchè se ho un poligono e lo divido in 2 parti diventa non valido ma lo si vuole gestire comunque
-   # a volte la trasformazione di coordinate genera oggetti non validi
+   # commented because if I have a polygon and divide it into 2 parts it becomes invalid but you want to manage it anyway
+   # sometimes coordinate transformation generates invalid objects
    #if g.isGeosValid() == False: return None
    gType = g.type()
    if g.isMultipart() == False:
@@ -1039,11 +941,11 @@ def fromQgsGeomToQadGeom(QgsGeom, crs = None):
          if qadGeom.fromGeom(g): return qadGeom
       elif gType == QgsWkbTypes.LineGeometry:
          qadGeom = QadMultiLinearObject()
-         if qadGeom.fromGeom(g): return qadGeom         
+         if qadGeom.fromGeom(g): return qadGeom
       elif gType == QgsWkbTypes.PolygonGeometry:
          qadGeom = QadMultiPolygon()
-         if qadGeom.fromGeom(g): return qadGeom      
-   
+         if qadGeom.fromGeom(g): return qadGeom
+
    return None
 
 
@@ -1051,19 +953,18 @@ def fromQgsGeomToQadGeom(QgsGeom, crs = None):
 # fromQadGeomToQgsGeom
 # ===============================================================================
 def fromQadGeomToQgsGeom(qadGeom, layer):
-   """
-   la funzione ritorna una geometria di QGIS da una geometria di QAD.
-   Le coordinate della geometria di QAD sono quelle del canvas per lavorare con coordinate piane xy
+   """the function returns a QGIS geometry from a QAD geometry.
+      The coordinates of the QAD geometry are those of the canvas for working with xy plane coordinates
    """
    g = qadGeom.asGeom(layer.wkbType())
    if g is None: return None
-   
-   # trasformo la geometria nel crs del layer (la geometria di QAD è nel sistema del canvas per lavorare con coordinate piane xy)
+
+   # I transform the geometry in the layer crs (the QAD geometry is in the canvas system to work with xy plane coordinates)
    canvasCrs = qgis.utils.iface.mapCanvas().mapSettings().destinationCrs()
    if layer.crs() != canvasCrs:
       coordTransform = QgsCoordinateTransform(canvasCrs, layer.crs(), QgsProject.instance())
       g.transform(coordTransform)
-   
+
    return g
 
 
@@ -1071,9 +972,7 @@ def fromQadGeomToQgsGeom(qadGeom, layer):
 # getQadGeomAt
 # ===============================================================================
 def getQadGeomAt(qadGeom, atGeom = 0, atSubGeom = 0):
-   """
-   la funzione ritorna la geometria alla posizione specificata
-   """
+   """the function returns the geometry to the specified position"""
    qadGeomType = qadGeom.whatIs()
    if qadGeomType == "MULTI_POINT":
       return None if atSubGeom != 0 else qadGeom.getPointAt(atGeom)
@@ -1093,9 +992,7 @@ def getQadGeomAt(qadGeom, atGeom = 0, atSubGeom = 0):
 # getQadGeomPartAt
 # ===============================================================================
 def getQadGeomPartAt(qadGeom, atGeom = 0, atSubGeom = 0, atPart = 0):
-   """
-   la funzione ritorna la parte della geometria alla posizione specificata
-   """
+   """the function returns the part of the geometry to the specified position"""
    subQadGeom = getQadGeomAt(qadGeom, atGeom, atSubGeom)
    if subQadGeom is None: return None
    qadSubGeomType = subQadGeom.whatIs()
@@ -1103,15 +1000,13 @@ def getQadGeomPartAt(qadGeom, atGeom = 0, atSubGeom = 0, atPart = 0):
       return subQadGeom.getLinearObjectAt(atPart)
    else:
       return subQadGeom
-   
+
 
 # ===============================================================================
 # setQadGeomAt
 # ===============================================================================
 def setQadGeomAt(qadGeom, newGeom, atGeom = 0, atSubGeom = 0):
-   """
-   la funzione retituisce la nuova geometria modificata alla posizione specificata
-   """
+   """the function returns the new modified geometry at the specified position"""
    qadGeomType = qadGeom.whatIs()
    if qadGeomType == "MULTI_POINT" or qadGeomType == "MULTI_LINEAR_OBJ":
       if atSubGeom != 0: return None
@@ -1135,7 +1030,7 @@ def setQadGeomAt(qadGeom, newGeom, atGeom = 0, atSubGeom = 0):
    else:
       if atGeom != 0 or atSubGeom != 0: return None
       newQadGeom = newGeom
-      
+
    return newQadGeom
 
 
@@ -1143,9 +1038,7 @@ def setQadGeomAt(qadGeom, newGeom, atGeom = 0, atSubGeom = 0):
 # delQadGeomAt
 # ===============================================================================
 def delQadGeomAt(qadGeom, atGeom = 0, atSubGeom = 0):
-   """
-   la funzione cancella la sotto-geometria alla posizione specificata
-   """
+   """the function deletes the sub-geometry at the specified position"""
    qadGeomType = qadGeom.whatIs()
    if qadGeomType == "MULTI_POINT":
       if atSubGeom != 0:
@@ -1179,9 +1072,7 @@ def delQadGeomAt(qadGeom, atGeom = 0, atSubGeom = 0):
 # isLinearQadGeom
 # ===============================================================================
 def isLinearQadGeom(qadGeom):
-   """
-   la funzione retituisce True se si tratta di una geometria lineare
-   """
+   """the function returns True if it is a linear geometry"""
    gType = qadGeom.whatIs()
    if gType == "POLYLINE" or gType == "LINE" or gType == "ARC" or gType == "ELLIPSE_ARC":
       return True
@@ -1193,9 +1084,7 @@ def isLinearQadGeom(qadGeom):
 # convertToPolyline
 # ===============================================================================
 def convertToPolyline(qadGeom):
-   """
-   la funzione trasforma una geometria in QadPolyline, se possibile
-   """
+   """the function transforms a geometry into QadPolyline, if possible"""
    gType = qadGeom.whatIs()
    if gType != "POLYLINE" and gType != "LINE" and gType != "ARC" and gType != "ELLIPSE_ARC":
       return None
@@ -1204,27 +1093,27 @@ def convertToPolyline(qadGeom):
    else:
       polyline = QadPolyline()
       polyline.append(qadGeom)
-   
+
    return polyline
 
 
 # ===============================================================================
 # QadGeomBoundingBoxCache class
-# classe per cercare velocemente quali parti di una polilinea o poligono o multi oggetto si intersecano con
-# un boundingBox. 
+# class to quickly searc which parts of a polyline or polygon or multi object intersect with
+# a boundingBox.
 # ===============================================================================
 class QadGeomBoundingBoxCache():
 
    def __init__(self, geom):
-      # creo un layer temporaneo in memoria
+      # create a temporary layer in memory
       self.cacheLayer = createMemoryLayer("QadLayerCacheArea", "Polygon", qgis.utils.iface.mapCanvas().mapSettings().destinationCrs())
-      
+
       provider = self.cacheLayer.dataProvider()
-      provider.addAttributes([QgsField("geom_at", QMetaType.Int, "Int")]) # codice della geometria
-      provider.addAttributes([QgsField("sub_geom_at", QMetaType.Int, "Int")]) # codice della sotto geometria
-      provider.addAttributes([QgsField("part_at", QMetaType.Int, "Int")]) # codice della parte
+      provider.addAttributes([QgsField("geom_at", QMetaType.Int, "Int")]) # geometry code
+      provider.addAttributes([QgsField("sub_geom_at", QMetaType.Int, "Int")]) # sub geometry code
+      provider.addAttributes([QgsField("part_at", QMetaType.Int, "Int")]) # part code
       self.cacheLayer.updateFields()
-      
+
       if provider.capabilities() & QgsVectorDataProvider.CreateSpatialIndex:
          provider.createSpatialIndex()
 
@@ -1235,13 +1124,13 @@ class QadGeomBoundingBoxCache():
       partAt = 0
       error = False
       geomType = geom.whatIs()
-      
+
       if geomType == "MULTI_POINT":
          for geomAt in range(0, geom.qty()):
             if self.insertBoundingBox(self.getPointAt(geomAt).getBoundingBox(), geomAt, subGeomAt, partAt) == False:
                error = True
                break
-            
+
       elif geomType == "MULTI_LINEAR_OBJ":
          for geomAt in range(0, geom.qty()):
             linearObj =  geom.getLinearObjectAt(geomAt)
@@ -1255,14 +1144,14 @@ class QadGeomBoundingBoxCache():
                if self.insertBoundingBox(linearObj.getBoundingBox(), geomAt, subGeomAt, partAt) == False:
                   error = True
             if error: break
-            
+
       elif geomType == "POLYLINE":
          for partAt in range(0, geom.qty()):
             part = geom.getLinearObjectAt(partAt)
             if self.insertBoundingBox(part.getBoundingBox(), geomAt, subGeomAt, partAt) == False:
                error = True
                break
-         
+
       elif geomType == "POLYGON":
          for subGeomAt in range(0, geom.qty()):
             closedObj = geom.getClosedObjectAt(geomAt)
@@ -1287,8 +1176,8 @@ class QadGeomBoundingBoxCache():
             if error: break
 
       else:
-         error = True if self.insertBoundingBox(geom.getBoundingBox(), geomAt, subGeomAt, partAt) == False else False 
-      
+         error = True if self.insertBoundingBox(geom.getBoundingBox(), geomAt, subGeomAt, partAt) == False else False
+
       if error:
          self.cacheLayer.rollBack()
          del self.cacheLayer
@@ -1296,7 +1185,7 @@ class QadGeomBoundingBoxCache():
       else:
          self.cacheLayer.commitChanges()
 
-         
+
    # ============================================================================
    # __del__
    # ============================================================================
@@ -1325,7 +1214,7 @@ class QadGeomBoundingBoxCache():
       request = QgsFeatureRequest()
       request.setFilterRect(boundingBox)
       request.setSubsetOfAttributes([])
-      
+
       feature = QgsFeature()
       result = []
       featureIterator = self.cacheLayer.getFeatures(request)
@@ -1334,10 +1223,10 @@ class QadGeomBoundingBoxCache():
          sub_geom_at = feature.attribute("sub_geom_at")
          part_at = feature.attribute("part_at")
          result.append((geom_at, sub_geom_at, part_at))
-      
+
       return result
-   
-   
+
+
    # ============================================================================
    # getTotalBoundingBox
    # ============================================================================

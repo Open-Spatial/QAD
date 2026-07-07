@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin ok
 
- funzioni per fillet
- 
+ functions for fillet operations
+
                               -------------------
         begin                : 2019-08-20
         copyright            : iiiii
@@ -41,31 +41,30 @@ from .qad_offset_fun import offsetBridgeTheGapBetweenLines
 # isStartedPtChanged
 # ============================================================================
 def isStartedPtChanged(oldQadGeom, newQadGeom, filletQadGeom, nearNewQadGeom):
+   """Help function for the filletQadGeometry and fillet2QadGeometries functions.
+
+      Given a qad geometry and the new geometries obtained from the fillet operation,
+      the function returns True if the starting point of the qad geometry has been changed and False
+      if the end point has been changed.
    """
-   Funzione di ausilio alle funzioni filletQadGeometry e fillet2QadGeometries.
-   
-   Data una geometria qad e le nuove geometrie ricavate dall'operazione di raccordo, 
-   la funzione ritorna True se è stato variato il punto iniziale della geoemtria qad e False 
-   se ne è stato variato il punto di finale.
-   """
-   # se la nuova geometria rispetto a oldQadGeom non è cambiata
+   # if the new geometry compared to oldQadGeom has not changed
    if qad_utils.ptNear(oldQadGeom.getStartPt(), newQadGeom.getStartPt()) and \
       qad_utils.ptNear(oldQadGeom.getEndPt(), newQadGeom.getEndPt()):
-      if filletQadGeom is not None: # se esiste un elemento di raccordo
-         # verifico se il punto iniziale di oldQadGeom è collegato con questo elemento di raccordo
+      if filletQadGeom is not None: # if a connecting element exists
+         # check if the starting point of oldQadGeom is connected with this connection element
          if qad_utils.ptNear(oldQadGeom.getStartPt(), filletQadGeom.getStartPt()) or \
             qad_utils.ptNear(oldQadGeom.getStartPt(), filletQadGeom.getEndPt()):
             changedStartPt = True
          else:
             changedStartPt = False
-      else: # se non esiste un elemento di raccordo
-         # verifico se il punto iniziale di oldQadGeom è collegato alla nuova geometria vicina nearNewQadGeom
+      else: # if there is no connection element
+         # check if the starting point of oldQadGeom is connected to the new neighboring geometry nearNewQadGeom
          if qad_utils.ptNear(oldQadGeom.getStartPt(), nearNewQadGeom.getStartPt()) or \
             qad_utils.ptNear(oldQadGeom.getStartPt(), nearNewQadGeom.getEndPt()):
             changedStartPt = True
          else:
             changedStartPt = False
-   else: # se la nuova geometria è cambiata verifico in quale punto
+   else: # if the new geometry has changed check at which point
       if qad_utils.ptNear(oldQadGeom.getStartPt(), newQadGeom.getStartPt()) == False:
          changedStartPt = True
       else:
@@ -79,61 +78,60 @@ def isStartedPtChanged(oldQadGeom, newQadGeom, filletQadGeom, nearNewQadGeom):
 # ============================================================================
 def filletQadPolyline(qadPolyline, partAt1, pointAt1, partAt2, pointAt2, \
                       filletMode, radius):
-   """
-   Date una geometria qad, 2 parti e due 2 punti in cui bisogna fare il raccordo tra le due
-   parti, la funzione ritorna una polilinea risultato del raccordo.
-   <filletMode> modalità di raccordo; 1=Taglia-estendi, 2=Non taglia-estendi
-   <radius> raggio di raccordo
+   """Give a qad geometry, 2 parts and two 2 points where the connection between the two must be made
+      parts, the function returns a polyline as a result of the fillet.
+      <filletMode> fillet mode; 1=Cut-extend, 2=Do not cut-extend
+      <radius> fillet radius
    """
    if partAt1 == partAt2: return None
-   
-   basicQadGeom1 = qadPolyline.getLinearObjectAt(partAt1)      
+
+   basicQadGeom1 = qadPolyline.getLinearObjectAt(partAt1)
    basicQadGeom2 = qadPolyline.getLinearObjectAt(partAt2)
 
-   res = filletBridgeTheGapBetween2BasicQadGeometries(basicQadGeom1, pointAt1, basicQadGeom2, pointAt2, filletMode, radius)   
-   
+   res = filletBridgeTheGapBetween2BasicQadGeometries(basicQadGeom1, pointAt1, basicQadGeom2, pointAt2, filletMode, radius)
+
    if res is None: # raccordo non possibile
       return None
 
    filletPolyline = qadPolyline.copy()
-        
+
    if res[0] is not None:
       filletPolyline.remove(partAt1)
       filletPolyline.insert(partAt1, res[0])
-      
-      # se è stato variato il punto iniziale di basicQadGeom1
+
+      # if the starting point of basicQadGeom1 has been changed
       if isStartedPtChanged(basicQadGeom1, res[0], res[1], res[2]):
-         # può essere variato solo il punto finale di partAt1 (se è minore di partAt2)
+         # only the end point of partAt1 can be varied (if it is less than partAt2)
          if partAt1 < partAt2: return None
-      else: # se è stato variato il punto finale di basicQadGeom1
-         # può essere variato solo il punto iniziale di partAt1 (se è maggiore di partAt2)
+      else: # if the end point of basicQadGeom1 has been varied
+         # only the starting point of partAt1 can be varied (if it is greater than partAt2)
          if partAt1 > partAt2: return None
-      
+
    if res[2] is not None:
       filletPolyline.remove(partAt2)
       filletPolyline.insert(partAt2, res[2])
-      
-      # se è stato variato il punto iniziale di basicQadGeom2
+
+      # if the starting point of basicQadGeom2 has been changed
       if isStartedPtChanged(basicQadGeom2, res[2], res[1], res[0]):
-         # può essere variato solo il punto finale di partAt2 (se è minore di partAt1)
+         # only the end point of partAt2 can be varied (if it is less than partAt1)
          if partAt2 < partAt1: return None
-      else: # se è stato variato il punto finale di basicQadGeom1
-         # può essere variato solo il punto iniziale di partAt2 (se è maggiore di partAt1)
+      else: # if the end point of basicQadGeom1 has been varied
+         # only the starting point of partAt2 can be varied (if it is greater than partAt1)
          if partAt2 > partAt1: return None
 
-   # rimuovo tutte le parti che sono fra partAt1 e partAt2
+   # I remove all the parts that are between partAt1 and partAt2
    if partAt1 < partAt2:
       for i in range(partAt1 + 1, partAt2):
          filletPolyline.remove(i)
-      if res[1] is not None: # inserisco arco di raccordo
+      if res[1] is not None: # insert a fillet arc
          filletPolyline.insert(partAt1 + 1, res[1])
    else:
       for i in range(partAt2 + 1, partAt1):
          filletPolyline.remove(i)
-      if res[1] is not None: # inserisco arco di raccordo
+      if res[1] is not None: # insert a fillet arc
          filletPolyline.insert(partAt2 + 1, res[1])
 
-   # verifico e correggo i versi delle parti della polilinea 
+   # verifico e correggo i versi delle parti della polilinea
    filletPolyline.reverseCorrection()
 
    return filletPolyline
@@ -145,91 +143,90 @@ def filletQadPolyline(qadPolyline, partAt1, pointAt1, partAt2, pointAt2, \
 def fillet2QadGeometries(qadGeom1, atGeom1, atSubGeom1, partAt1, pointAt1, \
                          qadGeom2, atGeom2, atSubGeom2, partAt2, pointAt2, \
                          filletMode, radius):
-   """
-   Date due geometrie qad, la parte e il punto in cui bisogna fare il raccordo tra le due
-   polilinee, la funzione ritorna una polilinea risultato del raccordo e due flag che
-   danno indicazioni su ciò che deve essere fatto alle polilinee originali:
-   (0=niente, 1=modificare, 2=cancellare)
-   <filletMode> modalità di raccordo; 1=Taglia-estendi, 2=Non taglia-estendi
-   <radius> raggio di raccordo
+   """Given two qad geometries, the part and the point where the connection must be made between the two
+      polylines, the function returns a polyline as a result of the fitting and two flags that
+      they give indications on what needs to be done to the original polylines:
+      (0=nothing, 1=modify, 2=delete)
+      <filletMode> fillet mode; 1=Cut-extend, 2=Do not cut-extend
+      <radius> fillet radius
    """
    gType1 = qadGeom1.whatIs()
    gType2 = qadGeom2.whatIs()
-   
+
    if gType1 == "POLYLINE" or gType1 == "MULTI_LINEAR_OBJ" or gType1 == "POLYGON" or gType1 == "MULTI_POLYGON":
       subQadGeom1 = getQadGeomAt(qadGeom1, atGeom1, atSubGeom1)
       if subQadGeom1.whatIs() == "POLYLINE":
          basicQadGeom1 = subQadGeom1.getLinearObjectAt(partAt1)
       else:
-         basicQadGeom1 = subQadGeom1         
-      
+         basicQadGeom1 = subQadGeom1
+
    else:
       subQadGeom1 = basicQadGeom1 = qadGeom1
    subQadGeomType1 = subQadGeom1.whatIs()
-      
+
    if gType2 == "POLYLINE" or gType2 == "MULTI_LINEAR_OBJ" or gType2 == "POLYGON" or gType2 == "MULTI_POLYGON":
       subQadGeom2 = getQadGeomAt(qadGeom2, atGeom2, atSubGeom2)
       if subQadGeom2.whatIs() == "POLYLINE":
          basicQadGeom2 = subQadGeom2.getLinearObjectAt(partAt2)
       else:
-         basicQadGeom2 = subQadGeom2         
+         basicQadGeom2 = subQadGeom2
    else:
       subQadGeom2 = basicQadGeom2 = qadGeom2
    subQadGeomType2 = subQadGeom2.whatIs()
 
-   res = filletBridgeTheGapBetween2BasicQadGeometries(basicQadGeom1, pointAt1, basicQadGeom2, pointAt2, filletMode, radius)   
-   
+   res = filletBridgeTheGapBetween2BasicQadGeometries(basicQadGeom1, pointAt1, basicQadGeom2, pointAt2, filletMode, radius)
+
    if res is None: # raccordo non possibile
       return None
 
    filletPolyline = QadPolyline()
-   
+
    if res[0] is None or \
       subQadGeomType1 == "CIRCLE" or subQadGeomType1 == "ELLIPSE" or subQadGeomType1 == "POLYGON":
-      whatToDoGeom1 = 0 # 0=niente
+      whatToDoGeom1 = 0 # 0=nothing
    else:
-      whatToDoGeom1 = 1 # 0=niente, 1=modificare, 2=cancellare
+      whatToDoGeom1 = 1 # 0=nothing, 1=modify, 2=delete
       if subQadGeomType1 == "POLYLINE":
-         # se è stato variato il punto iniziale di basicQadGeom1
+         # if the starting point of basicQadGeom1 has been changed
          if isStartedPtChanged(basicQadGeom1, res[0], res[1], res[2]):
-            # prendo tutte le parti successive a partAt1
+            # I take all the parts after partAt1
             for i in range(subQadGeom1.qty() - 1, partAt1, -1):
                filletPolyline.append(subQadGeom1.getLinearObjectAt(i))
          else:
-            # prendo tutte le parti precedenti a partAt1
+            # I take all the parts before partAt1
             for i in range(0, partAt1):
                filletPolyline.append(subQadGeom1.getLinearObjectAt(i))
-      filletPolyline.append(res[0])      
-      
-   if res[1] is not None: # arco di raccordo
+      filletPolyline.append(res[0])
+
+   if res[1] is not None: # fillet arc
       filletPolyline.append(res[1])
 
    if res[2] is None or \
       subQadGeomType2 == "CIRCLE" or subQadGeomType2 == "ELLIPSE" or subQadGeomType2 == "POLYGON":
-      whatToDoGeom2 = 0 # 0=niente
+      whatToDoGeom2 = 0 # 0=nothing
    elif res[2] is not None:
-      # 0=niente, 1=modificare, 2=cancellare
-      if whatToDoGeom1 == 1: # se la geometria1 è stata modificata
-         whatToDoGeom2 = 2 # la geometria2 si unisce alla 1 e va cancellata
+      # 0=nothing, 1=modify, 2=delete
+      if whatToDoGeom1 == 1: # if geometry1 has been changed
+         whatToDoGeom2 = 2 # geometry 2 joins 1 and must be deleted
       else:
          whatToDoGeom2 = 1
-                  
+
       filletPolyline.append(res[2])
       if subQadGeomType2 == "POLYLINE":
-         # se è stato variato il punto iniziale di basicQadGeom2
+         # if the starting point of basicQadGeom2 has been changed
          if isStartedPtChanged(basicQadGeom2, res[2], res[1], res[0]):
-            # prendo tutte le parti successive a partAt2
+            # I take all the parts after partAt2
             for i in range(partAt2 + 1, subQadGeom2.qty()):
                filletPolyline.append(subQadGeom2.getLinearObjectAt(i))
          else:
-            # prendo tutte le parti precedenti a partAt2
+            # I take all the parts before partAt2
             for i in range(partAt2 - 1, -1, -1):
                filletPolyline.append(subQadGeom2.getLinearObjectAt(i))
-      
-   # verifico e correggo i versi delle parti della polilinea 
+
+   # verifico e correggo i versi delle parti della polilinea
    filletPolyline.reverseCorrection()
 
-   # 1=modificare
+   # 1=modify
    if whatToDoGeom1 == 1 and (gType1 == "MULTI_LINEAR_OBJ" or gType1 == "POLYGON" or gType1 == "MULTI_POLYGON"):
       updGeom = setQadGeomAt(qadGeom1, filletPolyline, atGeom1, atSubGeom1)
       return updGeom, whatToDoGeom1, whatToDoGeom2
@@ -244,19 +241,17 @@ def fillet2QadGeometries(qadGeom1, atGeom1, atSubGeom1, partAt1, pointAt1, \
 # filletBridgeTheGapBetween2BasicQadGeometries
 # ============================================================================
 def filletBridgeTheGapBetween2BasicQadGeometries(qadGeom1, pointAt1, qadGeom2, pointAt2, filletMode, radius):
-   """
-   Date due geometrie di base di qad, la parte e il punto in cui bisogna fare il raccordo tra le due
-   polilinee, la funzione ritorna una polilinea risultato del raccordo e due flag che
-   danno indicazioni su ciò che deve essere fatto alle polilinee originali:
-   (0=niente, 1=modificare, 2=cancellare)
-   <filletMode> modalità di raccordo; 1=Taglia-estendi, 2=Non taglia-estendi
-   <radius> raggio di raccordo
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   una geometria 1 che sostituisce <qadGeom1>, se = None <qadGeom1> va rimossa
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   una geometria 2 che sostituisce <qadGeom2>, se = None <qadGeom2> va rimossa
-   
+   """Given two basic geometries of qad, the part and the point where the connection between the two must be made
+      polylines, the function returns a polyline as a result of the fitting and two flags that
+      they give indications on what needs to be done to the original polylines:
+      (0=nothing, 1=modify, 2=delete)
+      <filletMode> fillet mode; 1=Cut-extend, 2=Do not cut-extend
+      <radius> fillet radius
+
+      It returns a list of 3 elements (None in case of error):
+      a geometry 1 that replaces <qadGeom1>, if = None <qadGeom1> must be removed
+      an arc, if = None there is no connecting arc between the two lines
+      a geometry 2 that replaces <qadGeom2>, if = None <qadGeom2> must be removed
    """
    gType1 = qadGeom1.whatIs()
    gType2 = qadGeom2.whatIs()
@@ -269,19 +264,19 @@ def filletBridgeTheGapBetween2BasicQadGeometries(qadGeom1, pointAt1, qadGeom2, p
       elif gType2 == "ARC":
          res = filletBridgeTheGapBetweenArcCircle(qadGeom2, pointAt2, qadGeom1, pointAt1, radius, filletMode)
          if res is not None:
-            dummy = res[0] # inverto il primo e il terzo elemento
+            dummy = res[0] # I invert the first and third elements
             res[0] = res[2]
             res[2] = dummy
       elif gType2 == "ELLIPSE_ARC":
          res = filletBridgeTheGapBetweenCircleEllipsearc(qadGeom1, pointAt1, qadGeom2, pointAt2, radius, filletMode)
       elif gType2 == "LINE":
          res = filletBridgeTheGapBetweenCircleLine(qadGeom1, pointAt1, qadGeom2, pointAt2, radius, filletMode)
-         
+
    elif gType1 == "ELLIPSE":
       if gType2 == "CIRCLE":
          res = filletBridgeTheGapBetweenCircleEllipse(qadGeom2, pointAt2, qadGeom1, pointAt1, radius, filletMode)
          if res is not None:
-            dummy = res[0] # inverto il primo e il terzo elemento
+            dummy = res[0] # I invert the first and third elements
             res[0] = res[2]
             res[2] = dummy
       elif gType2 == "ELLIPSE":
@@ -289,7 +284,7 @@ def filletBridgeTheGapBetween2BasicQadGeometries(qadGeom1, pointAt1, qadGeom2, p
       elif gType2 == "ARC":
          res = filletBridgeTheGapBetweenArcEllipse(qadGeom2, pointAt2, qadGeom1, pointAt1, radius, filletMode)
          if res is not None:
-            dummy = res[0] # inverto il primo e il terzo elemento
+            dummy = res[0] # I invert the first and third elements
             res[0] = res[2]
             res[2] = dummy
       elif gType2 == "ELLIPSE_ARC":
@@ -313,19 +308,19 @@ def filletBridgeTheGapBetween2BasicQadGeometries(qadGeom1, pointAt1, qadGeom2, p
       if gType2 == "CIRCLE":
          res = filletBridgeTheGapBetweenCircleEllipsearc(qadGeom2, pointAt2, qadGeom1, pointAt1, radius, filletMode)
          if res is not None:
-            dummy = res[0] # inverto il primo e il terzo elemento
+            dummy = res[0] # I invert the first and third elements
             res[0] = res[2]
             res[2] = dummy
       elif gType2 == "ELLIPSE":
          res = filletBridgeTheGapBetweenEllipseEllipsearc(qadGeom2, pointAt2, qadGeom1, pointAt1, radius, filletMode)
          if res is not None:
-            dummy = res[0] # inverto il primo e il terzo elemento
+            dummy = res[0] # I invert the first and third elements
             res[0] = res[2]
             res[2] = dummy
       elif gType2 == "ARC":
          res = filletBridgeTheGapBetweenArcEllipsearc(qadGeom1, pointAt1, qadGeom2, pointAt2, radius, filletMode)
          if res is not None:
-            dummy = res[0] # inverto il primo e il terzo elemento
+            dummy = res[0] # I invert the first and third elements
             res[0] = res[2]
             res[2] = dummy
       elif gType2 == "ELLIPSE_ARC":
@@ -333,33 +328,33 @@ def filletBridgeTheGapBetween2BasicQadGeometries(qadGeom1, pointAt1, qadGeom2, p
       elif gType2 == "LINE":
          res = filletBridgeTheGapBetweenLineEllipsearc(qadGeom2, pointAt2, qadGeom1, pointAt1, radius, filletMode)
          if res is not None:
-            dummy = res[0] # inverto il primo e il terzo elemento
+            dummy = res[0] # I invert the first and third elements
             res[0] = res[2]
             res[2] = dummy
-         
+
    elif gType1 == "LINE":
       if gType2 == "CIRCLE":
          res = filletBridgeTheGapBetweenCircleLine(qadGeom1, pointAt1, qadGeom2, pointAt2, radius, filletMode)
          if res is not None:
-            dummy = res[0] # inverto il primo e il terzo elemento
+            dummy = res[0] # I invert the first and third elements
             res[0] = res[2]
             res[2] = dummy
       elif gType2 == "ELLIPSE":
          res = filletBridgeTheGapBetweenEllipseLine(qadGeom1, pointAt1, qadGeom2, pointAt2, radius, filletMode)
          if res is not None:
-            dummy = res[0] # inverto il primo e il terzo elemento
+            dummy = res[0] # I invert the first and third elements
             res[0] = res[2]
             res[2] = dummy
       elif gType2 == "ARC":
          res = filletBridgeTheGapBetweenArcLine(qadGeom2, pointAt2, qadGeom1, pointAt1, radius, filletMode)
          if res is not None:
-            dummy = res[0] # inverto il primo e il terzo elemento
+            dummy = res[0] # I invert the first and third elements
             res[0] = res[2]
             res[2] = dummy
       elif gType2 == "ELLIPSE_ARC":
          res = filletBridgeTheGapBetweenLineEllipsearc(qadGeom1, pointAt1, qadGeom2, pointAt2, radius, filletMode)
       elif gType2 == "LINE":
-         if radius == 0:         
+         if radius == 0:
             res = filletBridgeTheGapBetweenLines(qadGeom1, pointAt1, qadGeom2, pointAt2, radius, 0)
          else:
             res = filletBridgeTheGapBetweenLines(qadGeom1, pointAt1, qadGeom2, pointAt2, radius, 1)
@@ -368,7 +363,7 @@ def filletBridgeTheGapBetween2BasicQadGeometries(qadGeom1, pointAt1, qadGeom2, p
 
 
 # ===============================================================================
-# INIZIO - 2 CERCHI
+# START - 2 CIRCLES
 # ===============================================================================
 
 
@@ -376,22 +371,21 @@ def filletBridgeTheGapBetween2BasicQadGeometries(qadGeom1, pointAt1, qadGeom2, p
 # filletBridgeTheGapBetweenCircles
 # ===============================================================================
 def filletBridgeTheGapBetweenCircles(circle1, ptOnCircle1, circle2, ptOnCircle2, radius):
+   """the function connects two circles through
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on the circles.
+
+      It returns a list of 3 elements (None in case of error):
+      None
+      an arc, if = None there is no connecting arc between the two lines
+      None
    """
-   la funzione raccorda due cerchi attraverso 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sui cerchi.
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   None
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   None
-   """
-   # ricavo i possibili archi di raccordo
+   # ricavo i possibili arci di raccordo
    filletArcs = getFilletArcsBetweenCircles(circle1, circle2, radius)
-   
-   # cerco l'arco valido più vicino a ptOnCircle1 e ptOnCircle2
+
+   # I look for the valid arc closest to ptOnCircle1 and ptOnCircle2
    AvgList = []
-   Avg = sys.float_info.max   
+   Avg = sys.float_info.max
 
    resFilletArc = QadArc()
    for filletArc in filletArcs:
@@ -410,17 +404,17 @@ def filletBridgeTheGapBetweenCircles(circle1, ptOnCircle1, circle2, ptOnCircle2,
                                                             ptOnCircle2, \
                                                             filletArc.getTanDirectionOnStartPt()+ math.pi)
 
-      del AvgList[:]              
+      del AvgList[:]
       AvgList.append(distFromPtOnCircle1)
       AvgList.append(distFromPtOnCircle2)
 
       currAvg = qad_utils.numericListAvg(AvgList)
-      if currAvg < Avg: # mediamente più vicino
+      if currAvg < Avg: # closer on average
          Avg = currAvg
          resFilletArc.set(filletArc)
-      
+
    if Avg == sys.float_info.max:
-      return None   
+      return None
 
    return [None, resFilletArc, None]
 
@@ -429,90 +423,89 @@ def filletBridgeTheGapBetweenCircles(circle1, ptOnCircle1, circle2, ptOnCircle2,
 # getFilletArcsBetweenCircles
 # ===============================================================================
 def getFilletArcsBetweenCircles(circle1, circle2, radius):
-   """
-   la funzione raccorda due cerchi attraverso un arco di raccordo di raggio <radius>.
-   
-   Ritorna una lista dei possibili archi
+   """the function connects two circles through a connecting arc of radius <radius>.
+
+      Returns a list of possible arcs
    """
    res = []
-        
-   # caso 1: raccordo tra <circle1> e <circle2> formando un flesso con ciascuno dei cerchi
-   # creo un nuovo cerchio concentrico a circle1 con raggio aumentato di <radius>
+
+   # case 1: connection between <circle1> and <circle2> forming an inflection with each of the circles
+   # create a new circle concentric to circle1 with radius increased by <radius>
    newCircle1 = QadCircle(circle1)
    newCircle1.radius = newCircle1.radius + radius
-   # creo un nuovo cerchio concentrico a circle2 con raggio aumentato di <radius>
+   # create a new circle concentric to circle2 with radius increased by <radius>
    newCircle2 = QadCircle(circle2)
    newCircle2.radius = newCircle2.radius + radius
-  
+
    res.extend(auxFilletArcsBetweenCircles(newCircle1, newCircle2, radius))
-   
-   # caso 2: raccordo tra <circle1> e <circle2> senza formare un flesso con ciascuno dei cerchi      
-   if radius - circle1.radius > 0 and radius - circle2.radius > 0: 
-      # creo un nuovo cerchio concentrico a circle1 con raggio = <radius> - raggio di circle1
+
+   # case 2: connection between <circle1> and <circle2> without forming an inflection with each of the circles
+   if radius - circle1.radius > 0 and radius - circle2.radius > 0:
+      # create a new circle concentric to circle1 with radius = <radius> - radius of circle1
       newCircle1 = QadCircle(circle1)
       newCircle1.radius = radius - newCircle1.radius
-      # creo un nuovo cerchio concentrico a circle2 con raggio = <radius> - raggio di circle2
+      # create a new circle concentric to circle2 with radius = <radius> - radius of circle2
       newCircle2 = QadCircle(circle2)
       newCircle2.radius = radius - newCircle2.radius
-       
+
       res.extend(auxFilletArcsBetweenCircles(newCircle1, newCircle2, radius))
 
-   # caso 3: raccordo tra <circle1> e <circle2> formando un flesso solo con circle1
-   if radius - circle2.radius > 0: 
-      # creo un nuovo cerchio concentrico a circle1 con raggio aumentato di <radius>
+   # case 3: connection between <circle1> and <circle2> forming an inflection only with circle1
+   if radius - circle2.radius > 0:
+      # create a new circle concentric to circle1 with radius increased by <radius>
       newCircle1 = QadCircle(circle1)
       newCircle1.radius = newCircle1.radius + radius
-      # creo un nuovo cerchio concentrico a circle2 con raggio = <radius> - raggio di circle2
+      # create a new circle concentric to circle2 with radius = <radius> - radius of circle2
       newCircle2 = QadCircle(circle2)
       newCircle2.radius = radius - newCircle2.radius
- 
+
       res.extend(auxFilletArcsBetweenCircles(newCircle1, newCircle2, radius))
-                  
-   # caso 4: raccordo tra <circle1> e <circle2> formando un flesso solo con circle2
-   if radius - circle1.radius > 0: 
-      # creo un nuovo cerchio concentrico a circle1 con raggio aumentato di <radius>
+
+   # case 4: connection between <circle1> and <circle2> forming an inflection only with circle2
+   if radius - circle1.radius > 0:
+      # create a new circle concentric to circle1 with radius increased by <radius>
       newCircle1 = QadCircle(circle1)
       newCircle1.radius = radius - newCircle1.radius
-      # creo un nuovo cerchio concentrico a circle2 con raggio = <radius> - raggio di circle2
+      # create a new circle concentric to circle2 with radius = <radius> - radius of circle2
       newCircle2 = QadCircle(circle2)
       newCircle2.radius = newCircle2.radius + radius
- 
+
       res.extend(auxFilletArcsBetweenCircles(newCircle1, newCircle2, radius))
-                  
-   # caso 5: raccordo tra <circle1> e <circle2> interno a <circle1> formando un flesso solo con circle2
+
+   # case 5: connection between <circle1> and <circle2> inside <circle1> forming an inflection only with circle2
    if qad_utils.getDistance(circle1.center, circle2.center) + circle2.radius <= circle1.radius and \
-      circle1.radius - radius > 0: 
-      # creo un nuovo cerchio concentrico a circle1 con raggio diminuito di <radius>
+      circle1.radius - radius > 0:
+      # create a new circle concentric to circle1 with radius decreased by <radius>
       newCircle1 = QadCircle(circle1)
       newCircle1.radius = newCircle1.radius - radius
-      # creo un nuovo cerchio concentrico a circle2 con raggio aumentato di <radius>
+      # create a new circle concentric to circle2 with radius increased by <radius>
       newCircle2 = QadCircle(circle2)
       newCircle2.radius = newCircle2.radius + radius
- 
+
       res.extend(auxFilletArcsBetweenCircles(newCircle1, newCircle2, radius))
-                  
-   # caso 6: raccordo tra <circle1> interno a <circle2> e <circle2> formando un flesso solo con circle1
+
+   # case 6: connection between <circle1> inside <circle2> and <circle2> forming an inflection only with circle1
    if qad_utils.getDistance(circle1.center, circle2.center) + circle1.radius <= circle2.radius and \
-      circle2.radius - radius > 0: 
-      # creo un nuovo cerchio concentrico a circle1 con raggio aumentato di <radius>
+      circle2.radius - radius > 0:
+      # create a new circle concentric to circle1 with radius increased by <radius>
       newCircle1 = QadCircle(circle1)
       newCircle1.radius = newCircle1.radius + radius
-      # creo un nuovo cerchio concentrico a circle2 con raggio diminuito di <radius>
+      # create a new circle concentric to circle2 with radius decreased by <radius>
       newCircle2 = QadCircle(circle2)
       newCircle2.radius = newCircle2.radius - radius
- 
+
       res.extend(auxFilletArcsBetweenCircles(newCircle1, newCircle2, radius))
 
-   # caso 7: raccordo tra <circle1> e <circle2> interno a <circle1> senza formare alcun flesso
+   # caso 7: raccordo tra <circle1> e <circle2> inside a <circle1> without forming any inflection
    if qad_utils.getDistance(circle1.center, circle2.center) + circle2.radius <= circle1.radius and \
-      circle1.radius - radius > 0 and radius - circle2.radius: 
-      # creo un nuovo cerchio concentrico a circle1 con raggio diminuito di <radius>
+      circle1.radius - radius > 0 and radius - circle2.radius:
+      # create a new circle concentric to circle1 with radius decreased by <radius>
       newCircle1 = QadCircle(circle1)
       newCircle1.radius = newCircle1.radius - radius
-      # creo un nuovo cerchio concentrico a circle2 con raggio = <radius> - raggio di circle2
+      # create a new circle concentric to circle2 with radius = <radius> - radius of circle2
       newCircle2 = QadCircle(circle2)
       newCircle2.radius = radius - newCircle2.radius
- 
+
       res.extend(auxFilletArcsBetweenCircles(newCircle1, newCircle2, radius))
 
    return res
@@ -522,57 +515,56 @@ def getFilletArcsBetweenCircles(circle1, circle2, radius):
 # auxFilletArcsBetweenCircles
 # ===============================================================================
 def auxFilletArcsBetweenCircles(circle1, circle2, radius, both = True):
-   """
-   la funzione di ausilio a getFilletArcsBetweenCircles   
-   Ritorna una lista dei possibili archi di raccordo tra i cerchi <circle1> e <circle2>
+   """the helper function to getFilletArcsBetweenCircles
+      Returns a list of possible connecting arcs between the circles <circle1> and <circle2>
    """
    res = []
-   # calcolo le intersezioni tra le due circonferenze 
-   # che daranno origine ai centri degli archi di raccordo
+   # calculate the intersections between the two circles
+   # which will give rise to the centers of the fillet arces
    intPts = QadIntersections.twoCircles(circle1, circle2)
 
    if len(intPts) > 0:
-      # un punto di tangenza é dato dal punto a distanza radius dal centro dell'arco di raccordo
-      # in direzione centro dell'arco <circle1>
+      # a point of tangency is given by the point at a radius distance from the center of the fillet arc
+      # in the direction of the center of the arc <circle1>
       angle = qad_utils.getAngleBy2Pts(intPts[0], circle1.center)
       tanC1Pt = qad_utils.getPolarPointByPtAngle(intPts[0], angle, radius)
-      # un punto di tangenza é dato dal punto a distanza radius dal centro dell'arco di raccordo
-      # in direzione centro dell'arco <circle2>
+      # a point of tangency is given by the point at a radius distance from the center of the fillet arc
+      # in the direction of the center of the arc <circle2>
       angle = qad_utils.getAngleBy2Pts(intPts[0], circle2.center)
       tanC2Pt = qad_utils.getPolarPointByPtAngle(intPts[0], angle, radius)
       filletArc = QadArc()
       if filletArc.fromStartCenterEndPts(tanC1Pt, intPts[0], tanC2Pt) == True:
          res.append(filletArc)
       if both:
-         # inverto angolo iniziale-finale
+         # I invert the initial-final angle
          filletArc = QadArc(filletArc)
          filletArc.inverseAngles()
          res.append(filletArc)
 
       if len(intPts) > 1:
-         # un punto di tangenza é dato dal punto a distanza radius dal centro dell'arco di raccordo
-         # in direzione centro dell'arco <circle1>
+         # a point of tangency is given by the point at a radius distance from the center of the fillet arc
+         # in the direction of the center of the arc <circle1>
          angle = qad_utils.getAngleBy2Pts(intPts[1], circle1.center)
          tanC1Pt = qad_utils.getPolarPointByPtAngle(intPts[1], angle, radius)
-         # un punto di tangenza é dato dal punto a distanza radius dal centro dell'arco di raccordo
-         # in direzione centro dell'arco <circle2>
+         # a point of tangency is given by the point at a radius distance from the center of the fillet arc
+         # in the direction of the center of the arc <circle2>
          angle = qad_utils.getAngleBy2Pts(intPts[1], circle2.center)
          tanC2Pt = qad_utils.getPolarPointByPtAngle(intPts[1], angle, radius)
          filletArc = QadArc()
          if filletArc.fromStartCenterEndPts(tanC1Pt, intPts[1], tanC2Pt) == True:
             res.append(filletArc)
          if both:
-            # inverto angolo iniziale-finale
+            # I invert the initial-final angle
             filletArc = QadArc(filletArc)
             filletArc.inverseAngles()
             res.append(filletArc)
-            
+
    return res
 
 
 # ===============================================================================
-# FINE - 2 CERCHI
-# INIZIO - CERCHIO ED ELLISSE
+# END - 2 CIRCLES
+# BEGINNING - CIRCLE AND ELLIPSE
 # ===============================================================================
 
 
@@ -580,23 +572,22 @@ def auxFilletArcsBetweenCircles(circle1, circle2, radius, both = True):
 # filletBridgeTheGapBetweenCircleEllipse
 # ===============================================================================
 def filletBridgeTheGapBetweenCircleEllipse(circle, ptOnCircle, ellipse, ptOnEllipse, radius):
+   """the function fillets a circle with an ellipse through
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on the two geometries.
+
+      It returns a list of 3 elements (None in case of error):
+      None
+      an arc, if = None there is no connecting arc between the two lines
+      None
    """
-   la funzione raccorda un cerchio con una ellisse attraverso 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sulle due geometrie.
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   None
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   None
-   """
-   # da fare
+   # TODO
    return [None, None, None]
 
 
 # ===============================================================================
-# FINE - CERCHIO ED ELLISSE
-# INIZIO - 2 LINEE
+# END - CIRCLE AND ELLIPSE
+# START - 2 LINES
 # ===============================================================================
 
 
@@ -604,78 +595,77 @@ def filletBridgeTheGapBetweenCircleEllipse(circle, ptOnCircle, ellipse, ptOnElli
 # filletBridgeTheGapBetweenLines
 # ===============================================================================
 def filletBridgeTheGapBetweenLines(line1, ptOnLine1, line2, ptOnLine2, radius, filletMode):
-   """   
-   la funzione raccorda 2 segmenti retti (QadLine) attraverso 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sul segmento 1 <ptOnLine1> e sul segmento 2 <ptOnLine2>.
-   <filletMode> modalità di raccordo; 1=Taglia-estendi, 2=Non taglia-estendi
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   una linea che sostituisce <line1>, se = None <line1> va rimossa
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   una linea che sostituisce <line2>, se = None <line2> va rimossa
-   """   
-   if radius == 0: # Estende i segmenti     
-      # cerco il punto di intersezione tra le due linee
+   """the function connects 2 straight segments (QadLine) across
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on segment 1 <ptOnLine1> and on segment 2 <ptOnLine2>.
+      <filletMode> fillet mode; 1=Cut-extend, 2=Do not cut-extend
+
+      It returns a list of 3 elements (None in case of error):
+      a line that replaces <line1>, if = None <line1> should be removed
+      an arc, if = None there is no connecting arc between the two lines
+      a line that replaces <line2>, if = None <line2> should be removed
+   """
+   if radius == 0: # Estende i segmenti
+      # I look for the intersection point between the two lines
       ptInt = QadIntersections.twoInfinityLines(line1, line2)
       if ptInt is None: # linee parallele
          return None
-      
+
       distBetweenLine1Pt1AndPtInt = qad_utils.getDistance(line1.getStartPt(), ptInt)
       distBetweenLine1Pt2AndPtInt = qad_utils.getDistance(line1.getEndPt(), ptInt)
       distBetweenLine2Pt1AndPtInt = qad_utils.getDistance(line2.getStartPt(), ptInt)
       distBetweenLine2Pt2AndPtInt = qad_utils.getDistance(line2.getEndPt(), ptInt)
-      
+
       if distBetweenLine1Pt1AndPtInt > distBetweenLine1Pt2AndPtInt:
-         # secondo punto di line1 più vicino al punto di intersezione
+         # second point of line1 closest to the intersection point
          resLine1 = QadLine().set(line1.getStartPt(), ptInt)
       else:
-         # primo punto di line1 più vicino al punto di intersezione
+         # first point of line1 closest to the intersection point
          resLine1 = QadLine().set(ptInt, line1.getEndPt())
-         
+
       if distBetweenLine2Pt1AndPtInt > distBetweenLine2Pt2AndPtInt:
-         # secondo punto di line2 più vicino al punto di intersezione
+         # second point of line2 closest to the intersection point
          resLine2 = QadLine().set(line2.getStartPt(), ptInt)
       else:
-         # primo punto di line2 più vicino al punto di intersezione
+         # first point of line2 closest to the intersection point
          resLine2 = QadLine().set(ptInt, line2.getEndPt())
-      
+
       return [resLine1, None, resLine2]
    else: # Raccorda i segmenti
       filletArcs = getFilletArcsBetweenLines(line1, line2, radius)
 
-      # cerco l'arco valido più vicino a ptOnLine1 e ptOnLine2
+      # I look for the valid edge closest to ptOnLine1 and ptOnLine2
       AvgList = []
-      Avg = sys.float_info.max   
-   
+      Avg = sys.float_info.max
+
       resLine1 = QadLine()
       resFilletArc = QadArc()
       resLine2 = QadLine()
       for filletArc in filletArcs:
-         # ricavo il nuovo segmento in modo che sia tangente con l'arco di raccordo       
+         # get the new segment so that it is tangent with the fillet arc
          newLine1, distFromPtOnLine1 = getNewLineAccordingFilletArc(line1, filletArc, ptOnLine1)
          if newLine1 is None:
-            continue           
-         # ricavo il nuovo segmento in modo che sia tangente con l'arco di raccordo       
+            continue
+         # get the new segment so that it is tangent with the fillet arc
          newLine2, distFromPtOnLine2 = getNewLineAccordingFilletArc(line2, filletArc, ptOnLine2)
          if newLine2 is None:
-            continue           
-   
-         del AvgList[:]              
+            continue
+
+         del AvgList[:]
          AvgList.append(distFromPtOnLine1)
          AvgList.append(distFromPtOnLine2)
-   
+
          currAvg = qad_utils.numericListAvg(AvgList)
-         if currAvg < Avg: # mediamente più vicino
+         if currAvg < Avg: # closer on average
             Avg = currAvg
             resLine1.set(newLine1)
             resFilletArc.set(filletArc)
             resLine2.set(newLine2)
-         
+
       if Avg == sys.float_info.max:
-         return None   
-   
-      if filletMode == 1: # 1=Taglia-estendi
+         return None
+
+      if filletMode == 1: # 1=Trim-extend
          return [resLine1, resFilletArc, resLine2]
       else:
          return [None, resFilletArc, None]
@@ -685,41 +675,40 @@ def filletBridgeTheGapBetweenLines(line1, ptOnLine1, line2, ptOnLine2, radius, f
 # getFilletArcsBetweenLines
 # ===============================================================================
 def getFilletArcsBetweenLines(line1, line2, radius):
-   """
-   la funzione raccorda due linee rette (QadLine) attraverso 
-   un arco di raccordo di raggio <radius>.
-   
-   Ritorna una lista dei possibili archi
+   """the function connects two straight lines (QadLine) through
+      a connecting arc of radius <radius>.
+
+      Returns a list of possible arcs
    """
    res = []
-   
-   # cerco il punto di intersezione tra le due linee
+
+   # I look for the intersection point between the two lines
    intPt = QadIntersections.twoInfinityLines(line1, line2)
    if intPt is None: # linee parallele
-      # calcolo la proiezione perpendicolare del punto iniziale di <line1> su <line2> 
+      # calculate the perpendicular projection of the starting point of <line1> onto <line2>
       ptPerp = QadPerpendicularity.fromPointToInfinityLine(line1.getStartPt(), line2)
       d = qad_utils.getDistance(line1.getStartPt(), ptPerp)
-      # d deve essere 2 volte <radius>
+      # d must be 2 times <radius>
       if qad_utils.doubleNear(radius * 2, d):
          angle = qad_utils.getAngleBy2Pts(line1.getStartPt(), ptPerp)
          ptCenter = gad_utils.getPolarPointByPtAngle(line1.getStartPt(), angle, radius)
          filletArc = QadArc()
          if filletArc.fromStartCenterEndPts(line1.getStartPt(), ptCenter, ptPerp) == True:
             res.append(filletArc)
-         # stesso arco con il punto iniziale e finale invertiti
+         # same arc with the starting and ending points reversed
          filletArc = QadArc()
          if filletArc.fromStartCenterEndPts(ptPerp, ptCenter, line1.getStartPt()) == True:
             res.append(filletArc)
-      
+
          ptPerp = qad_utils.getPolarPointByPtAngle(line1.getEndPt(), angle, d)
          ptCenter = qad_utils.getPolarPointByPtAngle(line1.getEndPt(), angle, radius)
          filletArc = QadArc()
          if filletArc.fromStartCenterEndPts(line1.getEndPt(), ptCenter, ptPerp) == True:
             res.append(filletArc)
-         # stesso arco con il punto iniziale e finale invertiti
+         # same arc with the starting and ending points reversed
          filletArc = QadArc()
          if filletArc.fromStartCenterEndPts(ptPerp, ptCenter, line1.getEndPt()) == True:
-            res.append(filletArc)      
+            res.append(filletArc)
    else: # linee non parallele
       angleLine1 = line1.getTanDirectionOnPt()
       angleLine2 = line2.getTanDirectionOnPt()
@@ -730,7 +719,7 @@ def getFilletArcsBetweenLines(line1, line2, radius):
 
       ptLine2 = qad_utils.getPolarPointByPtAngle(intPt, angleLine2, -1)
       res.extend(auxFilletArcsBetweenLines(ptLine1, ptLine2, intPt, radius))
-      
+
       ptLine1 = qad_utils.getPolarPointByPtAngle(intPt, angleLine1, -1)
       res.extend(auxFilletArcsBetweenLines(ptLine1, ptLine2, intPt, radius))
 
@@ -744,17 +733,16 @@ def getFilletArcsBetweenLines(line1, line2, radius):
 # getNewLineAccordingFilletArc
 # ===============================================================================
 def getNewLineAccordingFilletArc(line, filletArc, ptOnLine):
-   """
-   dato un segmento retto (<line>) e un arco che si 
-   raccorda ad esso (<filleArc>), la funzione restituisce un nuovo segmento retto
-   modificando <line> in modo che sia tangente all'arco di raccordo. 
-   Inoltre, usando un punto indicato sul segmento <ptOnLine> restituisce 
-   la distanza di quel punto dal punto di tangenza con l'arco di raccordo.
+   """given a straight segment (<line>) and an arc that si
+      fille it to it (<filleArc>), the function returns a new straight segment
+      modifying <line> so that it is tangent to the fitting arc.
+      Also, using a point indicated on the <ptOnLine> segment returns
+      the distance of that point from the point of tangency with the connecting arc.
    """
    newLine = QadLine()
 
-   # determino quale punto (iniziale o finale) dell'arco di raccordo 
-   # si interseca sul prolugamento del segmento retto
+   # I determine which point (initial or final) of the fillet arc
+   # intersects on the extension of the straight segment
    if line.isPtOnInfinityLine(filletArc.getStartPt()):
       filletPtOnLine = filletArc.getStartPt()
       isStartFilletPtOnLine = True
@@ -762,52 +750,52 @@ def getNewLineAccordingFilletArc(line, filletArc, ptOnLine):
       filletPtOnLine = filletArc.getEndPt()
       isStartFilletPtOnLine = False
 
-   if line.containsPt(filletPtOnLine) == True: # se il punto é all'interno del segmento  
+   if line.containsPt(filletPtOnLine) == True: # if the point is inside the segment
       newLine.set(filletPtOnLine, line.getEndPt())
-      
-      if isStartFilletPtOnLine: # se il punto iniziale dell'arco di raccordo é sulla linea
-         # se il nuovo segmento non é un segmento valido
-         if qad_utils.ptNear(newLine.getStartPt(), newLine.getEndPt()):          
-            # se l'arco di raccordo é tangente sul punto finale del nuovo segmento
+
+      if isStartFilletPtOnLine: # if the starting point of the fillet arc is on the line
+         # if the new segment is not a valid segment
+         if qad_utils.ptNear(newLine.getStartPt(), newLine.getEndPt()):
+            # if the fillet arc is tangent to the final point of the new segment
             if qad_utils.TanDirectionNear(line.getTanDirectionOnEndPt(), \
                                           qad_utils.normalizeAngle(filletArc.getTanDirectionOnStartPt())) == True:
-               newLine.set(line) # ripristino il segmento originale
+               newLine.set(line) # restore the original segment
          else:
-            # se l'arco di raccordo non é tangente sul punto iniziale del nuovo segmento            
+            # if the fillet arc is not tangent to the starting point of the new segment
             if qad_utils.TanDirectionNear(newLine.getTanDirectionOnStartPt(), \
                                           qad_utils.normalizeAngle(filletArc.getTanDirectionOnStartPt() + math.pi)) == False:
                newLine.set(line.getStartPt(), filletPtOnLine)
-            
-         # se il nuovo segmento non é un segmento valido
+
+         # if the new segment is not a valid segment
          if qad_utils.ptNear(newLine.getStartPt(), newLine.getEndPt()) or \
             newLine.containsPt(ptOnLine) == False:
-            return None, None          
-         
-         # calcolo la distanza dal punto ptOnLine
+            return None, None
+
+         # calculate the distance from the ptOnLine point
          distFromPtOnLine = qad_utils.getDistance(ptOnLine, filletPtOnLine)
-      else: # se il punto finale dell'arco di raccordo é sulla linea
-         # se il nuovo segmento non é un segmento valido
-         if qad_utils.ptNear(newLine.getStartPt(), newLine.getEndPt()):          
-            # se l'arco di raccordo é tangente sul punto finale del nuovo segmento
+      else: # if the final point of the fillet arc is on the line
+         # if the new segment is not a valid segment
+         if qad_utils.ptNear(newLine.getStartPt(), newLine.getEndPt()):
+            # if the fillet arc is tangent to the final point of the new segment
             if qad_utils.TanDirectionNear(line.getTanDirectionOnEndPt(), \
                                           qad_utils.normalizeAngle(filletArc.getTanDirectionOnEndPt() + math.pi)) == True:
-               newLine.set(line) # ripristino il segmento originale
+               newLine.set(line) # restore the original segment
          else:
-            # se l'arco di raccordo non é tangente sul punto iniziale del nuovo segmento            
+            # if the fillet arc is not tangent to the starting point of the new segment
             if qad_utils.TanDirectionNear(newLine.getTanDirectionOnStartPt(), \
                                           filletArc.getTanDirectionOnEndPt()) == False:
                newLine.set(line.getStartPt(), filletPtOnLine)
-            
-         # se il nuovo segmento non é un segmento valido
+
+         # if the new segment is not a valid segment
          if qad_utils.ptNear(newLine.getStartPt(), newLine.getEndPt()) or \
             newLine.containsPt(ptOnLine) == False:
-            return None, None          
-         
-         # calcolo la distanza dal punto ptOnLine
+            return None, None
+
+         # calculate the distance from the ptOnLine point
          distFromPtOnLine = qad_utils.getDistance(ptOnLine, filletPtOnLine)
-         
+
       return newLine, distFromPtOnLine
-   else: # se il punto é all'esterno del segmento 
+   else: # if the point is outside the segment
       if qad_utils.getDistance(line.getStartPt(), filletPtOnLine) < qad_utils.getDistance(line.getEndPt(), filletPtOnLine):
          newLine.set(filletPtOnLine, line.getEndPt())
       else:
@@ -820,12 +808,11 @@ def getNewLineAccordingFilletArc(line, filletArc, ptOnLine):
 # auxFilletArcsBetweenLines
 # ===============================================================================
 def auxFilletArcsBetweenLines(ptLine1, ptLine2, intPt, radius, both = True):
-   """
-   la funzione di ausilio a getFilletArcsBetweenLines
-   Ritorna una lista dei possibili archi di raccordo tra la 
-   linea 1 che va da <ptLine1> fino al punto di intersezione con la linea 2 <intPt>
-   e 
-   linea2 che va da <ptLine2> fino al punto di intersezione con la linea 1 <intPt>
+   """the helper function to getFilletArcsBetweenLines
+      Returns a list of possible connecting arcs between the
+      line 1 going from <ptLine1> to the point of intersection with line 2 <intPt>
+      e
+      line2 that goes from <ptLine2> to the point of intersection with line 1 <intPt>
    """
    res = []
 
@@ -835,31 +822,31 @@ def auxFilletArcsBetweenLines(ptLine1, ptLine2, intPt, radius, both = True):
    line = QadLine().set(ptLine1, ptLine2)
    bisectorInfinityLinePts = qad_utils.getBisectorInfinityLine(ptLine1, intPt, ptLine2, True)
    bisectorLine = QadLine().set(bisectorInfinityLinePts[0], bisectorInfinityLinePts[1])
-   # cerco il punto di intersezione tra la bisettrice e 
-   # la retta che congiunge i punti più distanti delle due linee
+   # I look for the point of intersection between the bisector and
+   # the straight line that joins the most distant points of the two lines
    pt = QadIntersections.twoInfinityLines(bisectorLine, line)
    angleBisectorLine = qad_utils.getAngleBy2Pts(intPt, pt)
 
-   # calcolo l'angolo (valore assoluto) tra un lato e la bisettrice            
+   # calculate the angle (absolute value) between a side and the bisector
    alfa = angleLine1 - angleBisectorLine
    if alfa < 0:
-      alfa = angleBisectorLine - angleLine1      
+      alfa = angleBisectorLine - angleLine1
    if alfa > math.pi:
-      alfa = (2 * math.pi) - alfa 
+      alfa = (2 * math.pi) - alfa
 
-   # calcolo l'angolo del triangolo rettangolo sapendo che la somma degli angoli interni = 180
-   # - alfa - 90 gradi (angolo retto)
+   # calculate the angle of the right triangle knowing that the sum of the internal angles = 180
+   # - alpha - 90 degrees (right angle)
    distFromIntPt = math.tan(math.pi - alfa - (math.pi / 2)) * radius
    pt1Proj = qad_utils.getPolarPointByPtAngle(intPt, angleLine1, distFromIntPt)
    pt2Proj = qad_utils.getPolarPointByPtAngle(intPt, angleLine2, distFromIntPt)
    # Pitagora
-   distFromIntPt = math.sqrt((distFromIntPt * distFromIntPt) + (radius * radius))      
+   distFromIntPt = math.sqrt((distFromIntPt * distFromIntPt) + (radius * radius))
    secondPt = qad_utils.getPolarPointByPtAngle(intPt, angleBisectorLine, distFromIntPt - radius)
    filletArc = QadArc()
    if filletArc.fromStartSecondEndPts(pt1Proj, secondPt, pt2Proj) == True:
       res.append(filletArc)
    if both:
-      # inverto angolo iniziale-finale
+      # I invert the initial-final angle
       filletArc = QadArc(filletArc)
       filletArc.inverseAngles()
       res.append(filletArc)
@@ -868,8 +855,8 @@ def auxFilletArcsBetweenLines(ptLine1, ptLine2, intPt, radius, both = True):
 
 
 # ===============================================================================
-# FINE - 2 LINEE
-# INIZIO - ARCO E CERCHIO
+# END - 2 LINES
+# BEGINNING - ARC AND CIRCLE
 # ===============================================================================
 
 
@@ -877,56 +864,55 @@ def auxFilletArcsBetweenLines(ptLine1, ptLine2, intPt, radius, both = True):
 # filletBridgeTheGapBetweenArcCircle
 # ===============================================================================
 def filletBridgeTheGapBetweenArcCircle(arc, ptOnArc, circle, ptOnCircle, radius, filletMode):
+   """the function fillets an arc and a circle through
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on the arc <ptOnArc> and on the circle <ptCircle>.
+      <filletMode> fillet mode; 1=Cut-extend, 2=Do not cut-extend
+
+      It returns a list of 3 elements (None in case of error):
+      an arc that replaces <arc>
+      an arc, if = None there is no connecting arc between the two lines
+      None
    """
-   la funzione raccorda un arco e un cerchio attraverso 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sull'arco <ptOnArc> e sul cerchio <ptCircle>.
-   <filletMode> modalità di raccordo; 1=Taglia-estendi, 2=Non taglia-estendi
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   una arco che sostituisce <arc>
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   None
-   """
-   # ricavo i possibili archi di raccordo
+   # ricavo i possibili arci di raccordo
    filletArcs = getFilletArcsBetweenArcCircle(arc, circle, radius)
-   
-   # cerco l'arco valido più vicino a ptOnArc e ptOnCircle
+
+   # I searc for the closest valid arc to ptOnArc and ptOnCircle
    AvgList = []
-   Avg = sys.float_info.max   
+   Avg = sys.float_info.max
 
    resFilletArc = QadArc()
    resArc = QadArc()
    for filletArc in filletArcs:
-      # ricavo il nuovo arco in modo che sia tangente con l'arco di raccordo       
+      # get the new arc so that it is tangent with the fillet arc
       newArc, distFromPtOnArc = getNewArcAccordingFilletArc(arc, filletArc, ptOnArc)
       if newArc is None:
          continue
-         
-      # calcolo la distanza dal punto ptOnCircle
-      if circle.isPtOnCircle(filletArc.getStartPt()): # se il punto iniziale dell'arco di raccordo é sul cerchio
+
+      # calculate the distance from the ptOnCircle point
+      if circle.isPtOnCircle(filletArc.getStartPt()): # if the starting point of the fillet arc is on the circle
          distFromPtOnCircle = circle.lengthBetween2Points(filletArc.getStartPt(), \
                                                           ptOnCircle, \
                                                           filletArc.getTanDirectionOnStartPt() + math.pi)
-      else: # se il punto finale dell'arco di raccordo é sul cerchio
+      else: # if the final point of the fillet arc is on the circle
          distFromPtOnCircle = circle.lengthBetween2Points(filletArc.getEndPt(), \
                                                           ptOnCircle, \
                                                           filletArc.getTanDirectionOnEndPt())
 
-      del AvgList[:]              
+      del AvgList[:]
       AvgList.append(distFromPtOnArc)
       AvgList.append(distFromPtOnCircle)
 
       currAvg = qad_utils.qad_utils.numericListAvg(AvgList)
-      if currAvg < Avg: # mediamente più vicino
+      if currAvg < Avg: # closer on average
          Avg = currAvg
-         resArc.set(newArc) 
+         resArc.set(newArc)
          resFilletArc.set(filletArc)
-      
-   if Avg == sys.float_info.max:
-      return None   
 
-   if filletMode == 1: # 1=Taglia-estendi
+   if Avg == sys.float_info.max:
+      return None
+
+   if filletMode == 1: # 1=Trim-extend
       return [resArc, resFilletArc, None]
    else:
       return [None, resFilletArc, None]
@@ -936,12 +922,11 @@ def filletBridgeTheGapBetweenArcCircle(arc, ptOnArc, circle, ptOnCircle, radius,
 # getFilletArcsBetweenArcCircle
 # ===============================================================================
 def getFilletArcsBetweenArcCircle(arc, circle, radius):
+   """the function fillets an arc and a circle through
+      a connecting arc of radius <radius>.
+
+      Returns a list of possible arcs
    """
-   la funzione raccorda un arco e un cerchio attraverso 
-   un arco di raccordo di raggio <radius>.
-   
-   Ritorna una lista dei possibili archi
-   """  
    circle1 = QadCircle()
    circle1.set(arc.center, arc.radius)
 
@@ -952,20 +937,19 @@ def getFilletArcsBetweenArcCircle(arc, circle, radius):
 # getNewArcAccordingFilletArc
 # ===============================================================================
 def getNewArcAccordingFilletArc(arc, filletArc, ptOnArc):
+   """given an arc (<arc>) and another arc that connects to it (<filleArc>),
+      the function returns a new arc by modifying <arc> to be
+      tangent to the connecting arc. Also, using a point indicated on the bow
+      <ptOnArc> returns the distance of that point from the point of tangency with the arc
+      fillet using the tangent direction of the fillet arc.
    """
-   dato un arco (<arc>) e un altro arco che si raccorda ad esso (<filleArc>),
-   la funzione restituisce un nuovo arco modificando <arc> in modo che sia 
-   tangente all'arco di raccordo. Inoltre, usando un punto indicato sull'arco
-   <ptOnArc> restituisce la distanza di quel punto dal punto di tangenza con l'arco
-   di raccordo usando la direzione della tangente dell'arco di raccordo.
-   """
-   circle = QadCircle()    
-   circle.set(arc.center, arc.radius)  
+   circle = QadCircle()
+   circle.set(arc.center, arc.radius)
 
    newArc = QadArc(arc)
 
-   # determino quale punto (iniziale o finale) dell'arco di raccordo 
-   # si interseca sul prolugamento dell'arco 
+   # I determine which point (initial or final) of the fillet arc
+   # intersects on the extension of the arc
    if circle.isPtOnCircle(filletArc.getStartPt()):
       filletPtOnArc = filletArc.getStartPt()
       isStartFilletPtOnArc = True
@@ -973,50 +957,50 @@ def getNewArcAccordingFilletArc(arc, filletArc, ptOnArc):
       filletPtOnArc = filletArc.getEndPt()
       isStartFilletPtOnArc = False
 
-   # verifico che l'arco di raccordo sia tangente con l'arco
+   # I verify that the fillet arc is tangent to the arc
    newArc.setStartAngleByPt(filletPtOnArc)
-      
-   if isStartFilletPtOnArc: # se il punto iniziale dell'arco di raccordo é sull'arco
-      # se il nuovo arco non é un arco valido
+
+   if isStartFilletPtOnArc: # if the starting point of the fillet arc is on the arc
+      # if the new arc is not a valid arc
       if qad_utils.doubleNear(newArc.startAngle, newArc.endAngle):
-         # se l'arco di raccordo é tangente sul punto finale dell'arco
+         # if the fillet arc is tangent to the final point of the arc
          if qad_utils.TanDirectionNear(arc.getTanDirectionOnEndPt(), \
                                        qad_utils.normalizeAngle(filletArc.getTanDirectionOnStartPt())) == True:
-            newArc.startAngle = arc.startAngle # ripristino l'arco originale
+            newArc.startAngle = arc.startAngle # restore the original bow
       else:
-         # se l'arco di raccordo non é tangente sul punto iniziale del nuovo arco            
+         # if the fillet arc is not tangent to the starting point of the new arc
          if qad_utils.TanDirectionNear(newArc.getTanDirectionOnStartPt(), \
                                        qad_utils.normalizeAngle(filletArc.getTanDirectionOnStartPt() + math.pi)) == False:
-            newArc.startAngle = arc.startAngle # ripristino l'arco originale
+            newArc.startAngle = arc.startAngle # restore the original bow
             newArc.setEndAngleByPt(filletPtOnArc)
-         
-      # se il nuovo arco non é un arco valido
+
+      # if the new arc is not a valid arc
       if qad_utils.doubleNear(newArc.startAngle, newArc.endAngle):
          return None, None
-                   
-      # calcolo la distanza dal punto ptOnArc
+
+      # calculate the distance from the ptOnArc point
       distFromPtOnArc = circle.lengthBetween2Points(filletArc.getStartPt(), \
                                                     ptOnArc, \
                                                     filletArc.getTanDirectionOnStartPt() + math.pi)
-   else: # se il punto finale dell'arco di raccordo é sull'arco
-      # se il nuovo arco non é un arco valido
+   else: # if the final point of the fillet arc is on the arc
+      # if the new arc is not a valid arc
       if qad_utils.doubleNear(newArc.startAngle, newArc.endAngle):
-         # se l'arco di raccordo é tangente sul punto finale dell'arco
+         # if the fillet arc is tangent to the final point of the arc
          if qad_utils.TanDirectionNear(arc.getTanDirectionOnEndPt(), \
                                        qad_utils.normalizeAngle(filletArc.getTanDirectionOnEndPt() + math.pi)) == True:
-            newArc.startAngle = arc.startAngle # ripristino l'arco originale
+            newArc.startAngle = arc.startAngle # restore the original bow
       else:
-         # se l'arco di raccordo non é tangente sul punto iniziale del nuovo arco            
+         # if the fillet arc is not tangent to the starting point of the new arc
          if qad_utils.TanDirectionNear(newArc.getTanDirectionOnStartPt(), \
                                        filletArc.getTanDirectionOnEndPt()) == False:
-            newArc.startAngle = arc.startAngle # ripristino l'arco originale
+            newArc.startAngle = arc.startAngle # restore the original bow
             newArc.setEndAngleByPt(filletPtOnArc)
 
-      # se il nuovo arco non é un arco valido
+      # if the new arc is not a valid arc
       if qad_utils.doubleNear(newArc.startAngle, newArc.endAngle):
          return None, None
 
-      # calcolo la distanza dal punto ptOnArc
+      # calculate the distance from the ptOnArc point
       distFromPtOnArc = circle.lengthBetween2Points(filletArc.getEndPt(), \
                                                     ptOnArc, \
                                                     filletArc.getTanDirectionOnEndPt())
@@ -1025,8 +1009,8 @@ def getNewArcAccordingFilletArc(arc, filletArc, ptOnArc):
 
 
 # ===============================================================================
-# FINE - ARCO E CERCHIO
-# INIZIO - CERCHIO E ARCO DI ELLISSE
+# END - ARC AND CIRCLE
+# BEGINNING - CIRCLE AND ARC OF ELLIPSE
 # ===============================================================================
 
 
@@ -1034,23 +1018,22 @@ def getNewArcAccordingFilletArc(arc, filletArc, ptOnArc):
 # filletBridgeTheGapBetweenCircleEllipsearc
 # ===============================================================================
 def filletBridgeTheGapBetweenCircleEllipsearc(circle, ptOnCircle, ellipseArc, ptOnEllipseArc, radius):
+   """the function fillets a circle and an arc through ellipse
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on the 2 geometries.
+
+      It returns a list of 3 elements (None in case of error):
+      None
+      an arc, if = None there is no connecting arc between the two lines
+      None
    """
-   la funzione raccorda un cerchio ed un arco ellisse attraverso 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sulle 2 geometrie.
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   None
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   None
-   """
-   # da fare
+   # TODO
    return [None, None, None]
 
 
 # ===============================================================================
-# FINE - CERCHIO E ARCO DI ELLISSE
-# INIZIO - CERCHIO E LINEA
+# END - CIRCLE AND ARC OF ELLIPSE
+# BEGINNING - CIRCLE AND LINE
 # ===============================================================================
 
 
@@ -1058,31 +1041,30 @@ def filletBridgeTheGapBetweenCircleEllipsearc(circle, ptOnCircle, ellipseArc, pt
 # filletBridgeTheGapBetweenCircleLine
 # ===============================================================================
 def filletBridgeTheGapBetweenCircleLine(circle, ptOnCircle, line, ptOnLine, radius, filletMode):
+   """the function fillets a circle and a straight segment (QadLine) through
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on the circle <ptOnCircle> and on the straight segment <ptOnLine>.
+      <filletMode> fillet mode; 1=Cut-extend, 2=Do not cut-extend
+
+      It returns a list of 3 elements (None in case of error):
+      None
+      an arc, if = None there is no connecting arc between the two lines
+      a line that replaces <line> if filleMode = 1 (Cut-Extend) otherwise None
    """
-   la funzione raccorda un cerchio e un segmento retto (QadLine) attraverso 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sul cerchio <ptOnCircle> e sul segmento retto <ptOnLine>.
-   <filletMode> modalità di raccordo; 1=Taglia-estendi, 2=Non taglia-estendi
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   None
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   una linea che sostituisce <line> se filleMode = 1 (Taglia-estendi) altrimenti None
-   """
-   # ricavo i possibili archi di raccordo
+   # ricavo i possibili arci di raccordo
    filletArcs = getFilletArcsBetweenCircleLine(circle, line, radius)
-   
-   # cerco l'arco valido più vicino a ptOnArc e ptOnLine
+
+   # I searc for the closest valid arc to ptOnArc and ptOnLine
    AvgList = []
-   Avg = sys.float_info.max   
+   Avg = sys.float_info.max
 
    resFilletArc = QadArc()
    resLine = QadLine()
    for filletArc in filletArcs:
-      # ricavo il nuovo segmento in modo che sia tangente con l'arco di raccordo       
+      # get the new segment so that it is tangent with the fillet arc
       newLine, distFromPtOnLine = getNewLineAccordingFilletArc(line, filletArc, ptOnLine)
       if newLine is None:
-         continue           
+         continue
 
       if circle.isPtOnCircle(filletArc.getStartPt()):
          distFromPtOnCircle = circle.lengthBetween2Points(filletArc.getStartPt(), \
@@ -1093,20 +1075,20 @@ def filletBridgeTheGapBetweenCircleLine(circle, ptOnCircle, line, ptOnLine, radi
                                                           ptOnCircle, \
                                                           filletArc.getTanDirectionOnEndPt())
 
-      del AvgList[:]              
+      del AvgList[:]
       AvgList.append(distFromPtOnLine)
       AvgList.append(distFromPtOnCircle)
 
       currAvg = qad_utils.numericListAvg(AvgList)
-      if currAvg < Avg: # mediamente piùvicino
+      if currAvg < Avg: # closer on average
          Avg = currAvg
          resLine.set(newLine)
          resFilletArc.set(filletArc)
-      
-   if Avg == sys.float_info.max:
-      return None   
 
-   if filletMode == 1: # 1=Taglia-estendi
+   if Avg == sys.float_info.max:
+      return None
+
+   if filletMode == 1: # 1=Trim-extend
       return [None, resFilletArc, resLine]
    else:
       return [None, resFilletArc, None]
@@ -1116,20 +1098,19 @@ def filletBridgeTheGapBetweenCircleLine(circle, ptOnCircle, line, ptOnLine, radi
 # auxFilletArcsBetweenCircleLine
 # ===============================================================================
 def auxFilletArcsBetweenCircleLine(circle, line, origCircle, origLine, both = True):
-   """
-   la funzione di ausilio a getFilletArcsBetweenArcLine
-   Ritorna una lista dei possibili archi di raccordo tra <circle> e <line>
+   """the helper function to getFilletArcsBetweenArcLine
+      Returns a list of possible connecting arcs between <circle> and <line>
    """
    res = []
-   # calcolo le intersezioni tra la circonferenza del cerchio e la retta parallela a <line> 
-   # che daranno origine ai centri degli archi di raccordo
+   # calculate the intersections between the circumference of the circle and the straight line parallel to <line>
+   # which will give rise to the centers of the fillet arces
    intPts = QadIntersections.infinityLineWithCircle(line, circle)
    if len(intPts) > 0:
-      # un punto di tangenza é dato dal punto a distanza radius dal centro di <origCircle> 
-      # in direzione centro dell'arco di raccordo
+      # a point of tangency is given by the point at a radius distance from the center of <origCircle>
+      # towards the center of the fillet arc
       angle = qad_utils.getAngleBy2Pts(origCircle.center, intPts[0])
-      tanCirclePt = qad_utils.getPolarPointByPtAngle(origCircle.center, angle, origCircle.radius)      
-      # un punto di tangenza é la proiezione perpendicolare del centro dell'arco di raccordo
+      tanCirclePt = qad_utils.getPolarPointByPtAngle(origCircle.center, angle, origCircle.radius)
+      # a point of tangency is the perpendicular projection of the center of the fillet arc
       # con <origLine>
       ptPerp = QadPerpendicularity.fromPointToInfinityLine(intPts[0], origLine)
       filletArc = QadArc()
@@ -1138,18 +1119,18 @@ def auxFilletArcsBetweenCircleLine(circle, line, origCircle, origLine, both = Tr
                                          ptPerp) == True:
          res.append(filletArc)
          if both:
-            # inverto angolo iniziale-finale
+            # I invert the initial-final angle
             filletArc = QadArc(filletArc)
             filletArc.inverseAngles()
             res.append(filletArc)
 
-      if len(intPts) > 1: # # due centri per i due archi di raccordo
-         # un punto di tangenza é dato dal punto a distanza arc.radius dal centro di <arc> 
-         # in direzione centro dell'arco di raccordo
+      if len(intPts) > 1: # # two centers for the two fillet arcs
+         # a point of tangency is given by the point at a distance arc.radius from the center of <arc>
+         # towards the center of the fillet arc
          angle = qad_utils.getAngleBy2Pts(origCircle.center, intPts[1])
-         tanCirclePt = qad_utils.getPolarPointByPtAngle(origCircle.center, angle, origCircle.radius)      
-         # un punto di tangenza é la proiezione perpendicolare del centro dell'arco di raccordo
-         # con <line> 
+         tanCirclePt = qad_utils.getPolarPointByPtAngle(origCircle.center, angle, origCircle.radius)
+         # a point of tangency is the perpendicular projection of the center of the fillet arc
+         # con <line>
          ptPerp = QadPerpendicularity.fromPointToInfinityLine(intPts[1], origLine)
          filletArc = QadArc()
          if filletArc.fromStartCenterEndPts(tanCirclePt, \
@@ -1157,11 +1138,11 @@ def auxFilletArcsBetweenCircleLine(circle, line, origCircle, origLine, both = Tr
                                             ptPerp) == True:
             res.append(filletArc)
             if both:
-               # inverto angolo iniziale-finale
+               # I invert the initial-final angle
                filletArc = QadArc(filletArc)
                filletArc.inverseAngles()
                res.append(filletArc)
-               
+
    return res
 
 
@@ -1169,79 +1150,78 @@ def auxFilletArcsBetweenCircleLine(circle, line, origCircle, origLine, both = Tr
 # getFilletArcsBetweenCircleLine
 # ===============================================================================
 def getFilletArcsBetweenCircleLine(circle, line, radius):
-   """
-   la funzione raccorda un cerchio e una linea retta (QadLine) attraverso 
-   un arco di raccordo di raggio <radius>.
-   
-   Ritorna una lista dei possibili archi
+   """the function fillets a circle and a straight line (QadLine) through
+      a connecting arc of radius <radius>.
+
+      Returns a list of possible arcs
    """
    res = []
-   
+
    offsetCircle = circle.copy()
 
    intPts = QadIntersections.infinityLineWithCircle(line, circle)
    if len(intPts) == 0:
-      # se il cerchio e la retta generata dall'estensione di line
-      # non hanno punti in comune
+      # if the circle is the straight line generated by the extension of line
+      # have no points in common
       leftOfLine = line.leftOf(circle.center)
-      # creo una retta parallela a <line> ad una distanza <radius> verso il centro di <circle>  
+      # create a straight line parallel to <line> at a distance <radius> towards the center of <circle>
       linePar = QadLine()
       angle = line.getTanDirectionOnStartPt()
-      if leftOfLine < 0: # a sinistra
+      if leftOfLine < 0: # on the left
          linePar.set(qad_utils.getPolarPointByPtAngle(line.getStartPt(), angle + math.pi / 2, radius), \
                      qad_utils.getPolarPointByPtAngle(line.getEndPt(), angle + math.pi / 2, radius))
-      else :# a destra
+      else :# on the right
          linePar.set(qad_utils.getPolarPointByPtAngle(line.getStartPt(), angle - math.pi / 2, radius), \
                      qad_utils.getPolarPointByPtAngle(line.getEndPt(), angle - math.pi / 2, radius))
-         
-      # Calcolo la distanza dal centro di <circle> a <line>
+
+      # Calculate the distance from the center of <circle> to <line>
       ptPerp = QadPerpendicularity.fromPointToInfinityLine(circle.center, line)
       d = qad_utils.getDistance(circle.center, ptPerp)
-      # <radius> deve essere >= (d - raggio cerchio) / 2
+      # <radius> must be >= (d - circle radius) / 2
       if radius >= (d - circle.radius) / 2:
-         
-         # caso 1: raccordo tra <circle> e <line> formando un flesso con <circle>
-         
-         # creo un cerchio con raggio aumentato di <radius> 
+
+         # case 1: connection between <circle> and <line> forming an inflection with <circle>
+
+         # create a circle with a radius increased by <radius>
          offsetCircle.radius = circle.radius + radius
          res.extend(auxFilletArcsBetweenCircleLine(offsetCircle, linePar, circle, line))
-         
-         # caso 2: raccordo tra <circle> e <line> senza formare un flesso con <circle>
-         
-         # <radius> deve essere > raggio cerchio
-         if radius > circle.radius:         
-            # creo un cerchio con raggio = <radius> - circle.radius
+
+         # case 2: connection between <circle> and <line> without forming an inflection with <circle>
+
+         # <radius> must be > circle radius
+         if radius > circle.radius:
+            # create a circle with radius = <radius> - circle.radius
             offsetCircle.radius = radius - circle.radius
             res.extend(auxFilletArcsBetweenCircleLine(offsetCircle, linePar, circle, line))
    else:
-      # se il cerchio e la retta generata dall'estensione di line
-      # hanno punti in comune
-      # creo una retta parallela a <line> ad una distanza <radius> verso sinistra  
+      # if the circle is the straight line generated by the extension of line
+      # have points in common
+      # create a straight line parallel to <line> at a distance <radius> to the left
       linePar = QadLine()
       angle = line.getTanDirectionOnStartPt()
       linePar.set(qad_utils.getPolarPointByPtAngle(line.getStartPt(), angle + math.pi / 2, radius), \
                   qad_utils.getPolarPointByPtAngle(line.getEndPt(), angle + math.pi / 2, radius))
 
-      # creo un cerchio con raggio aumentato di <radius> 
+      # create a circle with a radius increased by <radius>
       offsetCircle.radius = circle.radius + radius
       res.extend(auxFilletArcsBetweenCircleLine(offsetCircle, linePar, circle, line))
-      
-      if circle.radius > radius: 
-         # creo un cerchio con raggio diminuito di <radius>
+
+      if circle.radius > radius:
+         # create a circle with a radius decreased by <radius>
          offsetCircle.radius = circle.radius - radius
          res.extend(auxFilletArcsBetweenCircleLine(offsetCircle, linePar, circle, line))
 
-      # creo una retta parallela a <line> ad una distanza <radius> verso destra
+      # create a straight line parallel to <line> at a distance <radius> to the right
       linePar.set(qad_utils.getPolarPointByPtAngle(line.getStartPt(), angle - math.pi / 2, radius), \
                   qad_utils.getPolarPointByPtAngle(line.getEndPt(), angle - math.pi / 2, radius))
 
-      # creo un cerchio con raggio aumentato di <radius> 
+      # create a circle with a radius increased by <radius>
       offsetCircle.radius = circle.radius + radius
       res.extend(auxFilletArcsBetweenCircleLine(offsetCircle, linePar, circle, line))
-      # calcolo le intersezioni tra la circonferenza del cerchio e la retta parallela a <line> 
+      # calculate the intersections between the circumference of the circle and the straight line parallel to <line>
 
-      if circle.radius > radius: 
-         # creo un cerchio con raggio diminuito di <radius>
+      if circle.radius > radius:
+         # create a circle with a radius decreased by <radius>
          offsetCircle.radius = circle.radius - radius
          res.extend(auxFilletArcsBetweenCircleLine(offsetCircle, linePar, circle, line))
 
@@ -1249,8 +1229,8 @@ def getFilletArcsBetweenCircleLine(circle, line, radius):
 
 
 # ===============================================================================
-# FINE - CERCHIO E LINEA
-# INIZIO - 2 ELLISSI
+# END - CIRCLE AND LINE
+# START - 2 ELLIPSES
 # ===============================================================================
 
 
@@ -1258,23 +1238,22 @@ def getFilletArcsBetweenCircleLine(circle, line, radius):
 # filletBridgeTheGapBetweenEllipses
 # ===============================================================================
 def filletBridgeTheGapBetweenEllipses(ellipse1, ptOnEllipse1, ellipse2, ptOnEllipse2, radius):
+   """the function connects two ellipses across
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on the ellipses.
+
+      It returns a list of 3 elements (None in case of error):
+      None
+      an arc, if = None there is no connecting arc between the two lines
+      None
    """
-   la funzione raccorda due ellissi attraverso 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sulle ellissi.
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   None
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   None
-   """
-   # da fare
+   # TODO
    return [None, None, None]
 
 
 # ===============================================================================
-# FINE - 2 ELLISSI
-# INIZIO - ARCO ED ELLISSE
+# END - 2 ELLIPSES
+# BEGINNING - ARC AND ELLIPSE
 # ===============================================================================
 
 
@@ -1282,23 +1261,22 @@ def filletBridgeTheGapBetweenEllipses(ellipse1, ptOnEllipse1, ellipse2, ptOnElli
 # filletBridgeTheGapBetweenArcEllipse
 # ===============================================================================
 def filletBridgeTheGapBetweenArcEllipse(arc, ptOnArc, ellipse, ptOnEllipse, radius):
+   """the function fillets an arc with an ellipse through
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on geometries.
+
+      It returns a list of 3 elements (None in case of error):
+      None
+      an arc, if = None there is no connecting arc between the two lines
+      None
    """
-   la funzione raccorda un arco con una ellisse attraverso 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sulle geometrie.
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   None
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   None
-   """
-   # da fare
+   # TODO
    return [None, None, None]
 
 
 # ===============================================================================
-# FINE - ARCO ED ELLISSE
-# INIZIO - ELLISSE ED ARCO DI ELLISSE
+# END - ARC AND ELLIPSE
+# BEGINNING - ELLIPSE AND ARC OF ELLIPSE
 # ===============================================================================
 
 
@@ -1306,23 +1284,22 @@ def filletBridgeTheGapBetweenArcEllipse(arc, ptOnArc, ellipse, ptOnEllipse, radi
 # filletBridgeTheGapBetweenEllipseEllipsearc
 # ===============================================================================
 def filletBridgeTheGapBetweenEllipseEllipsearc(ellipse, ptOnEllipse, ellipseArc, ptOnEllipseArc, radius):
+   """the function fillets an ellipse with an arc of ellipse through
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on geometries.
+
+      It returns a list of 3 elements (None in case of error):
+      None
+      an arc, if = None there is no connecting arc between the two lines
+      None
    """
-   la funzione raccorda una ellisse con un arco di ellisse attraverso 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sulle geometrie.
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   None
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   None
-   """
-   # da fare
+   # TODO
    return [None, None, None]
 
 
 # ===============================================================================
-# FINE - ELLISSE ED ARCO DI ELLISSE
-# INIZIO - ELLISSE E LINEA
+# END - ELLIPSE AND ARC OF ELLIPSE
+# BEGINNING - ELLIPSE AND LINE
 # ===============================================================================
 
 
@@ -1330,23 +1307,22 @@ def filletBridgeTheGapBetweenEllipseEllipsearc(ellipse, ptOnEllipse, ellipseArc,
 # filletBridgeTheGapBetweenEllipseLine
 # ===============================================================================
 def filletBridgeTheGapBetweenEllipseLine(ellipse, ptOnEllipse, line, ptOnLine, radius):
+   """the function fillets an ellipse with a line through
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on geometries.
+
+      It returns a list of 3 elements (None in case of error):
+      None
+      an arc, if = None there is no connecting arc between the two lines
+      None
    """
-   la funzione raccorda una ellisse con una linea attraverso 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sulle geometrie.
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   None
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   None
-   """
-   # da fare
+   # TODO
    return [None, None, None]
 
 
 # ===============================================================================
-# FINE - ELLISSE E LINEA
-# INIZIO - 2 ARCHI
+# END - ELLIPSE AND LINE
+# BEGINNING - 2 ARCHES
 # ===============================================================================
 
 
@@ -1354,52 +1330,51 @@ def filletBridgeTheGapBetweenEllipseLine(ellipse, ptOnEllipse, line, ptOnLine, r
 # filletBridgeTheGapBetweenArcs
 # ===============================================================================
 def filletBridgeTheGapBetweenArcs(arc1, ptOnArc1, arc2, ptOnArc2, radius, filletMode):
+   """the function connects two arcs through
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on arc1 <ptOnArc1> and on arc2 <ptOnArc2>.
+      <filletMode> fillet mode; 1=Cut-extend, 2=Do not cut-extend
+
+      It returns a list of 3 elements (None in case of error):
+      an arc that replaces <arc1>
+      an arc, if = None there is no connecting arc between the two lines
+      an arc that replaces <arc2>
    """
-   la funzione raccorda due archi attraverso 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sull'arco1 <ptOnArc1> e sull'arco2 <ptOnArc2>.
-   <filletMode> modalità di raccordo; 1=Taglia-estendi, 2=Non taglia-estendi
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   una arco che sostituisce <arc1>
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   una arco che sostituisce <arc2>
-   """
-   # ricavo i possibili archi di raccordo
+   # ricavo i possibili arci di raccordo
    filletArcs = getFilletArcsBetweenArcs(arc1, arc2, radius)
-   
-   # cerco l'arco valido più vicino a ptOnArc1 e ptOnArc2
+
+   # I look for the valid arc closest to ptOnArc1 and ptOnArc2
    AvgList = []
-   Avg = sys.float_info.max   
+   Avg = sys.float_info.max
 
    resFilletArc = QadArc()
    resArc1 = QadArc()
    resArc2 = QadArc()
    for filletArc in filletArcs:
-      # ricavo il nuovo arco1 in modo che sia tangente con l'arco di raccordo       
+      # get the new arc1 so that it is tangent with the fillet arc
       newArc1, distFromPtOnArc1 = getNewArcAccordingFilletArc(arc1.getArc(), filletArc, ptOnArc1)
       if newArc1 is None:
          continue
-      # ricavo il nuovo arco in modo che sia tangente con l'arco di raccordo       
+      # get the new arc so that it is tangent with the fillet arc
       newArc2, distFromPtOnArc2 = getNewArcAccordingFilletArc(arc2.getArc(), filletArc, ptOnArc2)
       if newArc2 is None:
          continue
 
-      del AvgList[:]              
+      del AvgList[:]
       AvgList.append(distFromPtOnArc1)
       AvgList.append(distFromPtOnArc2)
 
       currAvg = qad_utils.numericListAvg(AvgList)
-      if currAvg < Avg: # mediamente più vicino
+      if currAvg < Avg: # closer on average
          Avg = currAvg
-         resArc1.set(newArc1) 
+         resArc1.set(newArc1)
          resFilletArc.set(filletArc)
-         resArc2.set(newArc2) 
-      
-   if Avg == sys.float_info.max:
-      return None   
+         resArc2.set(newArc2)
 
-   if filletMode == 1: # 1=Taglia-estendi
+   if Avg == sys.float_info.max:
+      return None
+
+   if filletMode == 1: # 1=Trim-extend
       return [resArc1, resFilletArc, resArc2]
    else:
       return [None, resFilletArc, None]
@@ -1409,11 +1384,10 @@ def filletBridgeTheGapBetweenArcs(arc1, ptOnArc1, arc2, ptOnArc2, radius, fillet
 # getFilletArcsBetweenArcs
 # ===============================================================================
 def getFilletArcsBetweenArcs(arc1, arc2, radius):
+   """the function connects two arcs through a connecting arc of radius <radius>.
+
+      Returns a list of possible arcs
    """
-   la funzione raccorda due archi attraverso un arco di raccordo di raggio <radius>.
-   
-   Ritorna una lista dei possibili archi
-   """  
    circle1 = QadCircle()
    circle1.set(arc1.center, arc1.radius)
    circle2 = QadCircle()
@@ -1423,8 +1397,8 @@ def getFilletArcsBetweenArcs(arc1, arc2, radius):
 
 
 # ===============================================================================
-# FINE - 2 ARCHI
-# INIZIO - ARCO ED ARCO DI ELLISSE
+# END - 2 ARCHES
+# BEGINNING - ARC AND ARC OF ELLIPSE
 # ===============================================================================
 
 
@@ -1432,23 +1406,22 @@ def getFilletArcsBetweenArcs(arc1, arc2, radius):
 # filletBridgeTheGapBetweenArcEllipsearc
 # ===============================================================================
 def filletBridgeTheGapBetweenArcEllipsearc(arc, ptOnArc, ellipseArc, ptOnEllipseArc, radius):
+   """the function connects an acro with an ellipse arc
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on geometries.
+
+      It returns a list of 3 elements (None in case of error):
+      None
+      an arc, if = None there is no connecting arc between the two lines
+      None
    """
-   la funzione raccorda una acro con un rco di ellisse 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sulle geometrie.
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   None
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   None
-   """
-   # da fare
+   # TODO
    return [None, None, None]
 
 
 # ===============================================================================
-# FINE - ARCO ED ARCO DI ELLISSE
-# INIZIO - ARCO E LINEA
+# END - ARC AND ARC OF ELLIPSE
+# BEGINNING - ARC AND LINE
 # ===============================================================================
 
 
@@ -1456,53 +1429,52 @@ def filletBridgeTheGapBetweenArcEllipsearc(arc, ptOnArc, ellipseArc, ptOnEllipse
 # filletBridgeTheGapBetweenArcLine
 # ===============================================================================
 def filletBridgeTheGapBetweenArcLine(arc, ptOnArc, line, ptOnLine, radius, filletMode):
+   """the function fillets an arc and a straight segment through
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on the arc <ptOnArc> and on the straight segment <ptOnLine>.
+      <filletMode> fillet mode; 1=Cut-extend, 2=Do not cut-extend
+
+      It returns a list of 3 elements (None in case of error):
+      an arc that replaces <arc>
+      an arc, if = None there is no connecting arc between the two lines
+      a line that replaces <line>
    """
-   la funzione raccorda un arco e un segmento retto attraverso 
-   un arco di raccordo di raggio <radius> che piùsi avvicinza ai punti di selezione
-   sull'arco <ptOnArc> e sul segmento retto <ptOnLine>.
-   <filletMode> modalità di raccordo; 1=Taglia-estendi, 2=Non taglia-estendi
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   una arco che sostituisce <arc>
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   una linea che sostituisce <line>
-   """
-   # ricavo i possibili archi di raccordo
+   # ricavo i possibili arci di raccordo
    filletArcs = getFilletArcsBetweenArcLine(arc, line, radius)
-   
-   # cerco l'arco valido più vicino a ptOnArc e ptOnLine
+
+   # I searc for the closest valid arc to ptOnArc and ptOnLine
    AvgList = []
-   Avg = sys.float_info.max   
+   Avg = sys.float_info.max
 
    resArc = QadArc()
    resFilletArc = QadArc()
    resLine = QadLine()
    for filletArc in filletArcs:
-      # ricavo il nuovo segmento in modo che sia tangente con l'arco di raccordo       
+      # get the new segment so that it is tangent with the fillet arc
       newLine, distFromPtOnLine = getNewLineAccordingFilletArc(line, filletArc, ptOnLine)
       if newLine is None:
-         continue        
-            
-      # ricavo il nuovo arco in modo che sia tangente con l'arco di raccordo       
+         continue
+
+      # get the new arc so that it is tangent with the fillet arc
       newArc, distFromPtOnArc = getNewArcAccordingFilletArc(arc, filletArc, ptOnArc)
       if newArc is None:
-         continue        
+         continue
 
-      del AvgList[:]              
+      del AvgList[:]
       AvgList.append(distFromPtOnLine)
       AvgList.append(distFromPtOnArc)
 
       currAvg = qad_utils.numericListAvg(AvgList)
-      if currAvg < Avg: # mediamente più vicino
+      if currAvg < Avg: # closer on average
          Avg = currAvg
          resLine.set(newLine)
          resFilletArc.set(filletArc)
-         resArc.set(newArc) 
-      
-   if Avg == sys.float_info.max:
-      return None   
+         resArc.set(newArc)
 
-   if filletMode == 1: # 1=Taglia-estendi
+   if Avg == sys.float_info.max:
+      return None
+
+   if filletMode == 1: # 1=Trim-extend
       return [resArc, resFilletArc, resLine]
    else:
       return [None, resFilletArc, None]
@@ -1512,21 +1484,20 @@ def filletBridgeTheGapBetweenArcLine(arc, ptOnArc, line, ptOnLine, radius, fille
 # getFilletArcsBetweenArcLine
 # ===============================================================================
 def getFilletArcsBetweenArcLine(arc, line, radius):
-   """
-   la funzione raccorda un arco e una linea retta attraverso 
-   un arco di raccordo di raggio <radius>.
-   
-   Ritorna una lista dei possibili archi
+   """the function fillets an arc and a straight line through
+      a connecting arc of radius <radius>.
+
+      Returns a list of possible arcs
    """
    circle = QadCircle()
    circle.set(arc.center, arc.radius)
-   
+
    return getFilletArcsBetweenCircleLine(circle, line, radius)
 
 
 # ===============================================================================
-# FINE - ARCO E LINEA
-# INIZIO - 2 ARCHI DI ELLISSE
+# END - ARC AND LINE
+# BEGINNING - 2 ARCS OF ELLIPSE
 # ===============================================================================
 
 
@@ -1534,23 +1505,22 @@ def getFilletArcsBetweenArcLine(arc, line, radius):
 # filletBridgeTheGapBetweenEllipsearcs
 # ===============================================================================
 def filletBridgeTheGapBetweenEllipsearcs(ellipseArc1, ptOnEllipseArc1, ellipseArc2, ptOnEllipseArc2, radius):
+   """the function connects two ellipse arcs through
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on the arcs of ellipses.
+
+      It returns a list of 3 elements (None in case of error):
+      an ellipse arc that replaces <ellipseArc1>
+      an arc, if = None there is no connecting arc between the two lines
+      an ellipse arc that replaces <ellipseArc2>
    """
-   la funzione raccorda due archi di ellisse attraverso 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sugli archi di ellisse.
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   una arco di ellisse che sostituisce <ellipseArc1>
-   un arco, se = None non c'é arco di raccordo tra le due linee
-   una arco di ellisse che sostituisce <ellipseArc2>
-   """
-   # da fare
+   # TODO
    return [None, None, None]
 
 
 # ===============================================================================
-# FINE - 2 ARCHI DI ELLISSE
-# INIZIO - LINEA E ARCO DI ELLISSE
+# END - 2 ARCS OF ELLIPSE
+# BEGINNING - LINE AND ARC OF ELLIPSE
 # ===============================================================================
 
 
@@ -1558,23 +1528,22 @@ def filletBridgeTheGapBetweenEllipsearcs(ellipseArc1, ptOnEllipseArc1, ellipseAr
 # filletBridgeTheGapBetweenLineEllipsearc
 # ===============================================================================
 def filletBridgeTheGapBetweenLineEllipsearc(line, ptOnLine, ellipseArc, ptOnEllipseArc, radius):
+   """the function fillets a line and an ellipse arc through
+      a connecting arc of radius <radius> that comes closest to the selection points
+      on geometries.
+
+      It returns a list of 3 elements (None in case of error):
+      a line that replaces <line>
+      an arc, if = None there is no connecting arc between the two geometries
+      an ellipse arc that replaces <ellipseArc>
    """
-   la funzione raccorda una linea ed un arco di ellisse attraverso 
-   un arco di raccordo di raggio <radius> che più si avvicinza ai punti di selezione
-   sulle geometrie.
-   
-   Ritorna una lista di 3 elementi (None in caso di errore):   
-   una linea che sostituisce <line>
-   un arco, se = None non c'é arco di raccordo tra le due geometrie
-   una arco di ellisse che sostituisce <ellipseArc>
-   """
-   # da fare
+   # TODO
    return [None, None, None]
 
 
 # ===============================================================================
-# FINE - LINEA E ARCO DI ELLISSE
-# INIZIO - POLILINEA
+# END - LINE AND ARC OF ELLIPSE
+# START - POLYLINE
 # ===============================================================================
 
 
@@ -1582,9 +1551,8 @@ def filletBridgeTheGapBetweenLineEllipsearc(line, ptOnLine, ellipseArc, ptOnElli
 # filletAllPartsQadPolyline
 # ============================================================================
 def filletAllPartsQadPolyline(polyline, radius):
-   """
-   la funzione raccorda ogni segmento al successivo con un raggio di curvatura noto,
-   la nuova polilinea avrà i vertici cambiati.
+   """the function connects each segment to the next with a known radius of curvature,
+      the new polyline will have the vertices changed.
    """
    if radius <= 0: return
    newPolyline = QadPolyline()
@@ -1595,10 +1563,10 @@ def filletAllPartsQadPolyline(polyline, radius):
    while i <= tot - 1:
       nextPart = polyline.getLinearObjectAt(i)
       if part.whatIs() == "LINE" and nextPart.whatIs() == "LINE":
-         # Ritorna una lista di 3 elementi (None in caso di errore):   
-         # - una linea che sostituisce <part>, se = None <part> va rimossa
-         # - un arco, se = None non c'é arco di raccordo tra le due linee
-         # - una linea che sostituisce <nextPart>, se = None <nextPart> va rimossa
+         # Returns a list of 3 elements (None in case of error):
+         # - a line replacing <part>, if = None <part> should be removed
+         # - an arc, if = None there is no fillet arc between the two lines
+         # - a line that replaces <nextPart>, if = None <nextPart> should be removed
          res = offsetBridgeTheGapBetweenLines(part, nextPart, radius, 1)
          if res is None:
             return
@@ -1615,11 +1583,11 @@ def filletAllPartsQadPolyline(polyline, radius):
    if polyline.isClosed():
       nextPart = newPolyline.getLinearObjectAt(0)
       if part.whatIs() == "LINE" and nextPart.whatIs() == "LINE":
-         
-         # Ritorna una lista di 3 elementi (None in caso di errore):
-         # - una linea che sostituisce <part>, se = None <part> va rimossa
-         # - un arco, se = None non c'é arco di raccordo tra le due linee
-         # - una linea che sostituisce <nextPart>, se = None <nextPart> va rimossa
+
+         # Returns a list of 3 elements (None in case of error):
+         # - a line replacing <part>, if = None <part> should be removed
+         # - an arc, if = None there is no fillet arc between the two lines
+         # - a line that replaces <nextPart>, if = None <nextPart> should be removed
          res = offsetBridgeTheGapBetweenLines(part, nextPart, radius, 1)
          if res is None:
             return
@@ -1631,7 +1599,7 @@ def filletAllPartsQadPolyline(polyline, radius):
             nextPart.set(res[2])
    else:
       newPolyline.append(part)
-        
+
    polyline.set(newPolyline)
-   
+
    return True

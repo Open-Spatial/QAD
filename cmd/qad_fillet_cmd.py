@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- comando FILLET per raccordare due oggetti grafici ok
- 
+ FILLET command to fillet two graphical objects
+
                               -------------------
         begin                : 2014-01-30
         copyright            : iiiii
@@ -44,11 +44,11 @@ from ..qad_multi_geom import fromQadGeomToQgsGeom, getQadGeomAt, setQadGeomAt
 from ..qad_geom_relations import getQadGeomClosestPart
 
 
-# Classe che gestisce il comando FILLET
+# Class that manages the FILLET command
 class QadFILLETCommandClass(QadCommandClass):
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadFILLETCommandClass(self.plugIn)
 
    def getName(self):
@@ -62,13 +62,13 @@ class QadFILLETCommandClass(QadCommandClass):
 
    def getIcon(self):
       return QIcon(":/plugins/qad/icons/fillet.svg")
-   
+
    def getNote(self):
-      # impostare le note esplicative del comando      
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_FILLET", "Rounds and fillets the edges of objects.")
-   
+
    def __init__(self, plugIn):
-      QadCommandClass.__init__(self, plugIn)      
+      QadCommandClass.__init__(self, plugIn)
       self.GetDistClass = None
 
       self.entity1 = QadEntity()
@@ -76,7 +76,7 @@ class QadFILLETCommandClass(QadCommandClass):
       self.atSubGeom1 = None
       self.partAt1 = 0
       self.pointAt1 = None
-      
+
       self.entity2 = QadEntity()
       self.atGeom2 = None
       self.atSubGeom2 = None
@@ -84,12 +84,12 @@ class QadFILLETCommandClass(QadCommandClass):
       self.partAt2 = 0
       self.pointAt2 = None
 
-      self.filletMode = plugIn.filletMode # modalità di raccordo; 1=Taglia-estendi, 2=Non taglia-estendi
+      self.filletMode = plugIn.filletMode # fillet mode; 1=Trim-extend, 2=Do not trim-extend
       self.radius = QadVariables.get(QadMsg.translate("Environment variables", "FILLETRAD"))
       self.multi = False
       self.nOperationsToUndo = 0
-            
-   
+
+
    def __del__(self):
       QadCommandClass.__del__(self)
       if self.GetDistClass is not None:
@@ -99,7 +99,7 @@ class QadFILLETCommandClass(QadCommandClass):
 
 
    def getPointMapTool(self, drawMode = QadGetPointDrawModeEnum.NONE):
-      # quando si é in fase di richiesta distanza
+      # when you are in the distance request phase
       if self.step == 3 or self.step == 5 or self.step == 7:
          return self.GetDistClass.getPointMapTool()
       elif (self.plugIn is not None):
@@ -111,7 +111,7 @@ class QadFILLETCommandClass(QadCommandClass):
 
 
    def getCurrentContextualMenu(self):
-      # quando si é in fase di richiesta distanza
+      # when you are in the distance request phase
       if self.step == 3 or self.step == 5 or self.step == 7:
          return self.GetDistClass.getCurrentContextualMenu()
       else:
@@ -122,31 +122,30 @@ class QadFILLETCommandClass(QadCommandClass):
    # setEntityInfo
    # ============================================================================
    def setEntityInfo(self, firstObj, layer, featureId, point):
-      """
-      Setta self.entity, self.atGeom, self.atSubGeom, self.partAt, self.pointAt
-      di primo o del secondo oggetto da raccordare (vedi <firstObj>)
+      """Set self.entity, self.atGeom, self.atSubGeom, self.partAt, self.pointAt
+            of the first or second object to be joined (see <firstObj>)
       """
       if firstObj:
          e = self.entity1
       else:
          e = self.entity2
-         
+
       e.set(layer, featureId)
       qadGeom = e.getQadGeom()
       """
-      la funzione ritorna una lista con 
-      (<minima distanza>
-       <punto più vicino>
-       <indice della geometria più vicina>
-       <indice della sotto-geometria più vicina>
-       <indice della parte della sotto-geometria più vicina>
-       <"a sinistra di" se il punto é alla sinista della parte con i seguenti valori:
-       -   < 0 = sinistra (per linea, arco o arco di ellisse) o interno (per cerchi, ellissi)
-       -   > 0 = destra (per linea, arco o arco di ellisse) o esterno (per cerchi, ellissi)
+      the function returns a list with
+      (<minimum distance>
+       <closest point>
+       <index of the nearest geometry>
+       <index of the nearest sub-geometry>
+       <index of the nearest sub-geometry part>
+       <"left of" if the point is to the left of the part with the following values:
+       -   < 0 = left (for line, arc or elliptical arc) or inside (for circles, ellipses)
+       -   > 0 = right (for line, arc or elliptical arc) or outside (for circles, ellipses)
        )
       """
       res = getQadGeomClosestPart(qadGeom, point)
-      
+
       if firstObj:
          self.pointAt1 = res[1]
          self.atGeom1 = res[2]
@@ -157,7 +156,7 @@ class QadFILLETCommandClass(QadCommandClass):
          self.atGeom2 = res[2]
          self.atSubGeom2 = res[3]
          self.partAt2 = res[4]
-   
+
       e.selectOnLayer(False) # non incrementale
       return True
 
@@ -165,42 +164,42 @@ class QadFILLETCommandClass(QadCommandClass):
    # ============================================================================
    # filletPolyline
    # ============================================================================
-   def filletPolyline(self):         
+   def filletPolyline(self):
       layer = self.entity1.layer
       f = self.entity1.getFeature()
       qadGeom = self.entity1.getQadGeom()
       subQadGeom = getQadGeomAt(qadGeom, self.atGeom1, self.atSubGeom1)
-            
+
       if filletAllPartsQadPolyline(subQadGeom, self.radius) == False: return False
       newQadGeom = setQadGeomAt(qadGeom, subQadGeom, self.atGeom1, self.atSubGeom1)
       if newQadGeom is None:
          return False
       f.setGeometry(fromQadGeomToQgsGeom(newQadGeom, layer))
-                              
+
       self.plugIn.beginEditCommand("Feature edited", layer)
-      
-      # plugIn, layer, feature, refresh, check_validity
+
+      # plugin, layer, feature, refresh, check_validity
       if qad_layer.updateFeatureToLayer(self.plugIn, layer, f, False, False) == False:
          self.plugIn.destroyEditCommand()
          return False
 
       self.plugIn.endEditCommand()
       self.nOperationsToUndo = self.nOperationsToUndo + 1
-      
+
       return True
-   
+
 
    # ============================================================================
    # fillet
    # ============================================================================
    def fillet(self):
-      tolerance2ApproxCurve = QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2APPROXCURVE")) 
-      
-      # stessa entità e stessa geometria
+      tolerance2ApproxCurve = QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2APPROXCURVE"))
+
+      # same entity and same geometry
       if self.entity1.layer.id() == self.entity2.layer.id() and \
          self.entity1.featureId == self.entity2.featureId and \
          self.atGeom1 == self.atGeom2 and self.atSubGeom1 == self.atSubGeom2:
-         # se anche stessa parte
+         # if also the same party
          if self.partAt1 == self.partAt2: return False
          subQadGeom = getQadGeomAt(self.entity1.getQadGeom(),self.atGeom1, self.atSubGeom1)
          if subQadGeom.whatIs() == "POLYLINE":
@@ -214,80 +213,80 @@ class QadFILLETCommandClass(QadCommandClass):
             return False
 
          self.plugIn.beginEditCommand("Feature edited", [self.entity1.layer])
-   
+
          f = self.entity1.getFeature()
-         # trasformo la geometria nel crs del layer
+         # I transform the geometry into the layer crs
          f.setGeometry(fromQadGeomToQgsGeom(newQadGeom, self.entity1.layer))
-         
-         # plugIn, layer, feature, refresh, check_validity
+
+         # plugin, layer, feature, refresh, check_validity
          if qad_layer.updateFeatureToLayer(self.plugIn, self.entity1.layer, f, False, False) == False:
             self.plugIn.destroyEditCommand()
             return False
 
          self.plugIn.endEditCommand()
          self.nOperationsToUndo = self.nOperationsToUndo + 1
-   
+
          return True
 
       # geometrie diverse
       res = fillet2QadGeometries(self.entity1.getQadGeom(), self.atGeom1, self.atSubGeom1, self.partAt1, self.pointAt1, \
                                  self.entity2.getQadGeom(), self.atGeom2, self.atSubGeom2, self.partAt2, self.pointAt2, \
                                  self.filletMode, self.radius)
-         
+
       if res is None: # raccordo non possibile
          msg = QadMsg.translate("Command_FILLET", "\nFillet with radius <{0}> impossible.")
          #showMsg
          self.showMsg(msg.format(str(self.radius)))
          return False
-      
+
       newQadGeom = res[0]
       whatToDoPoly1 = res[1]
       whatToDoPoly2 = res[2]
 
       self.plugIn.beginEditCommand("Feature edited", [self.entity1.layer, self.entity2.layer])
 
-      if whatToDoPoly1 == 1: # 1=modificare       
+      if whatToDoPoly1 == 1: # 1=modify
          f = self.entity1.getFeature()
-         # trasformo la geometria nel crs del layer
+         # I transform the geometry into the layer crs
          f.setGeometry(fromQadGeomToQgsGeom(newQadGeom, self.entity1.layer))
-         
-         # plugIn, layer, feature, refresh, check_validity
+
+         # plugin, layer, feature, refresh, check_validity
          if qad_layer.updateFeatureToLayer(self.plugIn, self.entity1.layer, f, False, False) == False:
             self.plugIn.destroyEditCommand()
             return False
-      elif whatToDoPoly1 == 2: # 2=cancellare
-         # se non si tratta della stessa entità
+      elif whatToDoPoly1 == 2: # 2=delete
+         # if it is not the same entity
          if self.entity1 != self.entity2:
-            # plugIn, layer, featureId, refresh
+            # plugin, layer, featureId, refresh
             if qad_layer.deleteFeatureToLayer(self.plugIn, self.entity1.layer, \
                                               self.entity1.featureId, False) == False:
                self.plugIn.destroyEditCommand()
                return False
 
-      if whatToDoPoly2 == 1: # 1=modificare
+      if whatToDoPoly2 == 1: # 1=modify
          f = self.entity2.getFeature()
-         # trasformo la geometria nel crs del layer
+         # I transform the geometry into the layer crs
          f.setGeometry(fromQadGeomToQgsGeom(newQadGeom, self.entity2.layer))
-         
-         # plugIn, layer, feature, refresh, check_validity
+
+         # plugin, layer, feature, refresh, check_validity
          if qad_layer.updateFeatureToLayer(self.plugIn, self.entity2.layer, f, False, False) == False:
             self.plugIn.destroyEditCommand()
             return False
-      elif whatToDoPoly2 == 2: # 2=cancellare 
-         # se non si tratta della stessa entità
+      elif whatToDoPoly2 == 2: # 2=delete
+         # if it is not the same entity
          if self.entity1 != self.entity2:
-            # plugIn, layer, featureId, refresh
+            # plugin, layer, featureId, refresh
             if qad_layer.deleteFeatureToLayer(self.plugIn, self.entity2.layer, \
                                               self.entity2.featureId, False) == False:
                self.plugIn.destroyEditCommand()
                return False
 
-      if whatToDoPoly1 == 0 and whatToDoPoly2 == 0: # 0=niente      
+      if whatToDoPoly1 == 0 and whatToDoPoly2 == 0: # 0=nothing
          geom = QgsGeometry.fromPolylineXY(filletLinearObjectList.asPolyline(tolerance2ApproxCurve))
-         # trasformo la geometria nel crs del layer
+         # I transform the geometry into the layer crs
          geom = fromQadGeomToQgsGeom(newQadGeom, self.entity1.layer)
-         
-         # plugIn, layer, geom, coordTransform, refresh, check_validity
+
+         # plugin, layer, geom, coordTransform, refresh, check_validity
          if qad_layer.addGeomToLayer(self.plugIn, self.entity1.layer, geom, None, False, False) == False:
             self.plugIn.destroyEditCommand()
             return False
@@ -296,63 +295,63 @@ class QadFILLETCommandClass(QadCommandClass):
       self.nOperationsToUndo = self.nOperationsToUndo + 1
 
       return True
-      
+
 
    # ============================================================================
    # waitForFirstEntSel
    # ============================================================================
-   def waitForFirstEntSel(self):      
+   def waitForFirstEntSel(self):
       self.step = 1
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().setMode(Qad_fillet_maptool_ModeEnum.ASK_FOR_FIRST_LINESTRING)
 
-      # l'opzione Radius viene tradotta in italiano in "RAggio" nel contesto "waitForFirstEntSel"
+      # the Radius option is translated into Italian as "RAggio" in the "waitForFirstEntSel" context
       keyWords = QadMsg.translate("Command_FILLET", "Undo") + "/" + \
                  QadMsg.translate("Command_FILLET", "Polyline") + "/" + \
                  QadMsg.translate("Command_FILLET", "Radius", "waitForFirstEntSel") + "/" + \
                  QadMsg.translate("Command_FILLET", "Trim") + "/" + \
                  QadMsg.translate("Command_FILLET", "Multiple")
       prompt = QadMsg.translate("Command_FILLET", "Select first object or [{0}]: ").format(keyWords)
-               
+
       englishKeyWords = "Undo" + "/" + "Polyline" + "/" + "Radius" + "/" + "Trim" + "/" + "Multiple"
       keyWords += "_" + englishKeyWords
-      # si appresta ad attendere un punto o enter o una parola chiave         
-      # msg, inputType, default, keyWords, valore nullo non permesso
+      # is preparing to wait for a point or Enter or a keyword
+      # msg, inputType, default, keyWords, null value not allowed
       self.waitFor(prompt, \
                    QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS, \
                    None, \
-                   keyWords, QadInputModeEnum.NOT_NULL)      
-      
+                   keyWords, QadInputModeEnum.NOT_NULL)
+
 
    # ============================================================================
    # WaitForPolyline
    # ============================================================================
    def WaitForPolyline(self):
       self.step = 2
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().setMode(Qad_fillet_maptool_ModeEnum.ASK_FOR_POLYLINE)
-      self.getPointMapTool().radius = self.radius      
+      self.getPointMapTool().radius = self.radius
 
-      # l'opzione Radius viene tradotta in italiano in "Raggio" nel contesto "WaitForPolyline"
+      # the Radius option is translated into Italian as "Radius" in the "WaitForPolyline" context
       keyWords = QadMsg.translate("Command_FILLET", "Radius", "WaitForPolyline")
       prompt = QadMsg.translate("Command_FILLET", "Select polyline or [{0}]: ").format(keyWords)
 
       englishKeyWords = "Radius"
       keyWords += "_" + englishKeyWords
-      # si appresta ad attendere un punto o enter o una parola chiave         
-      # msg, inputType, default, keyWords, valore nullo non permesso
+      # is preparing to wait for a point or Enter or a keyword
+      # msg, inputType, default, keyWords, null value not allowed
       self.waitFor(prompt, \
                    QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS, \
                    None, \
-                   keyWords, QadInputModeEnum.NOT_NULL)      
-            
-        
+                   keyWords, QadInputModeEnum.NOT_NULL)
+
+
    # ============================================================================
    # waitForFilletMode
    # ============================================================================
-   def waitForFilletMode(self):      
+   def waitForFilletMode(self):
       self.step = 4
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().setMode(Qad_fillet_maptool_ModeEnum.NONE)
 
       keyWords = QadMsg.translate("Command_FILLET", "Trim-extend") + "/" + \
@@ -361,93 +360,93 @@ class QadFILLETCommandClass(QadCommandClass):
       if self.filletMode == 1:
          default = QadMsg.translate("Command_FILLET", "Trim-extend")
       elif self.filletMode == 2:
-         default = QadMsg.translate("Command_FILLET", "No trim-extend") 
-                         
+         default = QadMsg.translate("Command_FILLET", "No trim-extend")
+
       prompt = QadMsg.translate("Command_FILLET", "Specify trim mode [{0}] <{1}>: ").format(keyWords, default)
 
       englishKeyWords = "Trim-extend" + "/" + "No trim-extend"
       keyWords += "_" + englishKeyWords
-      # si appresta ad attendere un punto o enter o una parola chiave o un numero reale     
-      # msg, inputType, default, keyWords, nessun controllo
+      # is preparing to wait for a point or Enter or a keyword or a real number
+      # msg, inputType, default, keyWords, no check
       self.waitFor(prompt, QadInputTypeEnum.KEYWORDS, default, \
-                   keyWords)      
+                   keyWords)
 
 
    # ============================================================================
    # waitForSecondEntSel
    # ============================================================================
-   def waitForSecondEntSel(self):      
-      self.step = 6      
-      # imposto il map tool
+   def waitForSecondEntSel(self):
+      self.step = 6
+      # set the map tool
       self.getPointMapTool().filletMode = self.filletMode
       self.getPointMapTool().radius = self.radius
       self.getPointMapTool().setEntityInfo(self.entity1, self.atGeom1, self.atSubGeom1, \
-                                           self.partAt1, self.pointAt1)      
+                                           self.partAt1, self.pointAt1)
       self.getPointMapTool().setMode(Qad_fillet_maptool_ModeEnum.ASK_FOR_SECOND_LINESTRING)
 
-      # l'opzione Radius viene tradotta in italiano in "RAggio" nel contesto "waitForSecondEntSel"
-      keyWords = QadMsg.translate("Command_FILLET", "Radius", "waitForSecondEntSel")           
+      # the Radius option is translated into Italian as "RAggio" in the "waitForSecondEntSel" context
+      keyWords = QadMsg.translate("Command_FILLET", "Radius", "waitForSecondEntSel")
       prompt = QadMsg.translate("Command_FILLET", "Select second object or shift-select to apply corner or [{0}]: ").format(keyWords)
 
       englishKeyWords = "Radius"
       keyWords += "_" + englishKeyWords
-      # si appresta ad attendere un punto o enter o una parola chiave         
-      # msg, inputType, default, keyWords, valore nullo non permesso
+      # is preparing to wait for a point or Enter or a keyword
+      # msg, inputType, default, keyWords, null value not allowed
       self.waitFor(prompt, \
                    QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS, \
                    None, \
-                   keyWords, QadInputModeEnum.NOT_NULL)      
+                   keyWords, QadInputModeEnum.NOT_NULL)
 
-        
+
    def run(self, msgMapTool = False, msg = None):
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
-      
+         return True # end command
+
       if self.step == 0:
          CurrSettingsMsg = QadMsg.translate("QAD", "\nCurrent settings: ")
          if self.filletMode == 1:
             CurrSettingsMsg = CurrSettingsMsg + QadMsg.translate("Command_FILLET", "Mode = Trim-extend")
          else:
             CurrSettingsMsg = CurrSettingsMsg + QadMsg.translate("Command_FILLET", "Mode = No trim-extend")
-               
+
          CurrSettingsMsg = CurrSettingsMsg + QadMsg.translate("Command_FILLET", ", Radius = ") + str(self.radius)
-         self.showMsg(CurrSettingsMsg)         
-            
+         self.showMsg(CurrSettingsMsg)
+
          self.waitForFirstEntSel()
          return False # continua
-      
+
       # =========================================================================
-      # RISPOSTA ALLA SELEZIONE PRIMO OGGETTO
+      # RESPONSE TO THE FIRST OBJECT SELECTION
       elif self.step == 1:
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
             else:
                value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == unicode:
             if value == QadMsg.translate("Command_FILLET", "Undo") or value == "Undo":
-               if self.nOperationsToUndo > 0: 
+               if self.nOperationsToUndo > 0:
                   self.nOperationsToUndo = self.nOperationsToUndo - 1
                   self.plugIn.undoEditCommand()
                else:
                   self.showMsg(QadMsg.translate("QAD", "\nThe command has been canceled."))
-                  
-               self.waitForFirstEntSel() # si appresta ad attendere la selezione del primo oggetto
+
+               self.waitForFirstEntSel() # is preparing to wait for the selection of the first object
             elif value == QadMsg.translate("Command_FILLET", "Polyline") or value == "Polyline":
                self.WaitForPolyline()
-            # l'opzione Radius viene tradotta in italiano in "RAggio" nel contesto "waitForFirstEntSel"
+            # the Radius option is translated into Italian as "RAggio" in the "waitForFirstEntSel" context
             elif value == QadMsg.translate("Command_FILLET", "Radius", "waitForFirstEntSel") or value == "Radius":
                if self.GetDistClass is not None:
                   del self.GetDistClass
@@ -462,25 +461,25 @@ class QadFILLETCommandClass(QadCommandClass):
                self.waitForFilletMode()
             elif value == QadMsg.translate("Command_FILLET", "Multiple") or value == "Multiple":
                self.multi = True
-               self.waitForFirstEntSel() # si appresta ad attendere la selezione del primo oggetto
-                           
-         elif type(value) == QgsPointXY: # se é stato selezionato un punto
+               self.waitForFirstEntSel() # is preparing to wait for the selection of the first object
+
+         elif type(value) == QgsPointXY: # if a point has been selected
             self.entity1.clear()
             if self.getPointMapTool().entity.isInitialized():
                if self.setEntityInfo(True, self.getPointMapTool().entity.layer, \
                                      self.getPointMapTool().entity.featureId, value) == True:
-                  self.waitForSecondEntSel() # si appresta ad attendere la selezione del secondo oggetto
+                  self.waitForSecondEntSel() # is preparing to wait for the selection of the second object
                   return False
             else:
-               # cerco se ci sono entità nel punto indicato considerando
-               # solo layer lineari o poligono editabili che non appartengano a quote
+               # I searc if there are entities at the point indicated considering
+               # only editable linear or polygon layers that do not belong to dimensions
                layerList = []
-               for layer in qad_utils.getVisibleVectorLayers(self.plugIn.canvas): # Tutti i layer vettoriali visibili
+               for layer in qad_utils.getVisibleVectorLayers(self.plugIn.canvas): # All vector layers visible
                   if (layer.geometryType() == QgsWkbTypes.LineGeometry or layer.geometryType() == QgsWkbTypes.PolygonGeometry) and \
                      layer.isEditable():
                      if len(QadDimStyles.getDimListByLayer(layer)) == 0:
                         layerList.append(layer)
-               
+
                result = qad_utils.getEntSel(self.getPointMapTool().toCanvasCoordinates(value), \
                                             self.getPointMapTool(), \
                                             QadVariables.get(QadMsg.translate("Environment variables", "PICKBOX")), \
@@ -488,35 +487,35 @@ class QadFILLETCommandClass(QadCommandClass):
                if result is not None:
                   # result[0] = feature, result[1] = layer, result[0] = point
                   if self.setEntityInfo(True, result[1], result[0].id(), result[2]) == True:
-                     self.waitForSecondEntSel() # si appresta ad attendere la selezione del secondo oggetto
+                     self.waitForSecondEntSel() # is preparing to wait for the selection of the second object
                      return False
-            self.waitForFirstEntSel() # si appresta ad attendere la selezione del primo oggetto                                    
+            self.waitForFirstEntSel() # is preparing to wait for the selection of the first object
          else:
-            return True # fine comando
-         
-         return False 
+            return True # end command
+
+         return False
 
       # =========================================================================
-      # RISPOSTA ALLA SELEZIONE DI UNA POLILINEA (da step = 1)
+      # RESPONSE TO THE SELECTION OF A POLYLINE (from step = 1)
       elif self.step == 2:
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
             else:
                value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == unicode:
-            # l'opzione Radius viene tradotta in italiano in "Raggio" nel contesto "WaitForPolyline"
+            # the Radius option is translated into Italian as "Radius" in the "WaitForPolyline" context
             if value == QadMsg.translate("Command_FILLET", "Radius", "WaitForPolyline") or value == "Radius":
                if self.GetDistClass is not None:
                   del self.GetDistClass
@@ -526,23 +525,23 @@ class QadFILLETCommandClass(QadCommandClass):
                self.GetDistClass.dist = self.radius
                self.GetDistClass.inputMode = QadInputModeEnum.NOT_NEGATIVE
                self.step = 5
-               self.GetDistClass.run(msgMapTool, msg)                           
+               self.GetDistClass.run(msgMapTool, msg)
                return False
-         elif type(value) == QgsPointXY: # se é stato selezionato un punto
+         elif type(value) == QgsPointXY: # if a point has been selected
             self.entity1.clear()
             if self.getPointMapTool().entity.isInitialized():
                if self.setEntityInfo(True, self.getPointMapTool().entity.layer, \
                                      self.getPointMapTool().entity.featureId, value) == True:
                   if self.filletPolyline() == False or self.multi:
-                     self.waitForFirstEntSel() # si appresta ad attendere la selezione del primo oggetto
+                     self.waitForFirstEntSel() # is preparing to wait for the selection of the first object
                      return False
                   else:
                      return True
             else:
-               # cerco se ci sono entità nel punto indicato considerando
-               # solo layer lineari o poligono editabili che non appartengano a quote
+               # I searc if there are entities at the point indicated considering
+               # only editable linear or polygon layers that do not belong to dimensions
                layerList = []
-               for layer in qad_utils.getVisibleVectorLayers(self.plugIn.canvas): # Tutti i layer vettoriali visibili
+               for layer in qad_utils.getVisibleVectorLayers(self.plugIn.canvas): # All vector layers visible
                   if (layer.geometryType() == QgsWkbTypes.LineGeometry or layer.geometryType() == QgsWkbTypes.PolygonGeometry) and \
                      layer.isEditable():
                      if len(QadDimStyles.getDimListByLayer(layer)) == 0:
@@ -556,45 +555,45 @@ class QadFILLETCommandClass(QadCommandClass):
                   # result[0] = feature, result[1] = layer, result[0] = point
                   if self.setEntityInfo(True, result[1], result[0].id(), result[2]) == True:
                      if self.filletPolyline() == False or self.multi:
-                        self.waitForFirstEntSel() # si appresta ad attendere la selezione del primo oggetto
+                        self.waitForFirstEntSel() # is preparing to wait for the selection of the first object
                         return False
                      else:
                         return True
          else:
-            return True # fine comando
+            return True # end command
 
          self.WaitForPolyline()
          return False
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL RAGGIO DI RACCORDO (da step = 1)
+      # RESPONSE TO THE FILLING RADIUS REQUEST (from step = 1)
       elif self.step == 3:
          if self.GetDistClass.run(msgMapTool, msg) == True:
             if self.GetDistClass.dist is not None:
                self.radius = self.GetDistClass.dist
                QadVariables.set(QadMsg.translate("Environment variables", "FILLETRAD"), self.radius)
                QadVariables.save()
-            self.waitForFirstEntSel() # si appresta ad attendere la selezione del primo oggetto
-            self.getPointMapTool().refreshSnapType() # aggiorno lo snapType che può essere variato dal maptool di distanza                     
-         return False # fine comando
-      
+            self.waitForFirstEntSel() # is preparing to wait for the selection of the first object
+            self.getPointMapTool().refreshSnapType() # update the snapType which can be varied from the distance map tool
+         return False # end command
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DELLA MODALITA' DI TAGLIO (da step = 1)
-      elif self.step == 4: # dopo aver atteso un punto o un numero reale si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
+      # RESPONSE TO THE CUTTING MODE REQUEST (from step = 1)
+      elif self.step == 4: # after waiting for a point or a real number the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
                   value = self.filletMode
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
             else:
                value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == unicode:
@@ -603,12 +602,12 @@ class QadFILLETCommandClass(QadCommandClass):
             elif value == QadMsg.translate("Command_FILLET", "No trim-extend") or value == "No trim-extend":
                self.filletMode = 2
             self.plugIn.setFilletMode(self.filletMode)
-            
-         self.waitForFirstEntSel() # si appresta ad attendere la selezione del primo oggetto
+
+         self.waitForFirstEntSel() # is preparing to wait for the selection of the first object
          return False
-      
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL RAGGIO DI RACCORDO (da step = 3)
+      # RESPONSE TO THE FILLING RADIUS REQUEST (from step = 3)
       elif self.step == 5:
          if self.GetDistClass.run(msgMapTool, msg) == True:
             if self.GetDistClass.dist is not None:
@@ -616,30 +615,30 @@ class QadFILLETCommandClass(QadCommandClass):
                QadVariables.set(QadMsg.translate("Environment variables", "FILLETRAD"), self.radius)
                QadVariables.save()
             self.WaitForPolyline()
-            self.getPointMapTool().refreshSnapType() # aggiorno lo snapType che può essere variato dal maptool di distanza                     
-         return False # fine comando
-      
+            self.getPointMapTool().refreshSnapType() # update the snapType which can be varied from the distance map tool
+         return False # end command
+
       # =========================================================================
-      # RISPOSTA ALLA SELEZIONE SECONDO OGGETTO
+      # RESPONSE TO SELECTION SECOND OBJECT
       elif self.step == 6:
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
             else:
                value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == unicode:
-            # l'opzione Radius viene tradotta in italiano in "RAggio" nel contesto "waitForSecondEntSel"
+            # the Radius option is translated into Italian as "RAggio" in the "waitForSecondEntSel" context
             if value == QadMsg.translate("Command_FILLET", "Radius", "waitForSecondEntSel") or value == "Radius":
                if self.GetDistClass is not None:
                   del self.GetDistClass
@@ -651,10 +650,10 @@ class QadFILLETCommandClass(QadCommandClass):
                self.step = 7
                self.GetDistClass.run(msgMapTool, msg)
                return False
-                           
-         elif type(value) == QgsPointXY: # se é stato selezionato un punto
+
+         elif type(value) == QgsPointXY: # if a point has been selected
             self.entity2.clear()
-            self.qadPolyline2.removeAll()            
+            self.qadPolyline2.removeAll()
 
             if self.getPointMapTool().entity.isInitialized():
                if self.setEntityInfo(False, self.getPointMapTool().entity.layer, \
@@ -663,27 +662,27 @@ class QadFILLETCommandClass(QadCommandClass):
                      dummyRadius = self.radius
                      self.radius = 0
                      dummyFilletMode = self.filletMode
-                     self.filletMode = 1 # modalità di raccordo; 1=Taglia-estendi
+                     self.filletMode = 1 # fillet mode; 1=Trim-extend
                      result = self.fillet()
                      self.radius = dummyRadius
                      self.filletMode = dummyFilletMode
                   else:
                      result = self.fillet()
-                  
+
                   if result == False:
-                     self.waitForSecondEntSel() # si appresta ad attendere la selezione del secondo oggetto         
-                     return False 
-                     
+                     self.waitForSecondEntSel() # is preparing to wait for the selection of the second object
+                     return False
+
                   if self.multi:
-                     self.waitForFirstEntSel() # si appresta ad attendere la selezione del primo oggetto
+                     self.waitForFirstEntSel() # is preparing to wait for the selection of the first object
                      return False
                   else:
                      return True
             else:
-               # cerco se ci sono entità nel punto indicato considerando
-               # solo layer lineari o poligono editabili che non appartengano a quote
+               # I searc if there are entities at the point indicated considering
+               # only editable linear or polygon layers that do not belong to dimensions
                layerList = []
-               for layer in qad_utils.getVisibleVectorLayers(self.plugIn.canvas): # Tutti i layer vettoriali visibili
+               for layer in qad_utils.getVisibleVectorLayers(self.plugIn.canvas): # All vector layers visible
                   if (layer.geometryType() == QgsWkbTypes.LineGeometry or layer.geometryType() == QgsWkbTypes.PolygonGeometry) and \
                      layer.isEditable():
                      if len(QadDimStyles.getDimListByLayer(layer)) == 0:
@@ -697,28 +696,28 @@ class QadFILLETCommandClass(QadCommandClass):
                   # result[0] = feature, result[1] = layer, result[0] = point
                   if self.setEntityInfo(False, result[1], result[0].id(), result[2]) == True:
                      if self.fillet() == False:
-                        self.waitForSecondEntSel() # si appresta ad attendere la selezione del secondo oggetto         
-                        return False 
-               
+                        self.waitForSecondEntSel() # is preparing to wait for the selection of the second object
+                        return False
+
                      if self.multi:
-                        self.waitForFirstEntSel() # si appresta ad attendere la selezione del primo oggetto
+                        self.waitForFirstEntSel() # is preparing to wait for the selection of the first object
                         return False
                      else:
                         return True
          else:
-            return True # fine comando
-         
-         self.waitForSecondEntSel() # si appresta ad attendere la selezione del secondo oggetto         
-         return False 
+            return True # end command
+
+         self.waitForSecondEntSel() # is preparing to wait for the selection of the second object
+         return False
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL RAGGIO DI RACCORDO (da step = 6)
+      # RESPONSE TO THE FILLING RADIUS REQUEST (from step = 6)
       elif self.step == 7:
          if self.GetDistClass.run(msgMapTool, msg) == True:
             if self.GetDistClass.dist is not None:
                self.radius = self.GetDistClass.dist
                QadVariables.set(QadMsg.translate("Environment variables", "FILLETRAD"), self.radius)
-               QadVariables.save()      
-            self.waitForSecondEntSel() # si appresta ad attendere la selezione del secondo oggetto
-            self.getPointMapTool().refreshSnapType() # aggiorno lo snapType che può essere variato dal maptool di distanza                     
-         return False # fine comando
+               QadVariables.save()
+            self.waitForSecondEntSel() # is preparing to wait for the selection of the second object
+            self.getPointMapTool().refreshSnapType() # update the snapType which can be varied from the distance map tool
+         return False # end command

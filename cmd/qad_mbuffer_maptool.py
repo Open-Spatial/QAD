@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per gestire il map tool in ambito del comando mbuffer
- 
+ class to manage the map tool for the mbuffer command
+
                               -------------------
         begin                : 2013-09-19
         copyright            : iiiii
@@ -38,21 +38,21 @@ from ..qad_multi_geom import fromQadGeomToQgsGeom
 # Qad_mbuffer_maptool_ModeEnum class.
 # ===============================================================================
 class Qad_mbuffer_maptool_ModeEnum():
-   # noto niente si richiede il primo punto
-   NONE_KNOWN_ASK_FOR_FIRST_PT = 1     
-   # noto il primo punto si richiede la larghezza del buffer
-   FIRST_PT_ASK_FOR_BUFFER_WIDTH = 2     
+   # if nothing is known, the first point is required
+   NONE_KNOWN_ASK_FOR_FIRST_PT = 1
+   # known the first point requires the width of the buffer
+   FIRST_PT_ASK_FOR_BUFFER_WIDTH = 2
 
 # ===============================================================================
 # Qad_mbuffer_maptool class
 # ===============================================================================
 class Qad_mbuffer_maptool(QadGetPoint):
-    
+
    def __init__(self, plugIn):
       QadGetPoint.__init__(self, plugIn)
-                        
+
       self.startPtForBufferWidth = None
-      # vedi il numero minimo di punti affinché venga riconosciuto un arco o un cerchio
+      # see the minimum number of points for an arc or circle to be recognized
       # nei files qad_arc.py e qad_circle.py e qad_ellipse.py
       self.segments = 12
       self.entitySet = QadEntitySet()
@@ -72,38 +72,38 @@ class Qad_mbuffer_maptool(QadGetPoint):
    def showPointMapToolMarkers(self):
       QadGetPoint.showPointMapToolMarkers(self)
       self.__rubberBand.show()
-                             
+
    def clear(self):
       QadGetPoint.clear(self)
       self.__rubberBand.reset()
-      self.mode = None    
-      
-      
+      self.mode = None
+
+
    def canvasMoveEvent(self, event):
       QadGetPoint.canvasMoveEvent(self, event)
-      
+
       self.__rubberBand.reset()
-               
-      # noto il primo punto si richiede la larghezza del buffer
+
+      # known the first point requires the width of the buffer
       if self.mode == Qad_mbuffer_maptool_ModeEnum.FIRST_PT_ASK_FOR_BUFFER_WIDTH:
          width = qad_utils.getDistance(self.startPtForBufferWidth, self.tmpPoint)
          tolerance = QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2APPROXCURVE"))
-         
+
          for layerEntitySet in self.entitySet.layerEntitySetList:
             entityIterator = QadLayerEntitySetIterator(layerEntitySet)
             for entity in entityIterator:
                bufferedQadGeom = buffer(entity.getQadGeom(), width)
                if bufferedQadGeom is not None:
-                  # trasformo la geometria nel crs del layer
+                  # I transform the geometry into the layer crs
                   self.__rubberBand.addGeometry(fromQadGeomToQgsGeom(bufferedQadGeom, entity.layer), entity.layer)
-                           
-    
+
+
    def activate(self):
-      QadGetPoint.activate(self)           
-      self.__rubberBand.show() 
+      QadGetPoint.activate(self)
+      self.__rubberBand.show()
 
    def deactivate(self):
-      try: # necessario perché se si chiude QGIS parte questo evento nonostante non ci sia più l'oggetto maptool !
+      try: # necessary because if you close QGIS this event starts even though the map tool object is no longer there!
          QadGetPoint.deactivate(self)
          self.__rubberBand.hide()
       except:
@@ -111,10 +111,10 @@ class Qad_mbuffer_maptool(QadGetPoint):
 
    def setMode(self, mode):
       self.mode = mode
-      # noto niente si richiede il primo punto
+      # if nothing is known, the first point is required
       if self.mode == Qad_mbuffer_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_FIRST_PT:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
-      # noto il primo punto si richiede la larghezza del buffer
+      # known the first point requires the width of the buffer
       elif self.mode == Qad_mbuffer_maptool_ModeEnum.FIRST_PT_ASK_FOR_BUFFER_WIDTH:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.startPtForBufferWidth)

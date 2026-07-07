@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- comando OPTIONS per impostazione disegno
- 
+ OPTIONS command for drawing settings
+
                               -------------------
         begin                : 2016-02-10
         copyright            : iiiii
@@ -32,13 +32,13 @@ from .qad_generic_cmd import QadCommandClass
 from ..qad_msg import QadMsg
 
 
-# Classe che gestisce il comando OPTIONS
+# Class that manages the OPTIONS command
 class QadOPTIONSCommandClass(QadCommandClass):
-   
+
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadOPTIONSCommandClass(self.plugIn)
-   
+
    def getName(self):
       return QadMsg.translate("Command_list", "OPTIONS")
 
@@ -52,13 +52,13 @@ class QadOPTIONSCommandClass(QadCommandClass):
       return QIcon(":/plugins/qad/icons/options.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_OPTIONS", "QAD Options.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
-            
+
    def run(self, msgMapTool = False, msg = None):
       Form = QadOPTIONSDialog(self.plugIn)
-      Form.exec_()
+      Form.exec()
       return True

@@ -3,10 +3,10 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per la gestione delle relazioni (intersezioni, tangenza, 
- perpendicolarità, minima distanza) tra oggetti geometrici di base:
- linea , arco, arco di ellisse, cerchio, ellisse
- 
+ class for managing relationships (intersections, tangency,
+ perpendicularity, minimum distance) between basic geometric objects:
+ line, arc, elliptical arc, circle, ellipse
+
                               -------------------
         begin                : 2019-02-28
         copyright            : iiiii
@@ -57,15 +57,15 @@ from .qad_multi_geom import *
 
 # ===============================================================================
 # QadIntersections class
-# rappresenta una classe che calcola le intersezioni tra oggetti di base: linea, cerchio, arco, ellisse, arco di ellisse
+# represents a class that calculates intersections between basic objects: line, circle, arc, ellipse, arc of ellipse
 # ===============================================================================
 class QadIntersections():
-    
+
    def __init__(self):
       pass
 
    # ===============================================================================
-   # metodi per le linee infinite - inizio
+   # methods for infinite lines - start
    # ===============================================================================
 
    # ===============================================================================
@@ -73,9 +73,8 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def twoInfinityLines(line1, line2):
-      """
-      La funzione ritorna il punto di intersezione tra la linea1 e la linea2 considerate linee infinite.
-      La funzione ritorna None se le linee non hanno intersezione.
+      """The function returns the intersection point between line1 and line2 considered infinite lines.
+            The function returns None if the lines have no intersection.
       """
       return qad_utils.getIntersectionPointOn2InfinityLines(line1.pt1, line1.pt2, line2.pt1, line2.pt2)
 
@@ -85,9 +84,8 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def infinityLineWithLine(infinityLine, line):
-      """
-      La funzione ritorna il punto di intersezione tra una linea infinita e un segmento <line>.
-      La funzione ritorna None se non c'è intersezione.
+      """The function returns the point of intersection between an infinite line and a <line> segment.
+            The function returns None if there is no intersection.
       """
       ptInt = QadIntersections.twoInfinityLines(infinityLine, line)
       if ptInt is None: return None
@@ -101,40 +99,38 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def infinityLineWithCircle(infinityLine, circle):
-      """
-      La funzione ritorna i punti di intersezione tra una linea infinita ed un cerchio.
-      """
-      # sposto le geometrie vicino a 0,0 per migliorare la precisione dei calcoli
+      """The function returns the points of intersection between an infinite line and a circle."""
+      # shift the geometries close to 0.0 to improve the accuracy of the calculations
       dx = circle.center.x()
       dy = circle.center.y()
       myInfinityLine = infinityLine.copy()
       myInfinityLine.move(-dx, -dy)
       myCircle = circle.copy()
       myCircle.move(-dx, -dy)
-      
+
       if qad_utils.ptNear(myInfinityLine.pt1, myInfinityLine.pt2): return []
 
-      x2_self = myCircle.center.x() * myCircle.center.x() # X del centro del cerchio <myCircle> al quadrato
-      y2_self = myCircle.center.y() * myCircle.center.y() # Y del centro del cerchio <myCircle> al quadrato
-      radius2_self = myCircle.radius * myCircle.radius # raggio del cerchio <myCircle> al quadrato
-      
+      x2_self = myCircle.center.x() * myCircle.center.x() # X of the center of the circle <myCircle> squared
+      y2_self = myCircle.center.y() * myCircle.center.y() # Y of the center of the circle <myCircle> squared
+      radius2_self = myCircle.radius * myCircle.radius # radius of circle <myCircle> squared
+
       diffX = myInfinityLine.pt2.x() - myInfinityLine.pt1.x()
-      # se diffX è così vicino a zero 
-      if qad_utils.doubleNear(diffX, 0.0): # se myInfinityLine è una retta verticale
+      # if diffX is this close to zero
+      if qad_utils.doubleNear(diffX, 0.0): # if myInfinityLine is a vertical line
          B = -2 * myCircle.center.y()
          C = x2_self + y2_self + (myInfinityLine.pt1.x() * myInfinityLine.pt1.x()) - (2* myInfinityLine.pt1.x() * myCircle.center.x()) - radius2_self
-         D = (B * B) - (4 * C) 
-         # se D è così vicino a zero 
+         D = (B * B) - (4 * C)
+         # if D is so close to zero
          if qad_utils.doubleNear(D, 0.0):
             D = 0
-         elif D < 0: # non si può fare la radice quadrata di un numero negativo
+         elif D < 0: # you cannot take the square root of a negative number
             return []
          E = math.sqrt(D)
-         
-         y1 = (-B + E) / 2        
+
+         y1 = (-B + E) / 2
          x1 = myInfinityLine.pt1.x()
-         
-         y2 = (-B - E) / 2        
+
+         y2 = (-B - E) / 2
          x2 = myInfinityLine.pt1.x()
       else:
          m = (myInfinityLine.pt2.y() - myInfinityLine.pt1.y()) / diffX
@@ -142,27 +138,27 @@ class QadIntersections():
          A = 1 + (m * m)
          B = (2 * m * q) - (2 * myCircle.center.x()) - (2 * m * myCircle.center.y())
          C = x2_self + (q * q) + y2_self - (2 * q * myCircle.center.y()) - radius2_self
-              
+
          D = (B * B) - 4 * A * C
-         # se D è così vicino a zero 
+         # if D is so close to zero
          if qad_utils.doubleNear(D, 0.0):
             D = 0
-         elif D < 0: # non si può fare la radice quadrata di un numero negativo
+         elif D < 0: # you cannot take the square root of a negative number
             return []
          E = math.sqrt(D)
-      
+
          x1 = (-B + E) / (2 * A)
          y1 = myInfinityLine.pt1.y() + m * x1 - m * myInfinityLine.pt1.x()
-   
+
          x2 = (-B - E) / (2 * A)
          y2 = myInfinityLine.pt1.y() + m * x2 - m * myInfinityLine.pt1.x()
-      
-      # traslo i punti per riportarli alla loro posizione originale
+
+      # I translate the points to bring them back to their original position
       result = []
       result.append(QgsPointXY(x1 + dx, y1 + dy))
-      if x1 != x2 or y1 != y2: # i punti non sono coincidenti
+      if x1 != x2 or y1 != y2: # the points are not coincident
          result.append(QgsPointXY(x2 + dx, y2 + dy))
-      
+
       return result
 
 
@@ -171,9 +167,7 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def infinityLineWithArc(infinityLine, arc):
-      """
-      La funzione ritorna i punti di intersezione tra una linea infinita ed un cerchio.
-      """
+      """The function returns the points of intersection between an infinite line and a circle."""
       result = []
       circle = QadCircle()
       circle.set(arc.center, arc.radius)
@@ -189,56 +183,54 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def infinityLineWithEllipse(infinityLine, ellipse):
-      """
-      La funzione ritorna i punti di intersezione tra una linea infinita e un'ellisse.
-      """
+      """The function returns the points of intersection between an infinite line and an ellipse."""
       # http://www.ambrsoft.com/TrigoCalc/Circles2/Ellipse/EllipseLine.htm
-      # la formula dell'ellisse è:
+      # the formula of the ellipse is:
       # (x - h)^2 / a^2 + (y - k)^2 / b^2 = 1
-      # la formula della linea è:
+      # the formula of the line is:
       # y = mx + c
-      # se h=0 e k=0 e c<>0 (ellisse orizzontale con centro in 0,0; linea che non passa da 0,0)
-      
+      # if h=0 and k=0 and c<>0 (horizontal ellipse with center at 0.0; line that does not pass through 0.0)
+
       # deltaForX = a * b * sqrt(a^2 * m^2 + b^2 - c^2)
       # deltaForY = a * b * m * sqrt(a^2 * m^2 + b^2 - c^2)
       # denom = a^2 * m^2 + b^2
-      
+
       # x1 = (-a^2 * m * c + deltaForX) / denom
       # y1 = (b^2 * c + deltaForY) / denom
       # x2 = (-a^2 * m * c - deltaForX) / denom
       # y1 = (b^2 * c - deltaForY) / denom
 
       result = []
-      # traslo e ruoto la linea per confrontarla con l'ellisse con centro in 0,0 e con rotazione = 0
+      # I translate and rotate the line to compare it with the ellipse with center at 0.0 and rotation = 0
       myP1 = ellipse.translateAndRotatePtForNormalEllipse(infinityLine.pt1, False)
       myP2 = ellipse.translateAndRotatePtForNormalEllipse(infinityLine.pt2, False)
-      
-      a = qad_utils.getDistance(ellipse.center, ellipse.majorAxisFinalPt) # semiasse maggiore
-      b = a * ellipse.axisRatio # semiasse minore
 
-      # a lo chiamo m e b lo chiamo c nell'equazione della retta
+      a = qad_utils.getDistance(ellipse.center, ellipse.majorAxisFinalPt) # semi-major axis
+      b = a * ellipse.axisRatio # semi-minor axis
+
+      # I call a m and b I call c in the equation of the line
       m, c = qad_utils.get_A_B_LineEquation(myP1.x(), myP1.y(), myP2.x(), myP2.y())
-      
+
       dummy = a*a * m*m + b*b - c*c
-      if dummy < 0: # non si può fare la radice quadrata di un numero negativo
+      if dummy < 0: # you cannot take the square root of a negative number
          return result
-      
+
       deltaForX = a * b * math.sqrt(dummy)
       deltaForY = a * b * m * math.sqrt(dummy)
       denom = a*a * m*m + b*b
       if denom == 0: return result
-      
+
       x1 = (-(a*a) * m * c + deltaForX) / denom
       y1 = (b*b * c + deltaForY) / denom
       x2 = (-(a*a) * m * c - deltaForX) / denom
       y2 = (b*b * c - deltaForY) / denom
-      
-      # traslo e ruoto il punto per riportarlo nella posizione originale (con il centro e la rotazione dell'ellisse originale)
+
+      # I translate and rotate the point to bring it back to the original position (with the center and rotation of the original ellipse)
       myP1.set(x1, y1)
       myP1 = ellipse.translateAndRotatePtForNormalEllipse(myP1, True)
       result.append(myP1)
-      
-      # traslo e ruoto il punto per riportarlo nella posizione originale (con il centro e la rotazione dell'ellisse originale)
+
+      # I translate and rotate the point to bring it back to the original position (with the center and rotation of the original ellipse)
       myP2.set(x2, y2)
       myP2 = ellipse.translateAndRotatePtForNormalEllipse(myP2, True)
       result.append(myP2)
@@ -251,9 +243,7 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def infinityLineWithEllipseArc(infinityLine, ellipseArc):
-      """
-      La funzione ritorna i punti di intersezione tra una linea infinita ed un arco di ellisse.
-      """
+      """The function returns the points of intersection between an infinite line and an arc of an ellipse."""
       result = []
       ellipse = QadEllipse()
       ellipse.set(ellipseArc.center, ellipseArc.majorAxisFinalPt, ellipseArc.axisRatio)
@@ -261,13 +251,13 @@ class QadIntersections():
       for intPt in intPtList:
          if ellipseArc.isPtOnEllipseArcOnlyByAngle(intPt):
             result.append(intPt)
-            
+
       return result
 
 
    # ===============================================================================
-   # metodi per le linee infinite - fine
-   # metodi per i segmenti - inizio
+   # methods for infinite lines - end
+   # segment methods - start
    # ===============================================================================
 
 
@@ -276,9 +266,8 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def twoLines(line1, line2):
-      """
-      La funzione ritorna il punto di intersezione tra 2 segmenti.
-      La funzione ritorna None se i segmenti non hanno intersezione.
+      """The function returns the intersection point between 2 segments.
+            The function returns None if the segments have no intersection.
       """
       intPt = QadIntersections.twoInfinityLines(line1, line2)
       if intPt is None: return None
@@ -292,9 +281,7 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def lineWithCircle(line, circle):
-      """
-      La funzione ritorna i punti di intersezione tra un segmento ed un cerchio.
-      """
+      """The function returns the intersection points between a segment and a circle."""
       result = []
       intPtList = QadIntersections.infinityLineWithCircle(line, circle)
       for intPt in intPtList:
@@ -308,9 +295,7 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def lineWithArc(line, arc):
-      """
-      La funzione ritorna i punti di intersezione tra un segmento ed un arco.
-      """
+      """The function returns the intersection points between a segment and an arc."""
       result = []
       circle = QadCircle()
       circle.set(arc.center, arc.radius)
@@ -326,9 +311,7 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def lineWithEllipse(line, ellipse):
-      """
-      La funzione ritorna i punti di intersezione tra un segmento e un'ellisse.
-      """
+      """The function returns the intersection points between a segment and an ellipse."""
       result = []
       intPtList = QadIntersections.infinityLineWithEllipse(line, ellipse)
       for intPt in intPtList:
@@ -342,9 +325,7 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def lineWithEllipseArc(line, ellipseArc):
-      """
-      La funzione ritorna i punti di intersezione tra un segmento e un arco di ellisse.
-      """
+      """The function returns the points of intersection between a segment and an arc of an ellipse."""
       result = []
       ellipse = QadEllipse()
       ellipse.set(ellipseArc.center, ellipseArc.majorAxisFinalPt, ellipseArc.axisRatio)
@@ -356,8 +337,8 @@ class QadIntersections():
 
 
    # ===============================================================================
-   # metodi per i segmenti - fine
-   # metodi per i cerchi - inizio
+   # segment methods - end
+   # methods for circles - start
    # ===============================================================================
 
 
@@ -366,85 +347,83 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def twoCircles(circle1, circle2):
-      """
-      La funzione ritorna i punti di intersezione tra 2 cerchi.
-      """
+      """The function returns the intersection points between 2 circles."""
       result = []
-      # sposto le geometrie vicino a 0,0 per migliorare la precisione dei calcoli
+      # shift the geometries close to 0.0 to improve the accuracy of the calculations
       dx = circle1.center.x()
       dy = circle1.center.y()
       myCircle1 = circle1.copy()
       myCircle1.move(-dx, -dy)
       myCircle2 = circle2.copy()
       myCircle2.move(-dx, -dy)
-      
-      # se i punti sono così vicini da essere considerati uguali 
-      if qad_utils.ptNear(myCircle1.center, myCircle2.center): # stesso centro
+
+      # if the points are so close that they are considered equal
+      if qad_utils.ptNear(myCircle1.center, myCircle2.center): # same center
          return []
       distFromCenters = qad_utils.getDistance(myCircle1.center, myCircle2.center)
       distFromCirc = distFromCenters - myCircle1.radius - myCircle2.radius
 
-      # se è così vicino allo zero da considerarlo = 0
+      # if it is so close to zero that it is considered = 0
       if qad_utils.doubleNear(distFromCirc, 0):
          angle = qad_utils.getAngleBy2Pts(myCircle1.center, myCircle2.center)
          pt = qad_utils.getPolarPointByPtAngle(myCircle1.center, angle, myCircle1.radius)
-         # traslo il punto per riportarlo alla sua posizione originale
+         # I move the point to bring it back to its original position
          pt.set(pt.x() + dx, pt.y() + dy)
          result.append(pt)
          return result
-         
+
       if distFromCirc > 0: # i cerchi sono troppo distanti
          return []
 
-      x2_myCircle1 = myCircle1.center.x() * myCircle1.center.x() # X del centro del cerchio <myCircle1> al quadrato
-      x2_circle = myCircle2.center.x() * myCircle2.center.x() # Y del centro del cerchio <myCircle2> al quadrato
-      radius2_myCircle1 = myCircle1.radius * myCircle1.radius # raggio del cerchio <myCircle1> al quadrato
-      radius2_circle = myCircle2.radius * myCircle2.radius # raggio del cerchio <myCircle2> al quadrato
-      
+      x2_myCircle1 = myCircle1.center.x() * myCircle1.center.x() # X of the center of the circle <myCircle1> squared
+      x2_circle = myCircle2.center.x() * myCircle2.center.x() # Y of the center of the circle <myCircle2> squared
+      radius2_myCircle1 = myCircle1.radius * myCircle1.radius # radius of circle <myCircle1> squared
+      radius2_circle = myCircle2.radius * myCircle2.radius # radius of circle <myCircle2> squared
+
       if qad_utils.doubleNear(myCircle1.center.y(), myCircle2.center.y()):
          x1 = x2_circle - x2_myCircle1 + radius2_myCircle1 - radius2_circle
          x1 = x1 / (2 * (myCircle2.center.x() - myCircle1.center.x()))
-         x2 = x1         
+         x2 = x1
          D = radius2_myCircle1 - ((x1 - myCircle1.center.x()) * (x1 - myCircle1.center.x()))
-         # se D è così vicino a zero 
+         # if D is so close to zero
          if qad_utils.doubleNear(D, 0.0):
             D = 0
-         elif D < 0: # non si può fare la radice quadrata di un numero negativo
+         elif D < 0: # you cannot take the square root of a negative number
             return []
          E = math.sqrt(D)
-         
+
          y1 = myCircle1.center.y() + E
          y2 = myCircle1.center.y() - E
       else:
-         y2_myCircle1 = myCircle1.center.y() * myCircle1.center.y() # Y del centro del cerchio <myCircle1> al quadrato
-         y2_circle = myCircle2.center.y() * myCircle2.center.y() # Y del centro del cerchio <myCircle2> al quadrato
-         
+         y2_myCircle1 = myCircle1.center.y() * myCircle1.center.y() # Y of the center of the circle <myCircle1> squared
+         y2_circle = myCircle2.center.y() * myCircle2.center.y() # Y of the center of the circle <myCircle2> squared
+
          a = (myCircle1.center.x() - myCircle2.center.x()) / (myCircle2.center.y() - myCircle1.center.y())
-         b = x2_circle - x2_myCircle1 + y2_circle - y2_myCircle1 + radius2_myCircle1 - radius2_circle 
+         b = x2_circle - x2_myCircle1 + y2_circle - y2_myCircle1 + radius2_myCircle1 - radius2_circle
          b = b / (2 * (myCircle2.center.y() - myCircle1.center.y()))
-         
+
          A = 1 + (a * a)
          B = (2 * a * b) - (2 * myCircle1.center.x()) - (2 * a * myCircle1.center.y())
          C = (b * b) - (2 * myCircle1.center.y() * b) + x2_myCircle1 + y2_myCircle1 - radius2_myCircle1
          D = (B * B) - (4 * A * C)
-         # se D è così vicino a zero 
+         # if D is so close to zero
          if qad_utils.doubleNear(D, 0.0):
             D = 0
-         elif D < 0: # non si può fare la radice quadrata di un numero negativo
+         elif D < 0: # you cannot take the square root of a negative number
             return []
          E = math.sqrt(D)
-         
+
          x1 = (-B + E) / (2 * A)
          y1 = a * x1 + b
-   
-         x2 = (-B - E) / (2 * A)           
+
+         x2 = (-B - E) / (2 * A)
          y2 = a * x2 + b
-      
-      # traslo i punti per riportarli alla loro posizione originale
+
+      # I translate the points to bring them back to their original position
       result.append(QgsPointXY(x1 + dx, y1 + dy))
-      if x1 != x2 or y1 != y2: # i punti non sono coincidenti
+      if x1 != x2 or y1 != y2: # the points are not coincident
          result.append(QgsPointXY(x2 + dx, y2 + dy))
-      
+
       return result
 
 
@@ -453,9 +432,7 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def circleWithArc(circle, arc):
-      """
-      La funzione ritorna i punti di intersezione tra un cerchio ed un arco.
-      """
+      """The function returns the points of intersection between a circle and an arc."""
       result = []
       circle1 = QadCircle()
       circle1.set(arc.center, arc.radius)
@@ -467,48 +444,48 @@ class QadIntersections():
 
 
    # ===============================================================================
-   # generate_initial_guesses 
-   # Funzione per generare i guess iniziali per i calcoli di intersezione cerchio con ellisse (chatgpt)
+   # generate_initial_guesses
+   # Function to generate initial guesses for circle-ellipse intersection calculations (chatgpt)
    # ===============================================================================
    def generate_initial_guesses(h, k, a, b, theta, num_points=20):
       t = np.linspace(0, 2 * np.pi, num_points)
       x_ellipse = a * np.cos(t)
       y_ellipse = b * np.sin(t)
-      
+
       initial_guesses = []
       for x_e, y_e in zip(x_ellipse, y_ellipse):
           x_rotated = h + (x_e * np.cos(theta) - y_e * np.sin(theta))
           y_rotated = k + (x_e * np.sin(theta) + y_e * np.cos(theta))
           initial_guesses.append((x_rotated, y_rotated))
-      
+
       return initial_guesses
 
 
    # ===============================================================================
-   # rotate 
-   # Funzione per la trasformazione di coordinate per i calcoli di intersezione cerchio con ellisse (chatgpt)
+   # rotate
+   # Coordinate transformation function for circle-ellipse intersection calculations (chatgpt)
    # ===============================================================================
    def rotate(x, y, theta):
       x_prime = x * np.cos(theta) + y * np.sin(theta)
       y_prime = -x * np.sin(theta) + y * np.cos(theta)
       return x_prime, y_prime
-   
+
 
 # ============================================================================
    # getEquationForIntCicleEllipse
-   # Definisce un sistema di equazioni non lineari per i calcoli di intersezione cerchio con ellisse (chatgpt)
-   # x e y: centro
-   # a e b: i semiassi dell'ellisse
-   # theta: l'angolo di rotazione dell'ellisse
-   # h e k: le traslazioni dell'ellisse rispetto all'origine.
+   # Defines a system of nonlinear equations for circle-ellipse intersection calculations (chatgpt)
+   # x and y: center
+   # a and b: the semi-axes of the ellipse
+   # theta: the rotation angle of the ellipse
+   # h and k: the translations of the ellipse with respect to the origin.
    # ============================================================================
    @staticmethod
    def getEquationForIntCicleEllipse(xy, circle, ellipse):
       x, y = xy
-      
+
       circle_eq = (x - circle.center.x())**2 + (y - circle.center.y())**2 - circle.radius**2
-         
-      return [circle_eq, QadIntersections.getEquationForEllipse(xy, ellipse)]      
+
+      return [circle_eq, QadIntersections.getEquationForEllipse(xy, ellipse)]
 
 
    # ===============================================================================
@@ -516,49 +493,47 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def circleWithEllipse(circle, ellipse):
-      """
-      La funzione ritorna i punti di intersezione tra un cerchio ed una ellisse.
-      """
+      """The function returns the intersection points between a circle and an ellipse."""
       if NO_SCIPY == True: return []
-      
-      # Calcola la lunghezza dell'asse maggiore (a)
+
+      # Calculate the length of the major axis (a)
       a = qad_utils.getDistance(ellipse.center, ellipse.majorAxisFinalPt)
-      # Calcola la lunghezza dell'asse minore (b)
-      b = a * ellipse.axisRatio      
-      # theta: l'angolo di rotazione dell'ellisse.
+      # Calculate the length of the minor axis (b)
+      b = a * ellipse.axisRatio
+      # theta: the rotation angle of the ellipse.
       theta = ellipse.getRotation()
-      # h e k: le traslazioni dell'ellisse rispetto all'origine, coordinate centro
+      # h and k: the translations of the ellipse with respect to the origin, center coordinates
       h = ellipse.center.x()
       k = ellipse.center.y()
 
       args = (circle, ellipse)
-      
+
       # Generiamo i guess iniziali
       initial_guesses = QadIntersections.generate_initial_guesses(h, k, a, b, theta)
-      
+
       # Risoluzione del sistema di equazioni
       intersections = []
       for guess in initial_guesses:
           sol = fsolve(QadIntersections.getEquationForIntCicleEllipse, guess, args)
           if not any(np.isclose(sol, x).all() for x in intersections):
               intersections.append(sol)
-      
+
       result = []
       for intersection in intersections:
          result.append(QgsPointXY(intersection[0], intersection[1]))
-               
+
       return result
-   
-#       # http://it.scienza.matematica.narkive.com/cTzzSW1r/intersezione-tra-ellisse-e-circonferenza
+
+#       # http://it.scienza.matematica.narkive.com/cTzzSW1r/intersection-tra-ellisse-e-circonformazione
 #       result = []
-# 
-#       # traslo e ruoto il centro del cerchio per confrontarlo con l'ellisse con centro in 0,0 e con rotazione = 0
+#
+#       # I translate and rotate the center of the circle to compare it with the ellipse with center at 0.0 and rotation = 0
 #       myCircle = QadCircle(circle)
 #       myCircle.center = ellipse.translateAndRotatePtForNormalEllipse(circle.center, False)
-# 
-#       a = qad_utils.getDistance(ellipse.center, ellipse.majorAxisFinalPt) # semiasse maggiore
-#       b = a * ellipse.axisRatio # semiasse minore
-#       
+#
+#       a = qad_utils.getDistance(ellipse.center, ellipse.majorAxisFinalPt) # semi-major axis
+#       b = a * ellipse.axisRatio # semi-minor axis
+#
 #       a2 = a * a # a al quadrato
 #       a4 = a2 * a2 # a alla quarta
 #       b2 = b * b # b al quadrato
@@ -566,50 +541,50 @@ class QadIntersections():
 #       c4 = c2 * c2
 #       r = myCircle.radius
 #       r2 = r * r
-#       xc = myCircle.center.x() # x del centro del cerchio
-#       xc2 = xc * xc # x cerchio al quadrato
-#       yc = myCircle.center.y() # y del centro del cerchio
-#       yc2 = yc * yc # y cerchio al quadrato
+#       xc = myCircle.center.x() # x of the center of the circle
+#       xc2 = xc * xc # x squared circle
+#       yc = myCircle.center.y() # y of the center of the circle
+#       yc2 = yc * yc # y squared circle
 #       a2_b2 = a2 - b2
-# 
-# #       [a^4+(p^2+q^2-r^2)^2-2a^2(p^2-q^2+r^2] +
-# #       y [4q(r^2-a^2-p^2-q^2)] +
+#
+# # [a^4+(p^2+q^2-r^2)^2-2a^2(p^2-q^2+r^2] +
+# # y [4q(r^2-a^2-p^2-q^2)] +
 # #       y^2 [2a^2-2a^2c^2+2p^2+2c^2p^2+6q^2-2c^2q^2-2r^2+2c^2r^2] +
 # #       y^3 [4c^2q-4q]+
 # #       y^4 [1-2c^2+c^4] = 0
-#       
+#
 #       z0 = a4 + (xc2 + yc2 - r2) * (xc2 + yc2 - r2) - (2 * a2) * (xc2 - yc2 + r2)
 #       z1 = (4 * yc2) * (r2 - a2 - xc2 - yc2)
 #       z2 = (2 * a2) - (2 * a2 * c2) + 2 *xc2 + (2 * c2 * xc2) + (6 * yc2) - (2 *c2 * yc2) - (2 * r2) + (2 * c2 * r2)
 #       z3 = (4 * c2 * yc) - (4 * yc)
 #       z4 = 1 - (2 * c2) + c4
-# 
+#
 #       y_result = np.roots([z4, z3, z2, z1, z0])
 #       for y in y_result:
 #          y = float(y)
-#          n = (1.0 - y * y / b2) * a2 # data la Y calcolo la X
-#          if qad_utils.doubleNear(n, 0): n = 0 # per problemi di precisione di calcolo (es. se x = 10 , n = -1.11022302463e-14 !)
+#          n = (1.0 - y * y / b2) * a2 # given the Y calculate the
+#          if qad_utils.doubleNear(n, 0): n = 0 # for calculation precision problems (e.g. if x = 10 , n = -1.11022302463e-14 !)
 #          if n >= 0:
 #             x = math.sqrt(n)
 #             p = QgsPointXY(x, y)
-#             # verifico se il punto va bene
+#             # check if the point is OK
 #             dist = qad_utils.getDistance(p, myCircle.center)
-#             # se la distanza coincide con il raggio del cerchio
-#             if qad_utils.doubleNear(dist, myCircle.radius, 1.e-1): # lo so che fa schifo ma l'approssimazione dei calcoli...
-#                # traslo e ruoto il punto per riportarlo nella posizione originale (con il centro e la rotazione dell'ellisse originale)
+#             # if the distance coincides with the radius of the circle
+#             if qad_utils.doubleNear(dist, myCircle.radius, 1.e-1): # I know it sucks but the approximation of the calculations...
+#                # I translate and rotate the point to bring it back to the original position (with the center and rotation of the original ellipse)
 #                p = ellipse.translateAndRotatePtForNormalEllipse(p, True)
 #                qad_utils.appendUniquePointToList(result, p)
-#                
+#
 #             # verifico l'altra coordinata x
 #             p = QgsPointXY(-x, y)
-#             # verifico se il punto va bene
+#             # check if the point is OK
 #             dist = qad_utils.getDistance(p, myCircle.center)
-#             # se la distanza coincide con il raggio del cerchio
-#             if qad_utils.doubleNear(dist, myCircle.radius, 1.e-1): # lo so che fa schifo ma l'approssimazione dei calcoli...
-#                # traslo e ruoto il punto per riportarlo nella posizione originale (con il centro e la rotazione dell'ellisse originale)
+#             # if the distance coincides with the radius of the circle
+#             if qad_utils.doubleNear(dist, myCircle.radius, 1.e-1): # I know it sucks but the approximation of the calculations...
+#                # I translate and rotate the point to bring it back to the original position (with the center and rotation of the original ellipse)
 #                p = ellipse.translateAndRotatePtForNormalEllipse(p, True)
 #                qad_utils.appendUniquePointToList(result, p)
-# 
+#
 #       return result
 
 
@@ -618,9 +593,7 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def circleWithEllipseArc(circle, ellipseArc):
-      """
-      La funzione ritorna i punti di intersezione tra un cerchio ed un arco di ellisse.
-      """
+      """The function returns the points of intersection between a circle and an arc of an ellipse."""
       result = []
       ellipse = QadEllipse()
       ellipse.set(ellipseArc.center, ellipseArc.majorAxisFinalPt, ellipseArc.axisRatio)
@@ -632,8 +605,8 @@ class QadIntersections():
 
 
    # ===============================================================================
-   # metodi per i cerchi - fine
-   # metodi per gli archi - inizio
+   # methods for circles - end
+   # methods for arcs - start
    # ===============================================================================
 
 
@@ -642,9 +615,7 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def twoArcs(arc1, arc2):
-      """
-      La funzione ritorna i punti di intersezione tra 2 archi.
-      """
+      """The function returns the intersection points between 2 arcs."""
       result = []
       circle = QadCircle()
       circle.set(arc1.center, arc1.radius)
@@ -660,12 +631,10 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def arcWithEllipseArc(arc, ellipseArc):
-      """
-      La funzione ritorna i punti di intersezione tra un arco ed un arco di ellisse.
-      """
+      """The function returns the points of intersection between an arc and an arc of an ellipse."""
       result = []
       circle = QadCircle()
-      circle.set(arc.center, arc.radius)     
+      circle.set(arc.center, arc.radius)
       intPtList = QadIntersections.circleWithEllipseArc(circle, ellipseArc)
       for intPt in intPtList:
          if arc.isPtOnArcOnlyByAngle(intPt):
@@ -674,29 +643,29 @@ class QadIntersections():
 
 
    # ===============================================================================
-   # metodi per gli archi - fine
-   # metodi per le ellissi - inizio
+   # methods for arcs - end
+   # methods for ellipses - start
    # ===============================================================================
 
-  
+
    # ============================================================================
    # getEquationForEllipse
-   # Definisce una funzione che rappresenta un'ellisse ruotata e traslata
-   # x e y: centro
-   # a e b: i semiassi dell'ellisse
-   # theta: l'angolo di rotazione dell'ellisse
-   # h e k: le traslazioni dell'ellisse rispetto all'origine.
+   # Defines a function that represents a rotated and translated ellipse
+   # x and y: center
+   # a and b: the semi-axes of the ellipse
+   # theta: the rotation angle of the ellipse
+   # h and k: the translations of the ellipse with respect to the origin.
    # ============================================================================
    @staticmethod
    def getEquationForEllipse(xy, ellipse):
       x, y = xy
-      # Calcola la lunghezza dell'asse maggiore (a)
+      # Calculate the length of the major axis (a)
       a = qad_utils.getDistance(ellipse.center, ellipse.majorAxisFinalPt)
-      # Calcola la lunghezza dell'asse minore (b)
-      b = a * ellipse.axisRatio      
-      # theta: l'angolo di rotazione dell'ellisse.
+      # Calculate the length of the minor axis (b)
+      b = a * ellipse.axisRatio
+      # theta: the rotation angle of the ellipse.
       theta = ellipse.getRotation()
-      # h e k: le traslazioni dell'ellisse rispetto all'origine, coordinate centro
+      # h and k: the translations of the ellipse with respect to the origin, center coordinates
       h = ellipse.center.x()
       k = ellipse.center.y()
 
@@ -706,26 +675,24 @@ class QadIntersections():
       term2 = ((x - h) * sin_t - (y - k) * cos_t) ** 2 / b ** 2
       return term1 + term2 - 1
 
-   
+
    @staticmethod
    def sistema(xy, ellipse1, ellipse2):
       return [QadIntersections.getEquationForEllipse(xy, ellipse1), QadIntersections.getEquationForEllipse(xy, ellipse2)]
 
-   
+
    # ===============================================================================
    # twoEllipses
    # ===============================================================================
    @staticmethod
    def twoEllipses(ellipse1, ellipse2):
-      """
-      La funzione ritorna i punti di intersezione tra 2 ellissi (chatGPT)
-      """
+      """The function returns the points of intersection between 2 ellipses (chatGPT)"""
       if NO_SCIPY == True: return []
-      
+
       # test
 #       l1 = QadLine()
 #       l1.set(QgsPointXY(1, 2), QgsPointXY(3, 4))
-#       
+#
 #       center = QgsPointXY(0, 0)
 #       a = 2
 #       b = 1
@@ -735,9 +702,9 @@ class QadIntersections():
 #       majorAxisFinalPt = qad_utils.getPolarPointByPtAngle(center, theta, a)
 #       ellipse1.set(center, majorAxisFinalPt, axisRatio)
 #       QadMinDistance.fromLineToEllipse(l1, ellipse1)
-      
-#             
-#       
+
+#
+#
 #       center = QgsPointXY(-1, -2)
 #       a = 4
 #       b = 2
@@ -747,31 +714,31 @@ class QadIntersections():
 #       majorAxisFinalPt = qad_utils.getPolarPointByPtAngle(center, theta, a)
 #       ellipse2.set(center, majorAxisFinalPt, axisRatio)
 
-      
+
       args = (ellipse1, ellipse2)
-      # Genera stime iniziali in una griglia intorno ai centri delle ellissi
+      # Generates initial estimates in a grid around the centers of the ellipses
       x_vals = np.linspace(-10, 10, 10)
       y_vals = np.linspace(-10, 10, 10)
       stima_iniziali = np.array(np.meshgrid(x_vals, y_vals)).T.reshape(-1, 2)
-            
-      # Trova le intersezioni utilizzando fsolve da diverse stime iniziali
+
+      # Find intersections using fsolve from several initial estimates
       soluzioni = []
       for stima in stima_iniziali:
           soluzione = fsolve(QadIntersections.sistema, stima, args)
           if QadIntersections.sistema(soluzione, ellipse1, ellipse2)[0] < 1e-6 and QadIntersections.sistema(soluzione, ellipse1, ellipse2)[1] < 1e-6:
               soluzioni.append(soluzione)
-      
+
       # Rimuovi soluzioni duplicate (vicine)
       tolleranza = 1e-4
       soluzioni_uniche = []
       for sol in soluzioni:
           if not any(np.linalg.norm(sol - s) < tolleranza for s in soluzioni_uniche):
               soluzioni_uniche.append(sol)
-      
+
       result = []
       for sol in soluzioni_uniche:
          result.append(QgsPointXY(sol[0], sol[1]))
-      
+
       return result
 
 
@@ -780,9 +747,7 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def ellipseWithArc(ellipse, arc):
-      """
-      La funzione ritorna i punti di intersezione tra un'ellisse ed un arco.
-      """
+      """The function returns the points of intersection between an ellipse and an arc."""
       result = []
       circle = QadCircle()
       circle.set(arc.center, arc.radius)
@@ -791,16 +756,14 @@ class QadIntersections():
          if arc.isPtOnArcOnlyByAngle(intPt):
             result.append(intPt)
       return result
-   
+
 
    # ===============================================================================
    # ellipseWithEllipseArc
    # ===============================================================================
    @staticmethod
    def ellipseWithEllipseArc(ellipse, ellipseArc):
-      """
-      La funzione ritorna i punti di intersezione tra un'ellisse ed un arco di ellisse.
-      """
+      """The function returns the points of intersection between an ellipse and an arc of an ellipse."""
       result = []
       ellipse1 = QadEllipse()
       ellipse1.set(ellipseArc.center, ellipseArc.majorAxisFinalPt, ellipseArc.axisRatio)
@@ -812,8 +775,8 @@ class QadIntersections():
 
 
    # ===============================================================================
-   # metodi per le ellissi - fine
-   # metodi per gli archi di ellisse - inizio
+   # methods for ellipses - end
+   # methods for ellipse arcs - start
    # ===============================================================================
 
 
@@ -822,9 +785,7 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def twoEllipseArcs(EllipseArc1, EllipseArc2):
-      """
-      La funzione ritorna i punti di intersezione tra 2 archi di ellisse.
-      """
+      """The function returns the intersection points between 2 ellipse arcs."""
       result = []
       ellipse1 = QadEllipse()
       ellipse1.set(EllipseArc1.center, EllipseArc1.majorAxisFinalPt, EllipseArc1.axisRatio)
@@ -836,20 +797,19 @@ class QadIntersections():
 
 
    # ===============================================================================
-   # metodi per gli archi di ellisse - fine
-   # metodi per gli oggetti geometrici di base - inizio
+   # methods for ellipse arcs - end
+   # methods for basic geometric objects - start
    # ===============================================================================
 
 
    # ============================================================================
    # twoBasicGeomObjects
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def twoBasicGeomObjects(object1, object2):
+      """the function calculates the intersection points between 2 basic geometric objects:
+            line, arc, ellipse arc, circle, ellipse.
       """
-      la funzione calcola i punti di intersezione tra 2 oggetti geometrici di base:
-      linea, arco, arco di ellisse, cerchio, ellisse.
-      """      
       if object1.whatIs() == "LINE":
          if object2.whatIs() == "LINE":
             result = QadIntersections.twoLines(object1, object2)
@@ -862,7 +822,7 @@ class QadIntersections():
             return QadIntersections.lineWithEllipse(object1, object2)
          elif object2.whatIs() == "ELLIPSE_ARC":
             return QadIntersections.lineWithEllipseArc(object1, object2)
-         
+
       elif object1.whatIs() == "CIRCLE":
          if object2.whatIs() == "LINE":
             return QadIntersections.lineWithCircle(object2, object1)
@@ -874,7 +834,7 @@ class QadIntersections():
             return QadIntersections.circleWithEllipse(object1, object2)
          elif object2.whatIs() == "ELLIPSE_ARC":
             return QadIntersections.circleWithEllipseArc(object1, object2)
-         
+
       elif object1.whatIs() == "ARC":
          if object2.whatIs() == "LINE":
             return QadIntersections.lineWithArc(object2, object1)
@@ -910,23 +870,22 @@ class QadIntersections():
             return QadIntersections.ellipseWithEllipseArc(object2, object1)
          elif object2.whatIs() == "ELLIPSE_ARC":
             return QadIntersections.twoEllipseArcs(object1, object2)
-   
+
       return []
 
 
    # ============================================================================
    # twoBasicGeomObjectExtensions
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def twoBasicGeomObjectExtensions(object1, object2):
+      """the function calculates the intersection points between the extensions of 2 basic geometric objects:
+            line (becomes infinite line), arc (becomes circle), ellipse arc (becomes ellipse), circle, ellipse.
       """
-      la funzione calcola i punti di intersezione tra le estensioni di 2 oggetti geometrici di base:
-      linea (diventa linea infinita), arco (diventa cerchio), arco di ellisse (diventa ellisse), cerchio, ellisse.
-      """      
       if object1.whatIs() == "LINE":
          if object2.whatIs() == "LINE":
             result = QadIntersections.twoInfinityLines(object1, object2)
-            return [result] if result is not None else ()         
+            return [result] if result is not None else ()
          elif object2.whatIs() == "CIRCLE":
             return QadIntersections.infinityLineWithCircle(object1, object2)
          elif object2.whatIs() == "ARC":
@@ -939,7 +898,7 @@ class QadIntersections():
             ellipse = QadEllipse()
             ellipse.set(object2.center, object2.majorAxisFinalPt, object2.axisRatio)
             return QadIntersections.infinityLineWithEllipse(object1, ellipse)
-         
+
       elif object1.whatIs() == "CIRCLE":
          if object2.whatIs() == "LINE":
             return QadIntersections.infinityLineWithCircle(object2, object1)
@@ -955,7 +914,7 @@ class QadIntersections():
             ellipse = QadEllipse()
             ellipse.set(object2.center, object2.majorAxisFinalPt, object2.axisRatio)
             return QadIntersections.circleWithEllipse(object1, ellipse)
-         
+
       elif object1.whatIs() == "ARC":
          circle = QadCircle()
          circle.set(object1.center, object1.radius)
@@ -981,24 +940,23 @@ class QadIntersections():
          ellipse = QadEllipse()
          ellipse.set(object1.center, object1.majorAxisFinalPt, object1.axisRatio)
          return QadIntersections.twoBasicGeomObjectExtensions(ellipse, object2)
-   
+
       return []
 
 
    # ============================================================================
    # basicGeomObjectWithBasicGeomObjectExtensions
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def basicGeomObjectWithBasicGeomObjectExtensions(object1, object2):
-      """
-      la funzione calcola i punti di intersezione tra un oggetto geometrico di base (object1) e 
-      le estensioni di oggetti geometrico (object2) di base:
-      linea (diventa linea infinita), arco (diventa cerchio), arco di ellisse (diventa ellisse), cerchio, ellisse.
+      """the function calculates the intersection points between a basic geometric object (object1) and
+            the extensions of basic geometric objects (object2):
+            line (becomes infinite line), arc (becomes circle), ellipse arc (becomes ellipse), circle, ellipse.
       """
       if object1.whatIs() == "LINE":
          if object2.whatIs() == "LINE":
             result = QadIntersections.infinityLineWithLine(object2, object1)
-            return [result] if result is not None else ()         
+            return [result] if result is not None else ()
          elif object2.whatIs() == "CIRCLE":
             return QadIntersections.lineWithCircle(object1, object2)
          elif object2.whatIs() == "ARC":
@@ -1011,10 +969,10 @@ class QadIntersections():
             ellipse = QadEllipse()
             ellipse.set(object2.center, object2.majorAxisFinalPt, object2.axisRatio)
             return QadIntersections.lineWithEllipse(object1, ellipse)
-         
+
       elif object1.whatIs() == "CIRCLE":
          return QadIntersections.twoBasicGeomObjectExtensions(object1, object2)
-         
+
       elif object1.whatIs() == "ARC":
          if object2.whatIs() == "LINE":
             return QadIntersections.infinityLineWithArc(object2, object1)
@@ -1049,114 +1007,117 @@ class QadIntersections():
             ellipse = QadEllipse()
             ellipse.set(object2.center, object2.majorAxisFinalPt, object2.axisRatio)
             return QadIntersections.ellipseWithEllipseArc(ellipse, object1)
-   
+
       return []
 
 
    # ============================================================================
    # twoGeomObjects
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def twoGeomObjects(object1, object2, object2GeomBoundingBoxCache = None):
-      """
-      la funzione calcola i punti di intersezione tra 2 oggetti geometrici
-      """
+      """the function calculates the intersection points between 2 geometric objects"""
+      if object1 is None or object2 is None:
+         return []
+
       geomType1 = object1.whatIs()
       result = []
-      
+
       if object2GeomBoundingBoxCache is None:
          object2GeomBoundingBoxCache = QadGeomBoundingBoxCache(object2)
-         
+
       if geomType1 == "MULTI_POINT":
          for geomAt in range(0, object1.qty()):
             pt = object1.getPointAt(geomAt)
             result.extend(QadIntersections.twoGeomObjects(pt, object2, object2GeomBoundingBoxCache))
-         
+
       elif geomType1 == "MULTI_LINEAR_OBJ":
          for geomAt in range(0, object1.qty()):
             linearObj = object1.getLinearObjectAt(geomAt)
             result.extend(QadIntersections.twoGeomObjects(linearObj, object2, object2GeomBoundingBoxCache))
-            
+
       elif geomType1 == "POLYLINE":
          for geomAt in range(0, object1.qty()):
             linearObj = object1.getLinearObjectAt(geomAt)
             result.extend(QadIntersections.twoGeomObjects(linearObj, object2, object2GeomBoundingBoxCache))
-            
+
       elif geomType1 == "POLYGON":
          for geomAt in range(0, object1.qty()):
             closedObj = object1.getClosedObjectAt(geomAt)
             result.extend(QadIntersections.twoGeomObjects(closedObj, object2, object2GeomBoundingBoxCache))
-         
+
       elif geomType1 == "MULTI_POLYGON":
          for geomAt in range(0, object1.qty()):
             polygon = object1.getPolygonAt(geomAt)
             result.extend(QadIntersections.twoGeomObjects(polygon, object2, object2GeomBoundingBoxCache))
-         
-      # oggetto 1 è una geometria base
+
+      # object 1 is a basic geometry
       elif object1.whatIs() == "POINT" or object1.whatIs() == "LINE" or object1.whatIs() == "CIRCLE" or \
            object1.whatIs() == "ARC" or object1.whatIs() == "ELLIPSE" or object1.whatIs() == "ELLIPSE_ARC":
          geomType2 = object2.whatIs()
-         
+
          if object2GeomBoundingBoxCache is not None and object2GeomBoundingBoxCache.cacheLayer is not None:
-            # leggo solo le parti che si intersecano con il bounding box di object1
+            # I only read the parts that intersect with the bounding box of object1
             boundingBox = object1.getBoundingBox()
             geomSubgeomPartAtList = object2GeomBoundingBoxCache.getIntersectionWithBoundingBox(boundingBox)
             for geomSubgeomPartAt in geomSubgeomPartAtList:
                part = getQadGeomPartAt(object2, geomSubgeomPartAt[0], geomSubgeomPartAt[1], geomSubgeomPartAt[2])
-               result.extend(QadIntersections.twoBasicGeomObjects(object1, part))                  
+               result.extend(QadIntersections.twoBasicGeomObjects(object1, part))
 
          elif geomType2 == "MULTI_POINT":
             for geomAt in range(0, object2.qty()):
                result.extend(QadIntersections.twoBasicGeomObjects(object1, object2.getPointAt(geomAt)))
-                  
+
          elif geomType2 == "MULTI_LINEAR_OBJ":
             for geomAt in range(0, object2.qty()):
                result.extend(QadIntersections.twoGeomObjects(object1, object2.getLinearObjectAt(geomAt)))
-            
+
          elif geomType2 == "POLYLINE":
             for geomAt in range(0, object2.qty()):
                result.extend(QadIntersections.twoGeomObjects(object1, object2.getLinearObjectAt(geomAt)))
-            
+
          elif geomType2 == "POLYGON":
             for geomAt in range(0, object2.qty()):
                result.extend(QadIntersections.twoGeomObjects(object1, object2.getClosedObjectAt(geomAt)))
-            
+
          elif geomType2 == "MULTI_POLYGON":
             for geomAt in range(0, object2.qty()):
                result.extend(QadIntersections.twoGeomObjects(object1, object2.getPolygonAt(geomAt)))
-            
-         # oggetto 1 è una geometria base
+
+         # object 1 is a basic geometry
          elif object2.whatIs() == "POINT" or object2.whatIs() == "LINE" or object2.whatIs() == "CIRCLE" or \
               object2.whatIs() == "ARC" or object2.whatIs() == "ELLIPSE" or object2.whatIs() == "ELLIPSE_ARC":
             result = QadIntersections.twoBasicGeomObjects(object1, object2)
-   
+
       return result
 
 
    # ============================================================================
    # twoGeomObjectsExtensions
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def twoGeomObjectsExtensions(object1, object2):
+      """the function calculates the intersection points between the extensions of 2 geometric objects:
+            line (becomes infinite line), arc (becomes circle), arc of ellipse (becomes ellipse).
       """
-      la funzione calcola i punti di intersezione tra tra le estensioni di 2 oggetti geometrici:
-      linea (diventa linea infinita), arco (diventa cerchio), arco di ellisse (diventa ellisse).
-      """
+      if object1 is None or object2 is None:
+         return []
+
       geomType1 = object1.whatIs()
       result = []
-      
+
       if geomType1 == "MULTI_POINT":
          for geomAt in range(0, object1.qty()):
             pt = object1.getPointAt(geomAt)
             result.extend(QadIntersections.twoGeomObjectsExtensions(pt, object2))
-         
+
       elif geomType1 == "MULTI_LINEAR_OBJ":
          for geomAt in range(0, object1.qty()):
             linearObj = object1.getLinearObjectAt(geomAt)
             result.extend(QadIntersections.twoGeomObjectsExtensions(linearObj, object2))
-            
+
       elif geomType1 == "POLYLINE":
-         if object1.qty() > 0: # prima parte della polilinea
+         if object1.qty() > 0: # first part of the polyline
             linearObj = object1.getLinearObjectAt(0)
             pts = QadIntersections.twoGeomObjectsExtensions(linearObj, object2)
             if linearObj.whatIs() == "LINE":
@@ -1164,11 +1125,11 @@ class QadIntersections():
                appendPtOnTheSameTanDirectionOnly(reversedLine.reverse(), pts, result)
             else:
                result.extend(pts)
-               
+
          for geomAt in range(1, object1.qty()-1):
             result.extend(QadIntersections.geomObjectWithGeomObjectExtensions(object1.getLinearObjectAt(geomAt), object2))
 
-         if object1.qty() > 1: # ultima parte della polilinea
+         if object1.qty() > 1: # last part of the polyline
             linearObj = object1.getLinearObjectAt(-1)
             pts = QadIntersections.twoGeomObjectsExtensions(linearObj, object2)
             if linearObj.whatIs() == "LINE":
@@ -1180,27 +1141,27 @@ class QadIntersections():
          for subGeomAt in range(0, object1.qty()):
             closedObj = object1.getClosedObjectAt(geomAt)
             result.extend(QadIntersections.twoGeomObjectsExtensions(closedObj, object2))
-         
+
       elif geomType1 == "MULTI_POLYGON":
          for geomAt in range(0, object1.qty()):
             polygon = object1.getPolygonAt(geomAt)
             result.extend(QadIntersections.twoGeomObjectsExtensions(polygon, object2))
-         
-      # oggetto 1 è una geometria base
+
+      # object 1 is a basic geometry
       elif object1.whatIs() == "POINT" or object1.whatIs() == "LINE" or object1.whatIs() == "CIRCLE" or \
            object1.whatIs() == "ARC" or object1.whatIs() == "ELLIPSE" or object1.whatIs() == "ELLIPSE_ARC":
          geomType2 = object2.whatIs()
-         
+
          if geomType2 == "MULTI_POINT":
             for geomAt in range(0, object2.qty()):
                result.extend(QadIntersections.twoBasicGeomObjectExtensions(object1, object2.getPointAt(geomAt)))
-                  
+
          elif geomType2 == "MULTI_LINEAR_OBJ":
             for geomAt in range(0, object2.qty()):
                result.extend(QadIntersections.twoGeomObjectsExtensions(object1, object2.getLinearObjectAt(geomAt)))
-            
+
          elif geomType2 == "POLYLINE":
-            if object2.qty() > 0: # prima parte della polilinea
+            if object2.qty() > 0: # first part of the polyline
                linearObj = object2.getLinearObjectAt(0)
                pts = QadIntersections.twoGeomObjectsExtensions(object1, linearObj)
                if linearObj.whatIs() == "LINE":
@@ -1208,58 +1169,60 @@ class QadIntersections():
                   appendPtOnTheSameTanDirectionOnly(reversedLine.reverse(), pts, result)
                else:
                   result.extend(pts)
-            
+
             for geomAt in range(1, object2.qty()-1):
                result.extend(QadIntersections.geomObjectWithGeomObjectExtensions(object2.getLinearObjectAt(geomAt), object1))
 
-            if object2.qty() > 1: # ultima parte della polilinea
+            if object2.qty() > 1: # last part of the polyline
                linearObj = object2.getLinearObjectAt(-1)
                pts = QadIntersections.twoGeomObjectsExtensions(object1, linearObj)
                if linearObj.whatIs() == "LINE":
                   appendPtOnTheSameTanDirectionOnly(linearObj, pts, result)
                else:
                   result.extend(pts)
-            
+
          elif geomType2 == "POLYGON":
             for geomAt in range(0, object2.qty()):
                result.extend(QadIntersections.twoGeomObjectsExtensions(object1, object2.getClosedObjectAt(geomAt)))
-            
+
          elif geomType2 == "MULTI_POLYGON":
             for geomAt in range(0, object2.qty()):
                result.extend(QadIntersections.twoGeomObjectsExtensions(object1, object2.getPolygonAt(geomAt)))
-            
-         # oggetto 2 è una geometria base
+
+         # object 2 is a basic geometry
          elif object2.whatIs() == "POINT" or object2.whatIs() == "LINE" or object2.whatIs() == "CIRCLE" or \
               object2.whatIs() == "ARC" or object2.whatIs() == "ELLIPSE" or object2.whatIs() == "ELLIPSE_ARC":
             result = QadIntersections.twoBasicGeomObjectExtensions(object1, object2)
-   
+
       return result
 
 
    # ============================================================================
    # geomObjectWithGeomObjectExtensions
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def geomObjectWithGeomObjectExtensions(object1, object2):
+      """the function calculates the intersection points between a geometric object (object1) and
+            the extensions of a geometric object (object2)
       """
-      la funzione calcola i punti di intersezione tra un oggetto geometrico (object1) e 
-      le estensioni di un oggetto geometrico (object2)
-      """
+      if object1 is None or object2 is None:
+         return []
+
       geomType1 = object1.whatIs()
       result = []
-      
+
       if geomType1 == "MULTI_POINT":
          for geomAt in range(0, object1.qty()):
             pt = object1.getPointAt(geomAt)
             result.extend(QadIntersections.geomObjectWithGeomObjectExtensions(pt, object2))
-         
+
       elif geomType1 == "MULTI_LINEAR_OBJ":
          for geomAt in range(0, object1.qty()):
             linearObj = object1.getLinearObjectAt(geomAt)
             result.extend(QadIntersections.geomObjectWithGeomObjectExtensions(linearObj, object2))
-            
+
       elif geomType1 == "POLYLINE":
-         if object1.qty() > 0: # prima parte della polilinea
+         if object1.qty() > 0: # first part of the polyline
             linearObj = object1.getLinearObjectAt(0)
             pts = QadIntersections.geomObjectWithGeomObjectExtensions(linearObj, object2)
             if linearObj.whatIs() == "LINE":
@@ -1267,43 +1230,43 @@ class QadIntersections():
                appendPtOnTheSameTanDirectionOnly(reversedLine.reverse(), pts, result)
             else:
                result.extend(pts)
-               
+
          for geomAt in range(1, object1.qty()-1):
             result.extend(QadIntersections.twoGeomObjects(object1.getLinearObjectAt(geomAt), object2))
 
-         if object1.qty() > 1: # ultima parte della polilinea
+         if object1.qty() > 1: # last part of the polyline
             linearObj = object1.getLinearObjectAt(-1)
             pts = QadIntersections.geomObjectWithGeomObjectExtensions(linearObj, object2)
             if linearObj.whatIs() == "LINE":
                appendPtOnTheSameTanDirectionOnly(linearObj, pts, result)
             else:
                result.extend(pts)
-            
+
       elif geomType1 == "POLYGON":
          for subGeomAt in range(0, object1.qty()):
             closedObj = object1.getClosedObjectAt(geomAt)
             result.extend(QadIntersections.geomObjectWithGeomObjectExtensions(closedObj, object2))
-         
+
       elif geomType1 == "MULTI_POLYGON":
          for geomAt in range(0, object1.qty()):
             polygon = object1.getPolygonAt(geomAt)
             result.extend(QadIntersections.geomObjectWithGeomObjectExtensions(polygon, object2))
-         
-      # oggetto 1 è una geometria base
+
+      # object 1 is a basic geometry
       elif object1.whatIs() == "POINT" or object1.whatIs() == "LINE" or object1.whatIs() == "CIRCLE" or \
            object1.whatIs() == "ARC" or object1.whatIs() == "ELLIPSE" or object1.whatIs() == "ELLIPSE_ARC":
          geomType2 = object2.whatIs()
-         
+
          if geomType2 == "MULTI_POINT":
             for geomAt in range(0, object2.qty()):
                result.extend(QadIntersections.geomObjectWithGeomObjectExtensions(object1, object2.getPointAt(geomAt)))
-                  
+
          elif geomType2 == "MULTI_LINEAR_OBJ":
             for geomAt in range(0, object2.qty()):
                result.extend(QadIntersections.geomObjectWithGeomObjectExtensions(object1, object2.getLinearObjectAt(geomAt)))
-            
+
          elif geomType2 == "POLYLINE":
-            if object2.qty() > 0: # prima parte della polilinea
+            if object2.qty() > 0: # first part of the polyline
                linearObj = object2.getLinearObjectAt(0)
                pts = QadIntersections.geomObjectWithGeomObjectExtensions(object1, linearObj)
                if linearObj.whatIs() == "LINE":
@@ -1311,31 +1274,31 @@ class QadIntersections():
                   appendPtOnTheSameTanDirectionOnly(reversedLine.reverse(), pts, result)
                else:
                   result.extend(pts)
-            
+
             for geomAt in range(1, object2.qty()-1):
                result.extend(QadIntersections.twoGeomObjects(object1, object2.getLinearObjectAt(geomAt)))
 
-            if object2.qty() > 1: # ultima parte della polilinea
+            if object2.qty() > 1: # last part of the polyline
                linearObj = object2.getLinearObjectAt(-1)
                pts = QadIntersections.geomObjectWithGeomObjectExtensions(object1, linearObj)
                if linearObj.whatIs() == "LINE":
                   appendPtOnTheSameTanDirectionOnly(linearObj, pts, result)
                else:
                   result.extend(pts)
-            
+
          elif geomType2 == "POLYGON":
             for geomAt in range(0, object2.qty()):
                result.extend(QadIntersections.geomObjectWithGeomObjectExtensions(object1, object2.getClosedObjectAt(geomAt)))
-            
+
          elif geomType2 == "MULTI_POLYGON":
             for geomAt in range(0, object2.qty()):
                result.extend(QadIntersections.geomObjectWithGeomObjectExtensions(object1, object2.getPolygonAt(geomAt)))
-            
-         # oggetto 2 è una geometria base
+
+         # object 2 is a basic geometry
          elif object2.whatIs() == "POINT" or object2.whatIs() == "LINE" or object2.whatIs() == "CIRCLE" or \
               object2.whatIs() == "ARC" or object2.whatIs() == "ELLIPSE" or object2.whatIs() == "ELLIPSE_ARC":
             result = QadIntersections.basicGeomObjectWithBasicGeomObjectExtensions(object1, object2)
-   
+
       return result
 
 
@@ -1344,28 +1307,27 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def getOrderedPolylineIntersectionPtsWithBasicGeom(polyline, linearObject, orderByStartPtOfLinearObject = False):
+      """The function returns several lists:
+            - the first is a list of intersection points between the <linearObject> part and the polyline.
+              The list is ordered by distance from the starting point of <linearObject> if <orderByStartPtOfLinearObject> = True
+              otherwise it is ordered by distance from the starting point of the polyline
+            - the second is a list that contains, respectively for each intersection point,
+              the part number (0-based) of the polyline where that point is located.
+            - the third is a list that contains, respectively for each intersection point,
+              the distance from the starting point of <linearObject> if <orderByStartPtOfLinearObject> = True or
+              from the starting point of the polyline if <orderByStartPtOfLinearObject> = False
       """
-      La funzione restituisce diverse liste:
-      - la prima é una lista di punti di intersezione tra la parte <linearObject> e la polilinea.
-        La lista è ordinata per distanza dal punto iniziale di <linearObject> se <orderByStartPtOfLinearObject> = True 
-        altrimenti è ordinata per distanza dal punto iniziale della polilinea
-      - la seconda é una lista che contiene, rispettivamente per ogni punto di intersezione,
-        il numero della parte (0-based) della polilinea in cui si trova quel punto.
-      - la terza é una lista che contiene, rispettivamente per ogni punto di intersezione,
-        la distanza dal punto iniziale di <linearObject> se <orderByStartPtOfLinearObject> = True o
-        dal punto iniziale della polilinea se <orderByStartPtOfLinearObject> = False
-      """         
       gType = linearObject.whatIs()
       if polyline.whatIs() != "POLYLINE" or \
          (gType != "LINE" and gType != "ARC" and gType != "ELLIPSE_ARC"):
          return [], [], []
 
-      intPtSortedList = [] # lista di ((punto, distanza dall'inizio di linearObject) ...)
+      intPtSortedList = [] # list of ((point, distance from start of linearObject)...)
       partNumber = -1
       if orderByStartPtOfLinearObject == False:
          distFromStartPrevParts = 0
-         
-      # per ogni parte della lista
+
+      # for each part of the list
       i = 0
       while i < polyline.qty():
          linearObject2 = polyline.getLinearObjectAt(i)
@@ -1373,32 +1335,32 @@ class QadIntersections():
          partialIntPtList = QadIntersections.twoBasicGeomObjects(linearObject, linearObject2)
 
          for partialIntPt in partialIntPtList:
-            # escludo i punti che sono già in intPtSortedList
+            # I exclude points that are already in intPtSortedList
             found = False
             for intPt in intPtSortedList:
                if qad_utils.ptNear(intPt[0], partialIntPt):
                   found = True
                   break
-               
+
             if found == False:
                if orderByStartPtOfLinearObject:
-                  # inserisco il punto ordinato per distanza dall'inizio di linearObject
+                  # insert the point ordered by distance from the start of linearObject
                   distFromStart = linearObject.getDistanceFromStart(partialIntPt)
                else:
                   distFromStart = distFromStartPrevParts + linearObject2.getDistanceFromStart(partialIntPt)
-                  
+
                insertAt = 0
                for intPt in intPtSortedList:
                   if intPt[1] < distFromStart:
                      insertAt = insertAt + 1
                   else:
-                     break                     
+                     break
                intPtSortedList.insert(insertAt, [partialIntPt, distFromStart, partNumber])
-            
+
          if orderByStartPtOfLinearObject == False:
             distFromStartPrevParts = distFromStartPrevParts + linearObject2.length()
          i = i + 1
-         
+
       resultIntPt = []
       resultPartNumber = []
       resultDistanceFromStart = []
@@ -1406,7 +1368,7 @@ class QadIntersections():
          resultIntPt.append(intPt[0])
          resultPartNumber.append(intPt[2])
          resultDistanceFromStart.append(intPt[1])
-   
+
       return resultIntPt, resultPartNumber, resultDistanceFromStart
 
 
@@ -1415,14 +1377,13 @@ class QadIntersections():
    # ===============================================================================
    @staticmethod
    def getOrderedPolylineIntersectionPtsWithPolyline(polyline1, polyline2):
-      """
-      la funzione restituisce diverse liste:
-      - la prima é una lista di punti di intersezione tra le 2 polilinee
-      ordinata per distanza dal punto iniziale di <polyline2> .
-      - la seconda é una lista che contiene, rispettivamente per ogni punto di intersezione,
-      il numero della parte della <polyline2> (0-based) in cui si trova quel punto.
-      - la terza é una lista che contiene, rispettivamente per ogni punto di intersezione,
-      la distanza dal punto iniziale della polilinea2.
+      """the function returns several lists:
+            - the first is a list of intersection points between the 2 polylines
+            sorted by distance from the starting point of <polyline2> .
+            - the second is a list that contains, respectively for each intersection point,
+            the number of the part of the <polyline2> (0-based) where that point is located.
+            - the third is a list that contains, respectively for each intersection point,
+            the distance from the starting point of the polyline2.
       """
       if polyline1.whatIs() != "POLYLINE" or polyline2.whatIs() != "POLYLINE":
          return [], [], []
@@ -1430,74 +1391,68 @@ class QadIntersections():
       resultIntPt = []
       resultPartNumber = []
       resultDistanceFromStart = []
-      
-      # per ogni parte della lista
+
+      # for each part of the list
       i = 0
       while i < polyline1.qty():
          linearObject1 = polyline1.getLinearObjectAt(i)
-         # lista di punti di intersezione ordinata per distanza dal punto iniziale di <linearObject1>
-         partialResult = QadIntersections.getOrderedPolylineIntersectionPtsWithBasicGeom(polyline2, linearObject1, orderByStartPtOfLinearObject = True)            
+         # list of intersection points ordered by distance from the starting point of <linearObject1>
+         partialResult = QadIntersections.getOrderedPolylineIntersectionPtsWithBasicGeom(polyline2, linearObject1, orderByStartPtOfLinearObject = True)
          resultIntPt.extend(partialResult[0])
          resultPartNumber.extend(partialResult[2])
          resultDistanceFromStart.extend(partialResult[1])
          i = i + 1
-         
+
       return resultIntPt, resultPartNumber, resultDistanceFromStart
 
 
 # ===============================================================================
 # QadPerpendicularity class
-# rappresenta una classe che calcola la perpendicolarità tra oggetti di base: punto, linea, arco, arco di ellisse, cerchio, ellisse
+# represents a class that calculates perpendicularity between basic objects: point, line, arc, ellipse arc, circle, ellipse
 # ===============================================================================
 class QadPerpendicularity():
-    
+
    def __init__(self):
       pass
 
 
    # ===============================================================================
-   # metodi per le linee infinite - inizio
+   # methods for infinite lines - start
    # ===============================================================================
 
    # ===============================================================================
    # fromPointToInfinityLine
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToInfinityLine(pt, line):
-      """
-      la funzione ritorna la proiezione perpendicolare di punto su una linea infinita
-      """
+      """the function returns the perpendicular projection of point on an infinite line"""
       return qad_utils.getPerpendicularPointOnInfinityLine(line.pt1, line.pt2, pt)
 
 
    # ===============================================================================
-   # metodi per le linee infinite - fine
-   # metodi per i segmenti - inizio
+   # methods for infinite lines - end
+   # segment methods - start
    # ===============================================================================
 
 
    # ===============================================================================
    # fromPointToLine
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToLine(pt, line):
-      """
-      la funzione ritorna la proiezione perpendicolare di punto su un segmento
-      """
+      """the function returns the perpendicular projection of a point on a segment"""
       perpPt = QadPerpendicularity.fromPointToInfinityLine(pt, line)
       if line.containsPt(perpPt):
          return perpPt
       return None
-   
+
 
    # ===============================================================================
    # getInfinityLinePerpOnMiddle
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def getInfinityLinePerpOnMiddleLine(line):
-      """
-      la funzione trova una linea perpendicolare e passante per il punto medio della linea.
-      """
+      """the function finds a line perpendicular to and passing through the midpoint of the line."""
       ptMiddle = line.getMiddlePt()
       dist = qad_utils.getDistance(line.pt1, ptMiddle)
       if dist == 0:
@@ -1507,125 +1462,119 @@ class QadPerpendicularity():
       line = QadLine()
       line.set(ptMiddle, pt2Middle)
       return line
-   
+
 
    # ===============================================================================
-   # metodi per i segmenti - fine
-   # metodi per i cerchi - inizio
+   # segment methods - end
+   # methods for circles - start
    # ===============================================================================
 
 
    # ===============================================================================
    # fromPointToCircle
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToCircle(pt, circle):
-      """
-      la funzione ritorna le proiezioni perpendicolari di punto su un cerchio
-      """
+      """the function returns the perpendicular projections of points on a circle"""
       angle = qad_utils.getAngleBy2Pts(circle.center, pt)
       pt1 = qad_utils.getPolarPointByPtAngle(circle.center, angle, circle.radius)
       pt2 = qad_utils.getPolarPointByPtAngle(circle.center, angle + math.pi, circle.radius)
-      return [pt1, pt2]      
+      return [pt1, pt2]
 
 
    # ===============================================================================
-   # metodi per i cerchi - fine
-   # metodi per gli archi - inizio
+   # methods for circles - end
+   # methods for arcs - start
    # ===============================================================================
 
 
    # ============================================================================
    # fromPointToArc
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToArc(pt, arc):
-      """
-      la funzione ritorna la proiezione perpendicolare di punto su un arco
-      """
+      """the function returns the perpendicular projection of a point on an arc"""
       result = []
       circle = QadCircle()
-      circle.set(arc.center, arc.radius)     
+      circle.set(arc.center, arc.radius)
       perpPtList = QadPerpendicularity.fromPointToCircle(pt, circle)
       for perpPt in perpPtList:
          if arc.isPtOnArcOnlyByAngle(perpPt):
             result.append(perpPt)
       return result
 
-      
+
    # ===============================================================================
-   # metodi per gli archi - fine
-   # metodi per le ellissi - inizio
+   # methods for arcs - end
+   # methods for ellipses - start
    # ===============================================================================
-   
-   
+
+
    # ============================================================================
    # fromPointToEllipse
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToEllipse(pt, ellipse):
-      """
-      la funzione ritorna la proiezione perpendicolare di punto su un'ellisse (fino a 4 punti)
-      """      
-      # https://www.mathpages.com/home/kmath505/kmath505.htm (per punti esterni all'ellise)
-      # https://math.stackexchange.com/questions/609351/number-of-normals-from-a-point-to-an-ellipse (per punti interni all'ellisse)
+      """the function returns the perpendicular projection of a point onto an ellipse (up to 4 points)"""
+      # https://www.mathpages.com/home/kmath505/kmath505.htm (for points outside the ellipse)
+      # https://math.stackexchange.com/questions/609351/number-of-normals-from-a-point-to-an-ellipse (for points inside the ellipse)
       result = []
 
-      # ritorna -1 se il punto è interno, 0 se è sull'ellisse, 1 se è esterno
+      # returns -1 if the point is internal, 0 if it is on the ellipse, 1 if it is external
       whereIsPt = ellipse.whereIsPt(pt)
-      if whereIsPt == 0: # pt è sull'ellisse
+      if whereIsPt == 0: # pt is on the ellipse
          result.append(QgsPointXY(pt.x(), pt.y()))
          return result
 
-      # traslo e ruoto il punto per confrontarlo con l'ellisse con centro in 0,0 e con rotazione = 0
+      # I translate and rotate the point to compare it with the ellipse with center at 0.0 and with rotation = 0
       myPoint = ellipse.translateAndRotatePtForNormalEllipse(pt, False)
 
-      a = qad_utils.getDistance(ellipse.center, ellipse.majorAxisFinalPt) # semiasse maggiore
-      b = a * ellipse.axisRatio # semiasse minore
+      a = qad_utils.getDistance(ellipse.center, ellipse.majorAxisFinalPt) # semi-major axis
+      b = a * ellipse.axisRatio # semi-minor axis
       e = QadEllipse(ellipse)
       e.center.set(0.0, 0.0)
       e.majorAxisFinalPt.set(a, 0.0)
-      
+
       a2 = a * a # a al quadrato
       b2 = b * b # b al quadrato
-      xp = myPoint.x() # x del punto
+      xp = myPoint.x() # x of the point
       xp2 = xp * xp # xp al quadrato
       yp = myPoint.y()
       yp2 = yp * yp # yp al quadrato
       a2_b2 = a2 - b2
-      
+
       c4 = a2_b2 * a2_b2
       c3 = -2 * a2 * xp * a2_b2
       c2 = a2 * (a2 * xp2 + b2 * yp2 - (a2_b2 * a2_b2))
       c1 = 2 * a2 * a2 * xp * a2_b2
       c0 = -1 * (a2 * a2 * a2) * xp2
-      
+
       x_result = np.roots([c4, c3, c2, c1, c0])
       for x in x_result:
-         n = (1.0 - x * x / a2) * b2 # data la X calcolo la Y
-         if qad_utils.doubleNear(n, 0): n = 0 # per problemi di precisione di calcolo (es. se x = 10 , n = -1.11022302463e-14 !)
+         n = (1.0 - x * x / a2) * b2 # given X calculate Y
+         if qad_utils.doubleNear(n, 0): n = 0 # for calculation precision problems (e.g. if x = 10, n = -1.11022302463e-14!)
          if n >= 0:
             y = math.sqrt(n)
             p = QgsPointXY(x, y)
-            # verifico se il punto va bene
-            # calcolo la tangente su quel punto
+            # check if the point is OK
+            # calculate the tangent on that point
             t = e.getTanDirectionOnPt(p)
-            # se è perpendicolare con il segmento che unisce il punto trovato con quello fornito (myPoint)
+            # if it is perpendicular to the segment that joins the point found with the one provided (myPoint)
             angSegment = qad_utils.normalizeAngle(qad_utils.getAngleBy2Pts(p, myPoint) + math.pi / 2)
             if qad_utils.doubleNear(t, angSegment) or qad_utils.doubleNear(qad_utils.normalizeAngle(t + math.pi), angSegment):
-               # traslo e ruoto il punto per riportarlo nella posizione originale (con il centro e la rotazione dell'ellisse originale)
+               # I translate and rotate the point to bring it back to the original position (with the center and rotation of the original ellipse)
                p = ellipse.translateAndRotatePtForNormalEllipse(p, True)
                qad_utils.appendUniquePointToList(result, p)
-               
+
             # verifico l'altra coordinata y
             p = QgsPointXY(x, -y)
-            # verifico se il punto va bene
-            # calcolo la tangente su quel punto
+            # check if the point is OK
+            # calculate the tangent on that point
             t = e.getTanDirectionOnPt(p)
-            # se è perpendicolare con il segmento che unisce il punto trovato con quello fornito (myPoint)
+            # if it is perpendicular to the segment that joins the point found with the one provided (myPoint)
             angSegment = qad_utils.normalizeAngle(qad_utils.getAngleBy2Pts(p, myPoint) + math.pi / 2)
             if qad_utils.doubleNear(t, angSegment) or qad_utils.doubleNear(qad_utils.normalizeAngle(t + math.pi), angSegment):
-               # traslo e ruoto il punto per riportarlo nella posizione originale (con il centro e la rotazione dell'ellisse originale)
+               # I translate and rotate the point to bring it back to the original position (with the center and rotation of the original ellipse)
                p = ellipse.translateAndRotatePtForNormalEllipse(p, True)
                qad_utils.appendUniquePointToList(result, p)
 
@@ -1633,19 +1582,17 @@ class QadPerpendicularity():
 
 
    # ===============================================================================
-   # metodi per le ellissi - fine
-   # metodi per gli archi di ellisse - inizio
+   # methods for ellipses - end
+   # methods for ellipse arcs - start
    # ===============================================================================
 
 
    # ============================================================================
    # fromPointToEllipseArc
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToEllipseArc(pt, ellipseArc):
-      """
-      la funzione ritorna la proiezione perpendicolare di punto su un arco di ellisse
-      """
+      """the function returns the perpendicular projection of point on an arc of ellipse"""
       result = []
       ellipse = QadEllipse()
       ellipse.set(ellipseArc.center, ellipseArc.majorAxisFinalPt, ellipseArc.axisRatio)
@@ -1659,11 +1606,10 @@ class QadPerpendicularity():
    # ============================================================================
    # fromPointToBasicGeomObject
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToBasicGeomObject(pt, object):
-      """
-      la funzione ritorna la proiezione perpendicolare di punto su un oggetto geometrico di base:
-      linea, arco, arco di ellisse, cerchio, ellisse.
+      """the function returns the perpendicular projection of a point onto a basic geometric object:
+            line, arc, ellipse arc, circle, ellipse.
       """
       if object.whatIs() == "LINE":
          res = QadPerpendicularity.fromPointToLine(pt, object)
@@ -1676,19 +1622,18 @@ class QadPerpendicularity():
          return QadPerpendicularity.fromPointToEllipse(pt, object)
       elif object.whatIs() == "ELLIPSE_ARC":
          return QadPerpendicularity.fromPointToEllipseArc(pt, object)
-         
+
       return []
 
 
    # ============================================================================
    # fromPointToBasicGeomObjectExtensions
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToBasicGeomObjectExtensions(pt, object):
+      """the function returns the perpendicular projections of points on an extension of a basic geometric object:
+            line (becomes infinite line), arc (becomes circle), ellipse arc (becomes ellipse), circle, ellipse.
       """
-      la funzione ritorna le proiezioni perpendicolari di punto su una estensione di un oggetto geometrico di base:
-      linea (diventa linea infinita), arco (diventa cerchio), arco di ellisse (diventa ellisse), cerchio, ellisse.
-      """      
       if object.whatIs() == "LINE":
          res = QadPerpendicularity.fromPointToInfinityLine(pt, object)
          return [] if res is None else [res]
@@ -1704,110 +1649,105 @@ class QadPerpendicularity():
          ellipse = QadEllipse()
          ellipse.set(object.center, object.majorAxisFinalPt, object.axisRatio)
          return QadPerpendicularity.fromPointToEllipse(pt, ellipse)
-         
+
       return []
 
 
    # ============================================================================
    # fromPointToGeomObject
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToGeomObject(pt, object):
-      """
-      la funzione ritorna la proiezione perpendicolare di punto su un oggetto geometrico
-      """
+      """the function returns the perpendicular projection of a point onto a geometric object"""
       geomType = object.whatIs()
       result = []
-      
+
       if geomType == "MULTI_LINEAR_OBJ":
          for geomAt in range(0, object.qty()):
             linearObj = object.getLinearObjectAt(geomAt)
             result.extend(QadPerpendicularity.fromPointToBasicGeomObject(pt, linearObj))
-            
+
       elif geomType == "POLYLINE":
          for geomAt in range(0, object.qty()):
             linearObj = object.getLinearObjectAt(geomAt)
             result.extend(QadPerpendicularity.fromPointToBasicGeomObject(pt, linearObj))
-            
+
       elif geomType == "POLYGON":
          for subGeomAt in range(0, object.qty()):
             closedObj = object.getClosedObjectAt(geomAt)
-            result.extend(QadPerpendicularity.fromPointToGeomObject(pt, closedObj))            
-         
+            result.extend(QadPerpendicularity.fromPointToGeomObject(pt, closedObj))
+
       elif geomType == "MULTI_POLYGON":
          for geomAt in range(0, object.qty()):
             polygon = object.getPolygonAt(geomAt)
             result.extend(QadPerpendicularity.fromPointToGeomObject(pt, polygon))
-         
-      # oggetto è una geometria base
+
+      # object is a basic geometry
       else:
          result.extend(QadPerpendicularity.fromPointToBasicGeomObject(pt, object))
-   
+
       return result
 
 
 # ===============================================================================
 # QadMinDistance class
-# rappresenta una classe che calcola la minima distanza tra oggetti di base: punto, linea, arco, arco di ellisse, cerchio, ellisse
+# represents a class that calculates the minimum distance between basic objects: point, line, arc, ellipse arc, circle, ellipse
 # ===============================================================================
 class QadMinDistance():
-    
+
    def __init__(self):
       pass
 
 
    # ===============================================================================
-   # metodi per le linee infinite - inizio
+   # methods for infinite lines - start
    # ===============================================================================
 
 
    # ===============================================================================
    # fromInfinityLineToPoint
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromInfinityLineToPoint(infinityLine, pt):
-      """
-      la funzione ritorna la distanza minima e il punto di distanza minima tra una linea infinita ed un punto
-      (<distanza minima><punto di distanza minima>)
+      """the function returns the minimum distance and the minimum distance point between an infinite line and a point
+            (<minimum distance><minimum distance point>)
       """
       if infinityLine.isPtOnInfinityLine(pt) == True:
          return [0, pt]
       perpPt = QadPerpendicularity.fromPointToInfinityLine(pt, infinityLine)
       return [qad_utils.getDistance(perpPt, pt), perpPt]
-   
+
 
    # ===============================================================================
    # fromInfinityLineToLine
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromInfinityLineToLine(infinityLine, line):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra una linea infinita ed un segmento
-      (<distanza minima><punto di distanza minima su linea infinita><punto di distanza minima su segmento>)
+      """the function returns the minimum distance and the minimum distance points between an infinite line and a segment
+            (<minimum distance><minimum distance point on infinite line><minimum distance point on segment>)
       """
       intPt = QadIntersections.infinityLineWithLine(infinityLine, line)
       if intPt is not None:
          return [0, intPt, intPt]
 
-      # ritorna una lista: (<distanza minima><punto di distanza minima>)
+      # returns a list: (<minimum distance><minimum distance point>)
       dist, ptLine = QadMinDistance.fromInfinityLineToPoint(infinityLine, line.pt1)
       bestResult = [dist, ptLine, line.pt1]
-      
+
       dist, ptLine = QadMinDistance.fromInfinityLineToPoint(infinityLine, line.pt2)
       if bestResult[0] > dist:
          bestResult = [dist, ptLine, line.pt2]
-         
+
       return bestResult[0], bestResult[1], bestResult[2]
 
 
    # ===============================================================================
    # fromInfinityLineToCircle
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromInfinityLineToCircle(infinityLine, circle):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra una linea infinita ed un cerchio
-      (<distanza minima><punto di distanza minima su linea infinita><punto di distanza minima su cerchio>)
+      """the function returns the minimum distance and the minimum distance points between an infinite line and a circle
+            (<minimum distance><minimum distance point on infinite line><minimum distance point on circle>)
       """
       intPts = QadIntersections.infinityLineWithCircle(infinityLine, circle)
       if len(intPts) > 0:
@@ -1816,18 +1756,17 @@ class QadMinDistance():
       perpPt = QadPerpendicularity.fromPointToInfinityLine(circle.center, infinityLine)
       angle = qad_utils.getAngleBy2Pts(circle.center, perpPt)
       ptOnCircle = qad_utils.getPolarPointByPtAngle(circle.center, angle, circle.radius)
-      
+
       return [qad_utils.getDistance(perpPt, ptOnCircle), perpPt, ptOnCircle]
 
 
    # ===============================================================================
    # fromInfinityLineToArc
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromInfinityLineToArc(infinityLine, arc):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra una linea infinita ed un arco
-      (<distanza minima><punto di distanza minima su linea infinita><punto di distanza minima su arco>)
+      """the function returns the minimum distance and the minimum distance points between an infinite line and an arc
+            (<minimum distance><minimum distance point on infinite line><minimum distance point on arc>)
       """
       circle = QadCircle()
       circle.set(arc.center, arc.radius)
@@ -1835,7 +1774,7 @@ class QadMinDistance():
       ptArc = result[2]
       if arc.isPtOnArcOnlyByAngle(ptArc):
          return result
-      
+
       d1 = qad_utils.getDistance(arc.gtStartPt(), ptOnCircle)
       res1 = QadMinDistance.fromInfinityLineToPoint(infinityLine, arc.getStartPt())
       res2 = QadMinDistance.fromInfinityLineToPoint(infinityLine, arc.getEndPt())
@@ -1848,16 +1787,16 @@ class QadMinDistance():
    @staticmethod
    def distanza_infinityLine_ellipse(params, px, py, dx, dy, a, b, theta, h, k):
       t, phi = params
-      # Parametri della retta: punto sulla retta (px, py) e vettore direzione (dx, dy)
-      # Parametri dell'ellisse: semiassi a, b, angolo di rotazione theta, centro (h, k)
+      # Parameters of the line: point on the line (px, py) and direction vector (dx, dy)
+      # Ellipse parameters: semi-axes a, b, rotation angle theta, center (h, k)
       # px, py, a, b, theta, h, k = line_ellipse
-      # Punto sulla retta
+      # Point on the line
       x_retta = px + t * dx
       y_retta = py + t * dy
-      # Punto sull'ellisse (parametrizzato da phi)
+      # Point on the ellipse (parameterized by phi)
       x_ellisse = h + a * np.cos(phi) * np.cos(theta) - b * np.sin(phi) * np.sin(theta)
       y_ellisse = k + a * np.cos(phi) * np.sin(theta) + b * np.sin(phi) * np.cos(theta)
-      # Distanza quadratica
+      # Quadratic distance
       distanza2 = (x_retta - x_ellisse)**2 + (y_retta - y_ellisse)**2
       return distanza2
 
@@ -1867,60 +1806,59 @@ class QadMinDistance():
    # ===============================================================================
    @staticmethod
    def fromInfinityLineToEllipse(line, ellipse):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra una linea infinita ed un'ellisse
-      (<distanza minima><punto di distanza minima su linea infinita><punto di distanza minima su ellisse>)
+      """the function returns the minimum distance and the minimum distance points between an infinite line and an ellipse
+            (<minimum distance><minimum distance point on infinite line><minimum distance point on ellipse>)
       """
       if NO_SCIPY == True: return []
-      
+
       # test
 #       line = QadLine()
 #       line.set(QgsPointXY(1,1), QgsPointXY(2, 1))
-# 
-#       ellipse = QadEllipse()      
+#
+#       ellipse = QadEllipse()
 #       center = QgsPointXY(2, 1)
 #       angle = np.pi / 6  # 30 gradi
 #       a = 5
 #       b = 3
 #       majorAxisFinalPt = qad_utils.getPolarPointByPtAngle(center, angle, a)
 #       ellipse.set(center, majorAxisFinalPt, b / a)
-      
-      
-      
-      # Parametri della retta: punto sulla retta (px, py) e vettore direzione (dx, dy)
+
+
+
+      # Parameters of the line: point on the line (px, py) and direction vector (dx, dy)
       px, py = line.getStartPt().x(), line.getStartPt().y()
       dx, dy = line.getEndPt().x() - px, line.getEndPt().y() - py
-      
-      # Calcola la lunghezza dell'asse maggiore (a)
+
+      # Calculate the length of the major axis (a)
       a = qad_utils.getDistance(ellipse.center, ellipse.majorAxisFinalPt)
-      # Calcola la lunghezza dell'asse minore (b)
-      b = a * ellipse.axisRatio      
-      # theta: l'angolo di rotazione dell'ellisse.
+      # Calculate the length of the minor axis (b)
+      b = a * ellipse.axisRatio
+      # theta: the rotation angle of the ellipse.
       theta = ellipse.getRotation()
-      # h e k: le traslazioni dell'ellisse rispetto all'origine, coordinate centro
+      # h and k: the translations of the ellipse with respect to the origin, center coordinates
       h = ellipse.center.x()
-      k = ellipse.center.y()      
+      k = ellipse.center.y()
 
       args = (px, py,  dx, dy, a, b, theta, h, k)
-      
-      # Stima iniziale per t e phi
+
+      # Initial estimate for t and phi
       stima_iniziale = [0, 0]
 
-      # Minimizzazione della funzione di distanza quadratica
+      # Minimization of the quadratic distance function
       risultato = minimize(QadMinDistance.distanza_infinityLine_ellipse, stima_iniziale, args, method='Nelder-Mead')
 
       # Estrazione dei risultati
       t_min, phi_min = risultato.x
-      
-      # Calcolo dei punti di minima distanza
+
+      # Calculation of minimum distance points
       x_retta_min = px + t_min * dx
       y_retta_min = py + t_min * dy
       x_ellisse_min = h + a * np.cos(phi_min) * np.cos(theta) - b * np.sin(phi_min) * np.sin(theta)
       y_ellisse_min = k + a * np.cos(phi_min) * np.sin(theta) + b * np.sin(phi_min) * np.cos(theta)
-      
+
       ptRetta = QgsPointXY(x_retta_min, y_retta_min)
       ptEllisse = QgsPointXY(x_ellisse_min, y_ellisse_min)
-      
+
       return qad_utils.getDistance(ptRetta, ptEllisse), ptRetta, ptEllisse
 
 
@@ -1928,11 +1866,10 @@ class QadMinDistance():
    # ===============================================================================
    # fromInfinityLineToEllipseArc
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromInfinityLineToEllipseArc(line, ellipseArc):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra una linea infinita ed un arco di ellisse
-      (<distanza minima><punto di distanza minima su linea infinita><punto di distanza minima su un arco di ellisse>)
+      """the function returns the minimum distance and the minimum distance points between an infinite line and an arc of an ellipse
+            (<minimum distance><minimum distance point on an infinite line><minimum distance point on an ellipse arc>)
       """
       ellipse = QadEllipse()
       ellipse.set(ellipseArc.center, ellipseArc.majorAxisFinalPt, ellipseArc.axisRatio)
@@ -1940,7 +1877,7 @@ class QadMinDistance():
       ptArc = result[2]
       if ellipseArc.isPtOnEllipseArcOnlyByAngle(ptArc):
          return result
-      
+
       d1 = qad_utils.getDistance(arc.gtStartPt(), ptOnCircle)
       res1 = QadMinDistance.fromInfinityLineToPoint(infinityLine, ellipseArc.getStartPt())
       res2 = QadMinDistance.fromInfinityLineToPoint(infinityLine, ellipseArc.getEndPt())
@@ -1951,19 +1888,18 @@ class QadMinDistance():
 
 
    # ===============================================================================
-   # metodi per le linee infinite - fine
-   # metodi per i segmenti - inizio
+   # methods for infinite lines - end
+   # segment methods - start
    # ===============================================================================
 
 
    # ===============================================================================
    # fromLineToPoint
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromLineToPoint(line, pt):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un segmento ed un punto
-      (<distanza minima><punto di distanza minima>)
+      """the function returns the minimum distance and the minimum distance points between a segment and a point
+            (<minimum distance><minimum distance point>)
       """
       if line.containsPt(pt) == True:
          return [0, pt]
@@ -1971,7 +1907,7 @@ class QadMinDistance():
       if perpPt is not None:
          if line.containsPt(perpPt) == True:
             return [qad_utils.getDistance(perpPt, pt), perpPt]
-   
+
       distFromP1 = qad_utils.getDistance(line.pt1, pt)
       distFromP2 = qad_utils.getDistance(line.pt2, pt)
       if distFromP1 < distFromP2:
@@ -1985,26 +1921,25 @@ class QadMinDistance():
    # ===============================================================================
    @staticmethod
    def fromTwoLines(line1, line2):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra 2 segmenti
-      (<distanza minima><punto di distanza minima su segmento1><punto di distanza minima su segmento2>)
+      """the function returns the minimum distance and the minimum distance points between 2 segments
+            (<minimum distance><minimum distance point on segment1><minimum distance point on segment2>)
       """
       intPt = QadIntersections.twoLines(line1, line2)
       if intPt is not None:
          return [0, intPt, intPt]
-   
-      # ritorna una lista: (<distanza minima><punto di distanza minima>)
+
+      # returns a list: (<minimum distance><minimum distance point>)
       result = QadMinDistance.fromLineToPoint(line2, line1.pt1)
       dist = result[0]
       ptLine = result[1]
       bestResult = [dist, line1.pt1, ptLine]
-      
+
       result = QadMinDistance.fromLineToPoint(line2, line1.pt2)
       dist = result[0]
       ptLine = result[1]
       if bestResult[0] > dist:
          bestResult = [dist, line1.pt2, ptLine]
-         
+
       result = QadMinDistance.fromLineToPoint(line1, line2.pt1)
       dist = result[0]
       ptLine = result[1]
@@ -2025,22 +1960,21 @@ class QadMinDistance():
    # ===============================================================================
    @staticmethod
    def fromLineToCircle(line, circle):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un segmento ed un cerchio
-      (<distanza minima><punto di distanza minima su linea><punto di distanza minima su cerchio>)
+      """the function returns the minimum distance and the minimum distance points between a segment and a circle
+            (<minimum distance><minimum distance point on line><minimum distance point on circle>)
       """
       intPts = QadIntersections.lineWithCircle(line, circle)
       if len(intPts) > 0:
          return [0, intPts[0], intPts[0]]
 
       d1 = qad_utils.getDistance(line.getStartPt(), circle.center)
-      if d1 < circle.radius: # linea interna al cerchio
+      if d1 < circle.radius: # line inside the circle
          d2 = qad_utils.getDistance(line.getEndPt(), circle.center)
          if d1 > d2:
             ptLine = line.getStartPt()
          else:
             ptLine = line.getEndPt()
-      else: # linea esterna al cerchio
+      else: # line outside the circle
          result = QadMinDistance.fromInfinityLineToCircle(line, circle)
          if line.containsPt(result[1]):
             return result
@@ -2053,7 +1987,7 @@ class QadMinDistance():
 
       angle = qad_utils.getAngleBy2Pts(circle.center, ptLine)
       ptOnCircle = qad_utils.getPolarPointByPtAngle(circle.center, angle, circle.radius)
-      
+
       return [qad_utils.getDistance(ptLine, ptOnCircle), ptLine, ptOnCircle]
 
 
@@ -2062,9 +1996,8 @@ class QadMinDistance():
    # ===============================================================================
    @staticmethod
    def fromLineToArc(line, arc):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un segmento ed un arco
-      (<distanza minima><punto di distanza minima su linea><punto di distanza minima su arco>)
+      """the function returns the minimum distance and the minimum distance points between a segment and an arc
+            (<minimum distance><minimum distance point on line><minimum distance point on arc>)
       """
       intPtList = QadIntersections.lineWithArc(line, arc)
       if len(intPtList) > 0:
@@ -2072,46 +2005,46 @@ class QadMinDistance():
 
       p1Line = line.getStartPt()
       p2Line = line.getEndPt()
-      resultP1 = QadMinDistance.fromArcToPoint(arc, p1Line) # ritorna (<distanza minima><punto di distanza minima su arco>)
-      resultP2 = QadMinDistance.fromArcToPoint(arc, p2Line) # ritorna (<distanza minima><punto di distanza minima su arco>)
-      
-      # se il segmento é interno al cerchio orginato dall'estensione dell'arco
+      resultP1 = QadMinDistance.fromArcToPoint(arc, p1Line) # returns (<minimum distance><minimum distance point on arc>)
+      resultP2 = QadMinDistance.fromArcToPoint(arc, p2Line) # returns (<minimum distance><minimum distance point on arc>)
+
+      # if the segment is inside the circle created by the extension of the arc
       if qad_utils.getDistance(p1Line, arc.center) < arc.radius and \
          qad_utils.getDistance(p2Line, arc.center) < arc.radius:
-         if resultP1[0] < resultP2[0]: # se il punto iniziale della linea è più vicino all'arco
+         if resultP1[0] < resultP2[0]: # if the starting point of the line is closer to the arc
             return [resultP1[0], p1Line, resultP1[1]]
          else:
             return [resultP2[0], p2Line, resultP2[1]]
-      
-      else: # se il segmento é esterno al cerchio orginato dall'estensione dell'arco
+
+      else: # if the segment is outside the circle originated by the extension of the arc
          perpPt = QadPerpendicularity.fromPointToLine(arc.center, line)
          if perpPt is not None:
             angle = qad_utils.getAngleBy2Pts(arc.center, perpPt)
-            # se il punto di perpendicolare al segmento <line> é compreso tra gli angoli dell'arco
+            # if the point of perpendicular to the <line> segment is included between the arc angles
             if arc.isAngleBetweenAngles(angle):
                ptOnArc = qad_utils.getPolarPointByPtAngle(arc.center, angle, arc.radius)
                return [qad_utils.getDistance(perpPt, ptOnArc), perpPt, ptOnArc]
-         
-         bestResult = resultP1 # (<distanza minima><punto di distanza minima su arco>)
-         bestResult.insert(1, p1Line) # (<distanza minima><punto di distanza minima su linea><punto di distanza minima su arco>)
+
+         bestResult = resultP1 # (<minimum distance><minimum distance point on arc>)
+         bestResult.insert(1, p1Line) # (<minimum distance><minimum distance point on line><minimum distance point on arc>)
          resultP2.insert(1, p2Line)
          if bestResult[0] > resultP2[0]:
             bestResult = resultP2
-   
+
          ptStart = arc.getStartPt()
          ptEnd = arc.getEndPt()
-         
-         resultStartPt = QadMinDistance.fromLineToPoint(line, ptStart) # (<distanza minima><punto di distanza minima su linea>
-         resultStartPt.append(ptStart) # <distanza minima><punto di distanza minima><distanza minimasu linea><punto di distanza minima su arco>
-         if bestResult[0] > resultStartPt[0]:
-            bestResult = resultStartPt   
 
-         resultEndPt = QadMinDistance.fromLineToPoint(line, ptEnd) # (<distanza minima><punto di distanza minimasu linea>
-         resultEndPt.append(ptEnd) # <distanza minima><punto di distanza minima><distanza minimasu linea><punto di distanza minima su arco>
+         resultStartPt = QadMinDistance.fromLineToPoint(line, ptStart) # (<minimum distance><minimum distance point on line>
+         resultStartPt.append(ptStart) # <minimum distance><minimum distance point><minimum distance on line><minimum distance point on arc>
+         if bestResult[0] > resultStartPt[0]:
+            bestResult = resultStartPt
+
+         resultEndPt = QadMinDistance.fromLineToPoint(line, ptEnd) # (<minimum distance><minimum distance point on line>
+         resultEndPt.append(ptEnd) # <minimum distance><minimum distance point><minimum distance on line><minimum distance point on arc>
          if bestResult[0] > resultEndPt[0]:
             bestResult = resultEndPt
-            
-         return bestResult # (<distanza minima><punto di distanza minima su linea><punto di distanza minima su arco>)
+
+         return bestResult # (<minimum distance><minimum distance point on line><minimum distance point on arc>)
 
 
    @staticmethod
@@ -2119,79 +2052,76 @@ class QadMinDistance():
       t, theta = params
       x_segment = (1 - t) * line.getStartPt().x() + t * line.getEndPt().x()
       y_segment = (1 - t) * line.getStartPt().y() + t * line.getEndPt().y()
-      
+
       pt_ellipse = ellipse.getPointAtAngle(theta)
       x_ellipse = pt_ellipse.x()
       y_ellipse = pt_ellipse.y()
-        
+
       return np.sqrt((x_segment - x_ellipse) ** 2 + (y_segment - y_ellipse) ** 2)
-   
+
 
    # ===============================================================================
    # fromLineToEllipse chatgpt
    # ===============================================================================
    @staticmethod
    def fromLineToEllipse(line, ellipse):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un segmento ed un'ellisse
-      (<distanza minima><punto di distanza minima su linea><punto di distanza minima su ellisse>)
+      """the function returns the minimum distance and the minimum distance points between a segment and an ellipse
+            (<minimum distance><minimum distance point on line><minimum distance point on ellipse>)
       """
       if NO_SCIPY == True: return []
-      
+
       initial_guess = [0.5, 0]
       bounds = [(0, 1), (0, 2 * np.pi)]
-    
+
       args = (line, ellipse)
-      
+
       result = minimize(QadMinDistance.distanza_line_ellipse, initial_guess, args, bounds=bounds)
-      
+
       if result.success:
         t_opt, theta_opt = result.x
         x_segment_opt = (1 - t_opt) * line.getStartPt().x() + t_opt * line.getEndPt().x()
         y_segment_opt = (1 - t_opt) * line.getStartPt().y() + t_opt * line.getEndPt().y()
-        
+
         pt_ellipse = ellipse.getPointAtAngle(theta_opt)
         x_ellipse_opt = pt_ellipse.x()
         y_ellipse_opt = pt_ellipse.y()
-        
+
         min_distance = result.fun
-        
+
         return [min_distance, QgsPointXY(x_segment_opt, y_segment_opt), QgsPointXY(x_ellipse_opt, y_ellipse_opt)]
       else:
-         raise []     
+         raise []
 
-     
+
    # ===============================================================================
    # fromLineToEllipseArc
    # ===============================================================================
    @staticmethod
    def fromLineToEllipseArc(line, ellipseArc):
+      """the function returns the minimum distance and the minimum distance points between a segment and an arc of an ellipse
+            (<minimum distance><minimum distance point on line><minimum distance point on ellipse arc>)
       """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un segmento ed un arco di ellisse
-      (<distanza minima><punto di distanza minima su linea><punto di distanza minima su arco di ellisse>)
-      """
-    
-      pass # da fare
+
+      pass # TODO
 
 
    # ===============================================================================
-   # metodi per i segmenti - fine
-   # metodi per i cerchi - inizio
+   # segment methods - end
+   # methods for circles - start
    # ===============================================================================
 
 
    # ===============================================================================
    # fromCircleToPoint
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromCircleToPoint(circle, pt):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un cerchio ed un punto
-      (<distanza minima><punto di distanza minima>)
+      """the function returns the minimum distance and the minimum distance points between a circle and a point
+            (<minimum distance><minimum distance point>)
       """
       angle = qad_utils.getAngleBy2Pts(circle.center, pt)
       ptOnCircle = qad_utils.getPolarPointByPtAngle(circle.center, angle, circle.radius)
-      
+
       return [qad_utils.getDistance(pt, ptOnCircle), ptOnCircle]
 
 
@@ -2200,20 +2130,19 @@ class QadMinDistance():
    # ===============================================================================
    @staticmethod
    def fromTwoCircles(circle1, circle2):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra 2 cerchi
-      (<distanza minima><punto di distanza minima su cerchio1><punto di distanza minima su cerchio2>)
+      """the function returns the minimum distance and the minimum distance points between 2 circles
+            (<minimum distance><minimum distance point on circle1><minimum distance point on circle2>)
       """
       intersections = QadIntersections.twoCircles(circle1, circle2)
       if len(intersections) > 0:
          return [0.0, intersections[0], intersections[0]]
-      
+
       angle = qad_utils.getAngleBy2Pts(circle1.center, circle2.center)
       pt1Circle1 = qad_utils.getPolarPointByPtAngle(circle1.center, angle, circle1.radius)
       pt2Circle1 = qad_utils.getPolarPointByPtAngle(circle1.center, angle, -circle1.radius)
       pt1Circle2 = qad_utils.getPolarPointByPtAngle(circle2.center, angle, circle2.radius)
       pt2Circle2 = qad_utils.getPolarPointByPtAngle(circle2.center, angle, -circle2.radius)
-      
+
       minDistance = qad_utils.getDistance(pt1Circle1, pt1Circle2)
       ptMinDistanceCircle1 = pt1Circle1
       ptMinDistanceCircle2 = pt1Circle2
@@ -2223,13 +2152,13 @@ class QadMinDistance():
          minDistance = dist
          ptMinDistanceCircle1 = pt1Circle1
          ptMinDistanceCircle2 = pt2Circle2
-         
+
       dist = qad_utils.getDistance(pt2Circle1, pt1Circle2)
       if dist < minDistance:
          minDistance = dist
          ptMinDistanceCircle1 = pt2Circle1
          ptMinDistanceCircle2 = pt1Circle2
-         
+
       dist = qad_utils.getDistance(pt2Circle1, pt2Circle2)
       if dist < minDistance:
          minDistance = dist
@@ -2244,9 +2173,8 @@ class QadMinDistance():
    # ===============================================================================
    @staticmethod
    def fromCircleToArc(circle, arc):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un cerchio ed un arco
-      (<distanza minima><punto di distanza minima su cerchio><punto di distanza minima su arco>)
+      """the function returns the minimum distance and the minimum distance points between a circle and an arc
+            (<minimum distance><minimum distance point on circle><minimum distance point on arc>)
       """
       intersections = QadIntersections.circleWithArc(circle, arc)
       if len(intersections) > 0:
@@ -2254,12 +2182,12 @@ class QadMinDistance():
 
       pt1Arc = arc.getStartPt()
       pt2Arc = arc.getEndPt()
-      
+
       angle = qad_utils.getAngleBy2Pts(circle.center, pt1Arc)
       ptCircle = qad_utils.getPolarPointByPtAngle(circle.center, angle, circle.radius)
       minDistance = qad_utils.getDistance(ptCircle, pt1Arc)
       ptMinDistanceCircle = ptCircle
-      ptMinDistanceArc = pt1Arc      
+      ptMinDistanceArc = pt1Arc
 
       angle = qad_utils.getAngleBy2Pts(circle.center, pt2Arc)
       ptCircle = qad_utils.getPolarPointByPtAngle(circle.center, angle, circle.radius)
@@ -2268,7 +2196,7 @@ class QadMinDistance():
          minDistance = dist
          ptMinDistanceCircle = ptCircle
          ptMinDistanceArc = pt2Arc
-                
+
       line = QadLine()
       line.set(circle.center, arc.center)
       intersections = QadIntersections.infinityLineWithArc(line, arc)
@@ -2280,7 +2208,7 @@ class QadMinDistance():
             minDistance = dist
             ptMinDistanceCircle = ptCircle
             ptMinDistanceArc = intersections[0]
-      
+
       return [minDistance, ptMinDistanceCircle, ptMinDistanceArc]
 
 
@@ -2289,11 +2217,10 @@ class QadMinDistance():
    # ===============================================================================
    @staticmethod
    def fromCircleToEllipse(circle, ellipse):
+      """the function returns the minimum distance and the minimum distance points between a circle and an ellipse
+            (<minimum distance><minimum distance point on circle><minimum distance point on ellipse>)
       """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un cerchio ed un'ellisse
-      (<distanza minima><punto di distanza minima su cerchio><punto di distanza minima su ellisse>)
-      """
-      pass # da fare
+      pass # TODO
 
 
    # ===============================================================================
@@ -2301,27 +2228,25 @@ class QadMinDistance():
    # ===============================================================================
    @staticmethod
    def fromCircleToEllipseArc(circle, ellipseArc):
+      """the function returns the minimum distance and the minimum distance points between a circle and an arc of an ellipse
+            (<minimum distance><minimum distance point on circle><minimum distance point on ellipse arc>)
       """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un cerchio ed un arco di ellisse
-      (<distanza minima><punto di distanza minima su cerchio><punto di distanza minima su arco di ellisse>)
-      """
-      pass # da fare
+      pass # TODO
 
 
    # ===============================================================================
-   # metodi per i cerchi - fine
-   # metodi per gli archi - inizio
+   # methods for circles - end
+   # methods for arcs - start
    # ===============================================================================
 
 
    # ===============================================================================
    # fromArcToPoint
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromArcToPoint(arc, pt):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un arco ed un punto
-      (<distanza minima><punto di distanza minima>)
+      """the function returns the minimum distance and the minimum distance points between an arc and a point
+            (<minimum distance><minimum distance point>)
       """
       if arc.isPtOnArcOnlyByAngle(pt):
          circle = QadCircle()
@@ -2336,10 +2261,10 @@ class QadMinDistance():
             return [d1, p1]
          else:
             return [d2, p2]
-         
+
       angle = qad_utils.getAngleBy2Pts(circle.center, pt)
       ptOnCircle = qad_utils.getPolarPointByPtAngle(circle.center, angle, circle.radius)
-      
+
       return [qad_utils.getDistance(pt, ptOnCircle), ptOnCircle]
 
 
@@ -2348,22 +2273,21 @@ class QadMinDistance():
    # ===============================================================================
    @staticmethod
    def fromTwoArcs(arc1, arc2):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra 2 archi
-      (<distanza minima><punto di distanza minima su arco1><punto di distanza minima su arco2>)
+      """the function returns the minimum distance and the minimum distance points between 2 arcs
+            (<minimum distance><minimum distance point on arc1><minimum distance point on arc2>)
       """
       intPtList = QadIntersections.twoArcs(arc1, arc2)
       if len(intPtList) > 0:
          return [0, intPtList[0], intPtList[0]]
-      
+
       StartPtArc1 = arc1.getStartPt()
-      EndPtArc1 = arc1.getEndPt()     
+      EndPtArc1 = arc1.getEndPt()
       StartPtArc2 = arc2.getStartPt()
-      EndPtArc2 = arc2.getEndPt()     
-      
-      # calcolo la minima distanza tra gli estremi di un arco e l'altro arco e 
-      # scelgo la migliore tra le quattro distanze
-      # ritorna una lista: (<minima distanza><punto più vicino>)
+      EndPtArc2 = arc2.getEndPt()
+
+      # calculate the minimum distance between the ends of one arc and the other arc e
+      # I choose the best of the four distances
+      # returns a list: (<minimum distance><nearest point>)
       dummy = QadMinDistance.fromArcToPoint(arc2, StartPtArc1)
       bestResult = [dummy[0], StartPtArc1, dummy[1]]
 
@@ -2371,60 +2295,60 @@ class QadMinDistance():
       resultArc2_EndPtArc1 = [dummy[0], EndPtArc1, dummy[1]]
       if bestResult[0] > resultArc2_EndPtArc1[0]:
          bestResult = resultArc2_EndPtArc1
-            
+
       dummy = QadMinDistance.fromArcToPoint(arc1, StartPtArc2)
       resultArc1_StartPtArc2 = [dummy[0], dummy[1], StartPtArc2]
       if bestResult[0] > resultArc1_StartPtArc2[0]:
          bestResult = resultArc1_StartPtArc2
-            
+
       dummy = QadMinDistance.fromArcToPoint(arc1, EndPtArc2)
       resultArc1_EndPtArc2 = [dummy[0], dummy[1], EndPtArc2]
       if bestResult[0] > resultArc1_EndPtArc2[0]:
-         bestResult = resultArc1_EndPtArc2   
+         bestResult = resultArc1_EndPtArc2
 
-      # il cerchio1 e il cerchio 2 sono derivati rispettivamente dall'estensione dell'arco1 e arco2.
+      # circle1 and circle 2 are derived from the extension of arc1 and arc2 respectively.
       circle1 = QadCircle()
       circle1.set(arc1.center, arc1.radius)
       circle2 = QadCircle()
       circle2.set(arc2.center, arc2.radius)
       distanceBetweenCenters = qad_utils.getDistance(circle1.center, circle2.center)
-      
+
       # considero i seguenti 2 casi:
       # i cerchi sono esterni
       if distanceBetweenCenters - circle1.radius - circle2.radius > 0:
-         # creo un segmento che unisce i due centri e lo interseco con l'arco 1
+         # create a segment that joins the two centers and intersects it with arc 1
          l = QadLine()
          l.set(arc1.center, arc2.center)
          intPtListArc1 = QadIntersections.lineWithArc(l, arc1)
          if len(intPtListArc1) > 0:
             intPtArc1 = intPtListArc1[0]
-         
-            # creo un segmento che unisce i due centri e lo interseco con l'arco 2
+
+            # create a segment that joins the two centers and intersects it with arc 2
             intPtListArc2 = QadIntersections.lineWithArc(l, arc2)
             if len(intPtListArc2) > 0:
                intPtArc2 = intPtListArc2[0]
-               
+
                distanceIntPts = qad_utils.getDistance(intPtArc1, intPtArc2)
                if bestResult[0] > distanceIntPts:
                   bestResult = [distanceIntPts, intPtArc1, intPtArc2]
-      # il cerchio1 é interno al cerchio2 oppure
-      # il cerchio2 é interno al cerchio1
+      # circle1 is inside circle2 or
+      # circle2 is inside circle1
       elif distanceBetweenCenters + circle1.radius < circle2.radius or \
            distanceBetweenCenters + circle2.radius < circle1.radius:
-         # creo un segmento che unisce i due centri e lo interseco con l'arco 2
+         # create a segment that joins the two centers and intersects it with arc 2
          l = QadLine()
          l.set(arc1.center, arc2.center)
          intPtListArc2 = QadIntersections.infinityLineWithArc(l, arc2)
          if len(intPtListArc2) > 0:
-            # creo un segmento che unisce i due centri e lo interseco con l'arco 1
+            # create a segment that joins the two centers and intersects it with arc 1
             intPtListArc1 = QadIntersections.infinityLineWithArc(l, arc1)
-   
+
             for intPtArc2 in intPtListArc2:
                for intPtArc1 in intPtListArc1:
                   distanceIntPts = qad_utils.getDistance(intPtArc2, intPtArc1)
                   if bestResult[0] > distanceIntPts:
-                     bestResult = [distanceIntPts, intPtArc1, intPtArc2]                                         
-   
+                     bestResult = [distanceIntPts, intPtArc1, intPtArc2]
+
       return bestResult
 
 
@@ -2433,27 +2357,25 @@ class QadMinDistance():
    # ===============================================================================
    @staticmethod
    def fromArcToEllipseArc(arc, ellipseArc):
+      """the function returns the minimum distance and the minimum distance points between an arc and an ellipse arc
+            (<minimum distance><point of minimum distance on arc><point of minimum distance on arc of ellipse>)
       """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un arco ed un arco di ellisse
-      (<distanza minima><punto di distanza minima su arco><punto di distanza minima su arco di ellisse>)
-      """
-      pass # da fare
+      pass # TODO
 
 
    # ===============================================================================
-   # metodi per gli archi - fine
-   # metodi per le ellissi - inizio
+   # methods for arcs - end
+   # methods for ellipses - start
    # ===============================================================================
 
 
    # ===============================================================================
    # fromEllipseToPoint
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromEllipseToPoint(ellipse, pt):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un'ellisse ed un punto
-      (<distanza minima><punto di distanza minima>)
+      """the function returns the minimum distance and the minimum distance points between an ellipse and a point
+            (<minimum distance><minimum distance point>)
       """
       perpPts = QadPerpendicularity.fromPointToEllipse(pt, ellipse)
       dist = sys.float_info.max
@@ -2462,20 +2384,19 @@ class QadMinDistance():
          if d < dist:
             dist = d
             bestPt = perpPt
-            
+
       return [dist, bestPt]
 
-   
+
    # ===============================================================================
    # fromTwoEllipses
    # ===============================================================================
    @staticmethod
    def fromTwoEllipses(ellipse1, ellipse2):
+      """the function returns the minimum distance and the minimum distance points between 2 ellipses
+            (<minimum distance><minimum distance point on ellipse1><minimum distance point on ellipse2>)
       """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra 2 ellissi
-      (<distanza minima><punto di distanza minima su ellisse1><punto di distanza minima su ellisse2>)
-      """
-      pass # da fare
+      pass # TODO
 
 
    # ===============================================================================
@@ -2483,11 +2404,10 @@ class QadMinDistance():
    # ===============================================================================
    @staticmethod
    def fromEllipseToArc(ellipse, arc):
+      """the function returns the minimum distance and the minimum distance points between an ellipse and an arc
+            (<minimum distance><minimum distance point on ellipse><minimum distance point on arc>)
       """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un'ellisse ed un arco
-      (<distanza minima><punto di distanza minima su ellisse><punto di distanza minima su arco>)
-      """
-      pass # da fare
+      pass # TODO
 
 
    # ===============================================================================
@@ -2495,27 +2415,25 @@ class QadMinDistance():
    # ===============================================================================
    @staticmethod
    def fromEllipseToEllipseArc(ellipse, ellipseArc):
+      """the function returns the minimum distance and the minimum distance points between an ellipse and an arc of an ellipse
+            (<minimum distance><minimum distance point on ellipse><minimum distance point on ellipse arc>)
       """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un'ellisse ed un arco di ellisse
-      (<distanza minima><punto di distanza minima su ellisse><punto di distanza minima su arco di ellisse>)
-      """
-      pass # da fare
+      pass # TODO
 
 
    # ===============================================================================
-   # metodi per le ellissi - fine
-   # metodi per gli archi di ellisse - inizio
+   # methods for ellipses - end
+   # methods for ellipse arcs - start
    # ===============================================================================
 
 
    # ===============================================================================
    # fromEllipseArcToPoint
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromEllipseArcToPoint(ellipseArc, pt):
-      """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra un arco di ellisse ed un punto
-      (<distanza minima><punto di distanza minima>)
+      """the function returns the minimum distance and the minimum distance points between an arc of an ellipse and a point
+            (<minimum distance><minimum distance point>)
       """
       perpPts = QadPerpendicularity.fromPointToEllipseArc(pt, ellipseArc)
       dist = sys.float_info.max
@@ -2524,12 +2442,12 @@ class QadMinDistance():
          if d < dist:
             dist = d
             bestPt = perpPt
-            
+
       if dist < sys.float_info.max: return [dist, bestPt]
-      
+
       d1 = qad_utils.getDistance(pt, ellipseArc.getStartPt())
       d2 = qad_utils.getDistance(pt, ellipseArc.getEndPt())
-      
+
       if d1 < d2:
          return [d1, ellipseArc.getStartPt()]
       else:
@@ -2541,21 +2459,19 @@ class QadMinDistance():
    # ===============================================================================
    @staticmethod
    def fromTwoEllipseArcs(ellipseArc1, ellipseArc2):
+      """the function returns the minimum distance and the minimum distance points between 2 ellipse arcs
+            (<minimum distance><minimum distance point on arc ellipse1><minimum distance point on arc ellipse2>)
       """
-      la funzione ritorna la distanza minima e i punti di distanza minima tra 2 archi di ellisse
-      (<distanza minima><punto di distanza minima su arco ellisse1><punto di distanza minima su arco di ellisse2>)
-      """
-      pass # da fare
+      pass # TODO
 
 
    # ============================================================================
    # fromPointToBasicGeomObject
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToBasicGeomObject(pt, object):
-      """
-      la funzione ritorna la distanza minima e il punto di distanza minima tra un oggetto geometrico di base ed un punto
-      (<distanza minima><punto di distanza minima>)
+      """the function returns the minimum distance and the minimum distance point between a basic geometric object and a point
+            (<minimum distance><minimum distance point>)
       """
       if object.whatIs() == "POINT":
          return (object.distance(pt), object)
@@ -2569,19 +2485,18 @@ class QadMinDistance():
          return QadMinDistance.fromEllipseToPoint(object, pt)
       elif object.whatIs() == "ELLIPSE_ARC":
          return QadMinDistance.fromEllipseArcToPoint(object, pt)
-         
+
       return []
 
 
    # ============================================================================
    # fromPointToBasicGeomObjectExtensions
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToBasicGeomObjectExtensions(pt, object):
+      """the function returns the minimum distance and the minimum distance point between an extension of the basic geometric object and a point
+            line (becomes infinite line), arc (becomes circle), ellipse arc (becomes ellipse), circle, ellipse.
       """
-      la funzione ritorna la distanza minima e il punto di distanza minima tra una estensione di oggetto geometrico di base ed un punto
-      linea (diventa linea infinita), arco (diventa cerchio), arco di ellisse (diventa ellisse), cerchio, ellisse.
-      """      
       if object.whatIs() == "LINE":
          return QadMinDistance.fromInfinityLineToPoint(object, pt)
       elif object.whatIs() == "CIRCLE":
@@ -2596,25 +2511,24 @@ class QadMinDistance():
          ellipse = QadEllipse()
          ellipse.set(object.center, object.majorAxisFinalPt, object.axisRatio)
          return QadMinDistance.fromEllipseToPoint(object, pt)
-         
+
       return []
 
 
    # ============================================================================
    # fromTwoBasicGeomObjects
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromTwoBasicGeomObjects(object1, object2):
+      """the function returns
+            <minimum distance>
+            <minimum distance point on object1>
+            <minimum distance point on object2>
+            of the 2 basic geometric objects: line, arc, ellipse arc, circle, ellipse.
       """
-      la funzione ritorna 
-      <distanza minima>
-      <punto di distanza minima su object1>
-      <punto di distanza minima su object2>
-      dei 2 oggetti geometrici di base: linea, arco, arco di ellisse, cerchio, ellisse.
-      """      
       if object1.whatIs() == "LINE":
          if object2.whatIs() == "LINE":
-            # <distanza minima><punto di distanza minima su segmento1><punto di distanza minima su segmento2>
+            # <minimum distance><minimum distance point on segment1><minimum distance point on segment2>
             return QadMinDistance.fromTwoLines(object1, object2)
          elif object2.whatIs() == "CIRCLE":
             return QadMinDistance.fromLineToCircle(object1, object2)
@@ -2624,7 +2538,7 @@ class QadMinDistance():
             return QadMinDistance.fromLineToEllipse(object1, object2)
          elif object2.whatIs() == "ELLIPSE_ARC":
             return QadMinDistance.fromLineToEllipseArc(object1, object2)
-         
+
       elif object1.whatIs() == "CIRCLE":
          if object2.whatIs() == "LINE":
             return QadMinDistance.fromLineToCircle(object2, object1)
@@ -2636,7 +2550,7 @@ class QadMinDistance():
             return QadMinDistance.fromCircleToEllipse(object1, object2)
          elif object2.whatIs() == "ELLIPSE_ARC":
             return QadMinDistance.fromCircleToEllipseArc(object1, object2)
-         
+
       elif object1.whatIs() == "ARC":
          if object2.whatIs() == "LINE":
             return QadMinDistance.fromLineToArc(object2, object1)
@@ -2672,31 +2586,30 @@ class QadMinDistance():
             return QadMinDistance.fromEllipseToEllipseArc(object2, object1)
          elif object2.whatIs() == "ELLIPSE_ARC":
             return QadMinDistance.fromTwoEllipseArcs(object1, object2)
-   
+
       return []
 
 
    # ============================================================================
    # fromTwoGeomObjects
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromTwoGeomObjects(object1, object2):
-      """
-      la funzione ritorna 
-      <distanza minima>
-      <punto di distanza minima su object1>
-      <geomIndex su object1>
-      <subGeomIndex su object1>
-      <partIndex su object1>
-      <punto di distanza minima su object2>
-      <geomIndex su object2>
-      <subGeomIndex su object2>
-      <partIndex su object2>
-      dei 2 oggetti geometrici.
+      """the function returns
+            <minimum distance>
+            <minimum distance point on object1>
+            <geomIndex on object1>
+            <subGeomIndex on object1>
+            <partIndex on object1>
+            <minimum distance point on object2>
+            <geomIndex on object2>
+            <subGeomIndex on object2>
+            <partIndex on object2>
+            of the 2 geometric objects.
       """
       minDistancePts = None
       geomType1 = object1.whatIs()
-      
+
       if geomType1 == "MULTI_LINEAR_OBJ":
          for geomAt in range(0, object1.qty()):
             partialMinDistancePts = QadMinDistance.fromTwoGeomObjects(object.getLinearObjectAt(geomAt), object2)
@@ -2706,7 +2619,7 @@ class QadMinDistance():
             elif partialMinDistancePts[0] < minDistancePts[0]:
                minDistancePts = partialMinDistancePts
                minDistancePts[2] = geomAt
-            
+
       elif geomType1 == "POLYLINE":
          for partAt in range(0, object1.qty()):
             partialMinDistancePts = QadMinDistance.fromTwoGeomObjects(object.getLinearObjectAt(partAt), object2)
@@ -2716,7 +2629,7 @@ class QadMinDistance():
             elif partialMinDistancePts[0] < minDistancePts[0]:
                minDistancePts = partialMinDistancePts
                minDistancePts[4] = partAt
-            
+
       elif geomType1 == "POLYGON":
          for subGeomAt in range(0, object1.qty()):
             partialMinDistancePts = QadMinDistance.fromTwoGeomObjects(object.getClosedObjectAt(geomAt), object2)
@@ -2726,7 +2639,7 @@ class QadMinDistance():
             elif partialMinDistancePts[0] < minDistancePts[0]:
                minDistancePts = partialMinDistancePts
                minDistancePts[3] = subGeomAt
-         
+
       elif geomType1 == "MULTI_POLYGON":
          for geomAt in range(0, object1.qty()):
             partialMinDistancePts = QadMinDistance.fromTwoGeomObjects(object.getPolygonAt(geomAt), object2)
@@ -2736,7 +2649,7 @@ class QadMinDistance():
             elif partialMinDistancePts[0] < minDistancePts[0]:
                minDistancePts = partialMinDistancePts
                minDistancePts[2] = geomAt
-         
+
       elif geomType1 == "MULTI_POINT":
          for geomAt in range(0, object1.qty()):
             partialMinDistancePts = QadMinDistance.fromTwoGeomObjects(object.getPointAt(geomAt), object2)
@@ -2746,11 +2659,11 @@ class QadMinDistance():
             elif partialMinDistancePts[0] < minDistancePts[0]:
                minDistancePts = partialMinDistancePts
                minDistancePts[2] = geomAt
-         
-      # oggetto1 è una geometria base
+
+      # object1 is a basic geometry
       else:
          geomType2 = object2.whatIs()
-         
+
          if geomType2 == "MULTI_LINEAR_OBJ":
             for geomAt in range(0, object2.qty()):
                partialMinDistancePts = QadMinDistance.fromTwoGeomObjects(object1, object2.getLinearObjectAt(geomAt))
@@ -2760,27 +2673,27 @@ class QadMinDistance():
                elif partialMinDistancePts[0] < minDistancePts[0]:
                   minDistancePts = partialMinDistancePts
                   minDistancePts[6] = geomAt
-               
+
          elif geomType2 == "POLYLINE":
             for partAt in range(0, object2.qty()):
                partialMinDistancePts = QadMinDistance.fromTwoGeomObjects(object1, object2.getLinearObjectAt(partAt))
                if minDistancePts is None:
                   minDistancePts = partialMinDistancePts
-                  minDistancePts[8] = partAt                  
+                  minDistancePts[8] = partAt
                elif partialMinDistancePts[0] < minDistancePts[0]:
                   minDistancePts = partialMinDistancePts
-                  minDistancePts[8] = partAt                  
-               
+                  minDistancePts[8] = partAt
+
          elif geomType2 == "POLYGON":
             for subGeomAt in range(0, object2.qty()):
                partialMinDistancePts = QadMinDistance.fromTwoGeomObjects(object1, object2.getClosedObjectAt(geomAt))
                if minDistancePts is None:
                   minDistancePts = partialMinDistancePts
-                  minDistancePts[7] = subGeomAt                  
+                  minDistancePts[7] = subGeomAt
                elif partialMinDistancePts[0] < minDistancePts[0]:
                   minDistancePts = partialMinDistancePts
-                  minDistancePts[7] = subGeomAt                  
-            
+                  minDistancePts[7] = subGeomAt
+
          elif geomType2 == "MULTI_POLYGON":
             for geomAt in range(0, object2.qty()):
                partialMinDistancePts = QadMinDistance.fromTwoGeomObjects(object1, object2.getPolygonAt(geomAt))
@@ -2790,7 +2703,7 @@ class QadMinDistance():
                elif partialMinDistancePts[0] < minDistancePts[0]:
                   minDistancePts = partialMinDistancePts
                   minDistancePts[6] = geomAt
-            
+
          elif geomType2 == "MULTI_POINT":
             for geomAt in range(0, object2.qty()):
                partialMinDistancePts = QadMinDistance.fromTwoGeomObjects(object1, object2.getPointAt(geomAt))
@@ -2801,23 +2714,22 @@ class QadMinDistance():
                   minDistancePts = partialMinDistancePts
                   minDistancePts[6] = geomAt
 
-         # oggetto2 è una geometria base (e anche oggetto1 era una geometria base)
-         else:            
+         # object2 is a basic geometry (and object1 was also a basic geometry)
+         else:
             dummy = QadMinDistance.fromTwoBasicGeomObjects(object1, object2)
-            minDistancePts = [dummy[0], dummy[1], 0, 0, 0, dummy[2], 0, 0, 0,]    
-            
+            minDistancePts = [dummy[0], dummy[1], 0, 0, 0, dummy[2], 0, 0, 0,]
+
       return minDistancePts
-      
+
 
    # ============================================================================
    # twoBasicGeomObjectExtensions
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromTwoBasicGeomObjectExtensions(object1, object2):
+      """the function returns the minimum distance and the minimum distance points of the extensions of 2 basic geometric objects:
+            line (becomes infinite line), arc (becomes circle), ellipse arc (becomes ellipse), circle, ellipse.
       """
-      la funzione ritorna la distanza minima e i punti di distanza minima delle estensioni di 2 oggetti geometrici di base:
-      linea (diventa linea infinita), arco (diventa cerchio), arco di ellisse (diventa ellisse), cerchio, ellisse.
-      """      
       if object1.whatIs() == "LINE":
          if object2.whatIs() == "CIRCLE":
             return QadMinDistance.fromInfinityLineToCircle(object1, object2)
@@ -2829,7 +2741,7 @@ class QadMinDistance():
             return QadMinDistance.fromInfinityLineToEllipse(object1, object2)
          elif object2.whatIs() == "ELLIPSE_ARC":
             return QadMinDistance.fromInfinityLineToEllipseArc(object1, object2)
-         
+
       elif object1.whatIs() == "CIRCLE":
          if object2.whatIs() == "LINE":
             return QadMinDistance.fromInfinityLineToCircle(object2, object1)
@@ -2845,7 +2757,7 @@ class QadMinDistance():
             ellipse = QadEllipse()
             ellipse.set(object2.center, object2.majorAxisFinalPt, object2.axisRatio)
             return QadMinDistance.fromCircleToEllipse(object1, ellipse)
-         
+
       elif object1.whatIs() == "ARC":
          circle1 = QadCircle()
          circle1.set(object1.center, object1.radius)
@@ -2897,40 +2809,38 @@ class QadMinDistance():
             ellipse2 = QadEllipse()
             ellipse2.set(object2.center, object2.majorAxisFinalPt, object2.axisRatio)
             return QadMinDistance.fromTwoEllipseArcs(ellipse1, ellipse2)
-   
+
       return []
 
 
 # ===============================================================================
 # QadTangency class
-# rappresenta una classe che calcola la tangenza tra oggetti di base: punto, linea, cerchio, arco, ellisse, arco di ellisse
+# represents a class that calculates the tangency between basic objects: point, line, circle, arc, ellipse, arc of ellipse
 # ===============================================================================
 class QadTangency():
-    
+
    def __init__(self):
       pass
 
 
    # ===============================================================================
-   # metodi per i cerchi - inizio
+   # methods for circles - start
    # ===============================================================================
 
 
    # ===============================================================================
    # fromPointToCircle
    # ===============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToCircle(point, circle):
-      """
-      la funzione ritorna una lista punti di tangenza sul cerchio di linee passanti per un punto
-      """
+      """the function returns a list of tangency points on the circle of lines passing through a point"""
       dist = circle.center.distance(point)
       if dist < circle.radius: return []
-      
+
       angleOffSet = math.asin(circle.radius / dist)
       angleOffSet = (math.pi / 2) - angleOffSet
       angle = qad_utils.getAngleBy2Pts(circle.center, point)
-      
+
       pt1 = qad_utils.getPolarPointByPtAngle(circle.center, angle + angleOffSet, circle.radius)
       pt2 = qad_utils.getPolarPointByPtAngle(circle.center, angle - angleOffSet, circle.radius)
       return [pt1, pt2]
@@ -2939,11 +2849,9 @@ class QadTangency():
    # ============================================================================
    # twoCircles
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def twoCircles(circle1, circle2):
-      """
-      la funzione ritorna una lista di linee che sono le tangenti ai due cerchi
-      """      
+      """the function returns a list of lines that are tangents to the two circles"""
       x1 = circle1.center[0]
       y1 = circle1.center[1]
       r1 = circle1.radius
@@ -2954,17 +2862,17 @@ class QadTangency():
       d_sq = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)
       if (d_sq <= (r1-r2)*(r1-r2)):
           return []
- 
+
       d = math.sqrt(d_sq);
       vx = (x2 - x1) / d;
       vy = (y2 - y1) / d;
- 
+
       tangents = []
       # Let A, B be the centers, and C, D be points at which the tangent
       # touches first and second circle, and n be the normal vector to it.
       #
       # We have the system:
-      #   n * n = 1          (n is a unit vector)          
+      #   n * n = 1          (n is a unit vector)
       #   C = A + r1 * n
       #   D = B +/- r2 * n
       #   n * CD = 0         (common orthogonality)
@@ -2976,13 +2884,13 @@ class QadTangency():
       sign1 = +1
       while sign1 >= -1:
          c = (r1 - sign1 * r2) / d;
- 
+
          # Now we're just intersecting a line with a circle: v*n=c, n*n=1
- 
+
          if (c*c > 1.0):
             sign1 = sign1 - 2
             continue
-         
+
          h = math.sqrt(max(0.0, 1.0 - c*c));
 
          sign2 = +1
@@ -2995,20 +2903,18 @@ class QadTangency():
                         QgsPointXY(x2 + sign1 * r2 * nx, y2 + sign1 * r2 * ny))
             tangents.append(tangent)
             sign2 = sign2 - 2
-            
+
          sign1 = sign1 - 2
- 
+
       return tangents
 
 
    # ============================================================================
    # fromCircleToArc
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromCircleToArc(circle1, arc2):
-      """
-      la funzione ritorna una lista di linee che sono le tangenti al cerchio e all'arco
-      """
+      """the function returns a list of lines that are tangents to the circle and the arc"""
       result = []
       circle2 = QadCircle()
       circle2.set(arc2.center, arc2.radius)
@@ -3022,22 +2928,18 @@ class QadTangency():
    # ============================================================================
    # fromCircleToEllipse
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromCircleToEllipse(circle1, ellipse2):
-      """
-      la funzione ritorna una lista di linee che sono le tangenti al cerchio e all'ellisse
-      """
+      """the function returns a list of lines that are tangents to the circle and the ellipse"""
       return []
 
 
    # ============================================================================
    # fromCircleToEllipseArc
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromCircleToEllipseArc(circle1, ellipseArc2):
-      """
-      la funzione ritorna una lista di linee che sono le tangenti al cerchio e all'arco di ellisse
-      """
+      """the function returns a list of lines that are tangents to the circle and the arc of the ellipse"""
       result = []
       ellipse2 = QadEllipse()
       ellipse2.set(ellipseArc2.center, ellipseArc2.majorAxisFinalPt, ellipseArc2.axisRatio)
@@ -3049,19 +2951,17 @@ class QadTangency():
 
 
    # ===============================================================================
-   # metodi per i cerchi - fine
-   # metodi per gli archi - inizio
+   # methods for circles - end
+   # methods for arcs - start
    # ===============================================================================
 
 
    # ============================================================================
    # fromPointToArc
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToArc(pt, arc):
-      """
-      la funzione ritorna una lista punti di tangenza sull'arco di linee passanti per un punto
-      """
+      """the function returns a list of tangency points on the arc of lines passing through a point"""
       result = []
       circle = QadCircle()
       circle.set(arc.center, arc.radius)
@@ -3075,11 +2975,9 @@ class QadTangency():
    # ============================================================================
    # twoArcs
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def twoArcs(arc1, arc2):
-      """
-      la funzione ritorna una lista di linee che sono le tangenti ai due archi
-      """      
+      """the function returns a list of lines that are tangents to the two arcs"""
       result = []
       circle1 = QadCircle()
       circle1.set(arc1.center, arc1.radius)
@@ -3093,11 +2991,9 @@ class QadTangency():
    # ============================================================================
    # fromArcToEllipse
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromArcToEllipse(arc1, ellipse2):
-      """
-      la funzione ritorna una lista di linee che sono le tangenti all'arco e all'ellisse
-      """
+      """the function returns a list of lines that are tangents to the arc and the ellipse"""
       result = []
       circle1 = QadCircle()
       circle1.set(arc1.center, arc1.radius)
@@ -3111,11 +3007,9 @@ class QadTangency():
    # ============================================================================
    # fromArcToEllipseArc
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromArcToEllipseArc(arc1, ellipseArc2):
-      """
-      la funzione ritorna una lista di linee che sono le tangenti all'arco e all'arco di ellisse
-      """
+      """the function returns a list of lines that are the tangents to the arc and the arc of the ellipse"""
       result = []
       circle1 = QadCircle()
       circle1.set(arc1.center, arc1.radius)
@@ -3127,47 +3021,45 @@ class QadTangency():
 
 
    # ===============================================================================
-   # metodi per gli archi - fine
-   # metodi per le ellissi - inizio
+   # methods for arcs - end
+   # methods for ellipses - start
    # ===============================================================================
-   
-   
+
+
    # ============================================================================
    # fromPointToEllipse
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToEllipse(pt, ellipse):
-      """
-      la funzione ritorna una lista punti di tangenza sull'ellisse di linee passanti per un punto
-      """
+      """the function returns a list of tangent points on the ellipse of lines passing through a point"""
       # https://www3.ul.ie/~rynnet/swconics/TC.htm
       # 1. With the radius set to the major axis, scribe an arc  from F.
-      # 2. From P scribe an arc with radius set to F1
+      # 2. From P write an arc with radius set to F1
       # 3. Where this arc intersects the previous arc drawn, draw the lines back to the focal point F.
       # 4. The points where these lines intersect the curve will be the points of contact of the tangents from point P.
-      
+
       result = []
       line = QadLine()
       # trovo i fuochi
       foci = ellipse.getFocus()
       if len(foci) == 0: return result
-      a = qad_utils.getDistance(ellipse.center, ellipse.majorAxisFinalPt) * 2 # asse maggiore
-      b = a * ellipse.axisRatio # asse minore
-      # punto 1 e 2      
-      focus = foci[0] # provo prima con il primo fuoco
+      a = qad_utils.getDistance(ellipse.center, ellipse.majorAxisFinalPt) * 2 # major axis
+      b = a * ellipse.axisRatio # minor axis
+      # points 1 and 2
+      focus = foci[0] # I try with the first fire first
       circle1 = QadCircle()
       circle1.set(focus, a)
       circle2 = QadCircle()
       circle2.set(point, qad_utils.getDistance(foci[1], point))
-      intPts = QadIntersections.twoCircles(circle1, circle2)      
-      if len(intPts) == 0: # se non hanno intersezioni provo l'altro fuoco
+      intPts = QadIntersections.twoCircles(circle1, circle2)
+      if len(intPts) == 0: # if they have no intersections I try the other fire
          focus = foci[1]
          circle1.set(focus, a)
          circle2.set(point, qad_utils.getDistance(foci[0], point))
          intPts = QadIntersections.twoCircles(circle1, circle2)
-         if len(intPts) == 0: # se non hanno intersezioni ciao
+         if len(intPts) == 0: # if they have no intersections hello
             return result
-         
+
       if len(intPts) == 1:
          line.set(focus, intPts[0])
          tgPt1 = QadIntersections.lineWithEllipse(line, ellipse)
@@ -3181,30 +3073,26 @@ class QadTangency():
          if len(tgPt1) == 0 or len(tgPt2) == 0: return result
          result.append(tgPt1[0])
          result.append(tgPt2[0])
-      
+
       return result
 
 
    # ============================================================================
    # twoEllipses
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def twoEllipses(ellipse1, ellipse2):
-      """
-      la funzione ritorna una lista di linee che sono le tangenti a due ellissi
-      """
-      # da fare
+      """the function returns a list of lines that are the tangents to two ellipses"""
+      # TODO
       return []
 
 
    # ============================================================================
    # fromEllipseToEllipseArc
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromEllipseToEllipseArc(ellipse1, ellipseArc2):
-      """
-      la funzione ritorna una lista di linee che sono le tangenti all'ellisse e all'arco di ellisse
-      """
+      """the function returns a list of lines that are tangents to the ellipse and the arc of the ellipse"""
       result = []
       ellipse2 = QadEllipse()
       ellipse2.set(ellipseArc2.center, ellipseArc2.majorAxisFinalPt, ellipseArc2.axisRatio)
@@ -3216,19 +3104,17 @@ class QadTangency():
 
 
    # ===============================================================================
-   # metodi per le ellissi - fine
-   # metodi per gli archi di ellisse - inizio
+   # methods for ellipses - end
+   # methods for ellipse arcs - start
    # ===============================================================================
 
 
    # ============================================================================
    # fromPointToEllipseArc
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToEllipseArc(pt, ellipseArc):
-      """
-      la funzione ritorna una lista punti di tangenza sull'arco di ellisse di linee passanti per un punto
-      """
+      """the function returns a list of tangency points on the ellipse arc of lines passing through a point"""
       result = []
       ellipse = QadEllipse()
       ellipse.set(ellipseArc.center, ellipseArc.majorAxisFinalPt, ellipseArc.axisRatio)
@@ -3242,11 +3128,9 @@ class QadTangency():
    # ============================================================================
    # twoEllipseArcs
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def twoEllipseArcs(ellipseArc1, ellipseArc2):
-      """
-      la funzione ritorna una lista di linee che sono le tangenti a due archi di ellissi
-      """
+      """the function returns a list of lines that are the tangents to two arcs of ellipses"""
       result = []
       ellipse1 = QadEllipse()
       ellipse1.set(ellipseArc1.center, ellipseArc1.majorAxisFinalPt, ellipseArc1.axisRatio)
@@ -3258,20 +3142,19 @@ class QadTangency():
 
 
    # ===============================================================================
-   # metodi per gli archi di ellisse - fine
-   # metodi per gli oggetti geometrici di base - inizio
+   # methods for ellipse arcs - end
+   # methods for basic geometric objects - start
    # ===============================================================================
 
 
    # ============================================================================
    # fromPointToBasicGeomObject
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToBasicGeomObject(pt, object):
-      """
-      la funzione ritorna una lista punti di tangenza sull'oggetto passanti per un punto
-      la funzione ritorna i punti di tangenza su un oggetto geometrico di base:
-      linea, arco, arco di ellisse, cerchio, ellisse.
+      """the function returns a list of points of tangency on the object passing through a point
+            the function returns the points of tangency on a basic geometric object:
+            line, arc, ellipse arc, circle, ellipse.
       """
       if object.whatIs() == "CIRCLE":
          return QadTangency.fromPointToCircle(pt, object)
@@ -3281,19 +3164,18 @@ class QadTangency():
          return QadTangency.fromPointToEllipse(pt, object)
       elif object.whatIs() == "ELLIPSE_ARC":
          return QadTangency.fromPointToEllipseArc(pt, object)
-         
+
       return []
 
 
    # ============================================================================
    # fromPointToBasicGeomObjectExtensions
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToBasicGeomObjectExtensions(pt, object):
+      """the function returns a list of tangency points on an extension of a basic geometric object passing through a point
+            arc (becomes circle), arc of ellipse (becomes ellipse), circle, ellipse.
       """
-      la funzione ritorna una lista punti di tangenza su una estensione di un oggetto geometrico di base passanti per un punto
-      arco (diventa cerchio), arco di ellisse (diventa ellisse), cerchio, ellisse.
-      """      
       if object.whatIs() == "CIRCLE":
          return QadTangency.fromPointToCircle(pt, object)
       elif object.whatIs() == "ARC":
@@ -3306,60 +3188,57 @@ class QadTangency():
          ellipse = QadEllipse()
          ellipse.set(object.center, object.majorAxisFinalPt, object.axisRatio)
          return QadTangency.fromPointToEllipse(pt, ellipse)
-         
+
       return []
 
 
    # ============================================================================
    # fromPointToGeomObject
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def fromPointToGeomObject(pt, object):
-      """
-      la funzione ritorna una lista punti di tangenza sull'oggetto passanti per un punto
-      """
+      """the function returns a list of points of tangency on the object passing through a point"""
       geomType = object.whatIs()
       result = []
-      
+
       if geomType == "MULTI_LINEAR_OBJ":
          for geomAt in range(0, object.qty()):
             linearObj = object.getLinearObjectAt(geomAt)
             result.extend(QadTangency.fromPointToBasicGeomObject(pt, linearObj))
-            
+
       elif geomType == "POLYLINE":
          for geomAt in range(0, object.qty()):
             linearObj = object.getLinearObjectAt(geomAt)
             result.extend(QadTangency.fromPointToBasicGeomObject(pt, linearObj))
-            
+
       elif geomType == "POLYGON":
          for subGeomAt in range(0, object.qty()):
             closedObj = object.getClosedObjectAt(geomAt)
-            result.extend(QadTangency.fromPointToGeomObject(pt, closedObj))            
-         
+            result.extend(QadTangency.fromPointToGeomObject(pt, closedObj))
+
       elif geomType == "MULTI_POLYGON":
          for geomAt in range(0, object.qty()):
             polygon = object.getPolygonAt(geomAt)
-            result.extend(QadTangency.fromPointToGeomObject(pt, polygon))            
-         
-      # oggetto è una geometria base
+            result.extend(QadTangency.fromPointToGeomObject(pt, polygon))
+
+      # object is a basic geometry
       else:
          result.extend(QadTangency.fromPointToBasicGeomObject(pt, object))
-   
+
       return result
 
 
    # ============================================================================
    # bestTwoBasicGeomObjects
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def bestTwoBasicGeomObjects(object1, tanPt1, object2, tanPt2):
+      """Find the line tangent to one basic geometric object and tangent to another basic geometric object
+            (which has the starting/ending points that are respectively closest to the tanPt1 and tanPt2 points):
+            arc, ellipse arc, circle, ellipse.
+            tanPt1 = geometry selection point 1 of tangency
+            tanPt2 = geometry selection point 2 of tangency
       """
-      Trova la linea tangente a un oggetto geometrico di base e tangente ad un altro oggetto geometrico di base
-      (che ha i punti inziale/finale che rispettivamente sono più vicini ai punti tanPt1 e tanPt2):
-      arco, arco di ellisse, cerchio, ellisse.
-      tanPt1 = punto di selezione geometria 1 di tangenza
-      tanPt2 = punto di selezione geometria 2 di tangenza
-      """     
       if object1.whatIs() == "CIRCLE":
          if object2.whatIs() == "CIRCLE":
             return getLineWithStartEndPtsClosestToPts(QadTangency.twoCircles(object1, object2), tanPt1, tanPt2)
@@ -3369,7 +3248,7 @@ class QadTangency():
             return getLineWithStartEndPtsClosestToPts(QadTangency.fromCircleToEllipse(object1, object2), tanPt1, tanPt2)
          elif object2.whatIs() == "ELLIPSE_ARC":
             return getLineWithStartEndPtsClosestToPts(QadTangency.fromCircleToEllipseArc(object1, object2), tanPt1, tanPt2)
-         
+
       elif object1.whatIs() == "ARC":
          if object2.whatIs() == "CIRCLE":
             lines = QadTangency.fromCircleToArc(object2, object1)
@@ -3411,22 +3290,21 @@ class QadTangency():
             return getLineWithStartEndPtsClosestToPts(lines, tanPt1, tanPt2)
          elif object2.whatIs() == "ELLIPSE_ARC":
             return getLineWithStartEndPtsClosestToPts(QadTangency.twoEllipseArcs(object1, object2), tanPt1, tanPt2)
-   
+
       return None
 
 
    # ============================================================================
    # bestTwoBasicGeomObjectExtensions
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def bestTwoBasicGeomObjectExtensions(object1, tanPt1, object2, tanPt2):
-      """
-      Trova la linea tangente all'estensione di un oggetto geometrico di base e tangente ad un'estensione
-      di un altro oggetto geometrico di base (che ha i punti inziale/finale che rispettivamente sono 
-      più vicini ai punti tanPt1 e tanPt2):
-      arco, arco di ellisse, cerchio, ellisse.
-      tanPt1 = punto di selezione geometria 1 di tangenza
-      tanPt2 = punto di selezione geometria 2 di tangenza
+      """Finds the line tangent to the extent of a basic geometric object and tangent to an extent
+            of another basic geometric object (which has the starting/ending points which are respectively
+            closest to the points tanPt1 and tanPt2):
+            arc, ellipse arc, circle, ellipse.
+            tanPt1 = geometry selection point 1 of tangency
+            tanPt2 = geometry selection point 2 of tangency
       """
       if object1.whatIs() == "CIRCLE":
          if object2.whatIs() == "CIRCLE":
@@ -3441,7 +3319,7 @@ class QadTangency():
             ellipse2 = QadEllipse()
             ellipse2.set(object2.center, object2.majorAxisFinalPt, object2.axisRatio)
             return getLineWithStartEndPtsClosestToPts(QadTangency.circleWithEllipse(object1, ellipse2), tanPt1, tanPt2)
-         
+
       elif object1.whatIs() == "ARC":
          circle1 = QadCircle()
          circle1.set(object1.center, object1.radius)
@@ -3497,22 +3375,22 @@ class QadTangency():
             ellipse2 = QadEllipse()
             ellipse2.set(object2.center, object2.majorAxisFinalPt, object2.axisRatio)
             return getLineWithStartEndPtsClosestToPts(QadTangency.twoEllipseArcs(ellipse1, ellipse2), tanPt1, tanPt2)
-   
+
       return None
-      
+
 
 # ===============================================================================
 # QadTangPerp class
-# rappresenta una classe che calcola le linee tangenti ad un oggetto e perpendicolari ad un altro oggetto
+# represents a class that calculates lines tangent to one object and perpendicular to another object
 # ===============================================================================
 class QadTangPerp():
-    
+
    def __init__(self):
       pass
 
 
    # ===============================================================================
-   # metodi per i cerchi - inizio
+   # methods for circles - start
    # ===============================================================================
 
 
@@ -3521,25 +3399,23 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def circleWithInfinityLine(circle1, line2):
-      """
-      Trova la linee tangenti a un cerchio e perpendicolari ad una linea infinita
-      """
+      """Find the lines tangent to a circle and perpendicular to an infinite line"""
       lines = []
-      # linee tangenti ad un cerchio e perpendicolari ad una linea
+      # lines tangent to a circle and perpendicular to a line
       angle = line2.getTanDirectionOnStartPt()
       pt1 = qad_utils.getPolarPointByPtAngle(circle1.center, angle, circle1.radius)
       pt2 = QadPerpendicularity.fromPointToInfinityLine(pt1, line2)
       if pt2 is not None:
          line = QadLine()
-         line.set(pt1, pt2) # primo punto tangente e secondo punto perpendicolare
-         lines.append(line) 
-         
+         line.set(pt1, pt2) # first tangent point and second perpendicular point
+         lines.append(line)
+
       pt1 = qad_utils.getPolarPointByPtAngle(circle1.center, angle, -1 * circle1.radius)
       pt2 = QadPerpendicularity.fromPointToInfinityLine(pt1, line2)
       if pt2 is not None:
          line = QadLine()
-         line.set(pt1, pt2) # primo punto tangente e secondo punto perpendicolare
-         lines.append(line) 
+         line.set(pt1, pt2) # first tangent point and second perpendicular point
+         lines.append(line)
 
       return lines
 
@@ -3549,9 +3425,7 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def circleWithLine(circle1, line2):
-      """
-      Trova le linee tangenti a un cerchio e perpendicolari ad una linea
-      """
+      """Find lines tangent to a circle and perpendicular to a line"""
       lines = QadTangPerp.circleWithInfinityLine(circle1, line2)
 
       if len(lines) == 2:
@@ -3568,21 +3442,19 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def twoCircles(circle1, circle2):
-      """
-      Trova le linee tangenti a un cerchio e perpendicolari ad un altro cerchio
-      """
+      """Find lines tangent to one circle and perpendicular to another circle"""
       lines = []
       points = QadTangency.fromPointToCircle(circle2.center, circle1)
       for point in points:
          angle = qad_utils.getAngleBy2Pts(circle2.center, point)
          pt1 = qad_utils.getPolarPointByPtAngle(circle2.center, angle, circle2.radius)
          line = QadLine()
-         line.set(point, pt1) # primo punto tangente e secondo punto perpendicolare
-         lines.append(line) 
-         pt1 = qad_utils.getPolarPointByPtAngle(circle2.center, angle, -1 * circle2.radius)         
+         line.set(point, pt1) # first tangent point and second perpendicular point
+         lines.append(line)
+         pt1 = qad_utils.getPolarPointByPtAngle(circle2.center, angle, -1 * circle2.radius)
          line = QadLine()
-         line.set(point, pt1) # primo punto tangente e secondo punto perpendicolare
-         lines.append(line) 
+         line.set(point, pt1) # first tangent point and second perpendicular point
+         lines.append(line)
 
       return lines
 
@@ -3592,9 +3464,7 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def circleWithArc(circle1, arc2):
-      """
-      Trova la linee tangenti a un cerchio e perpendicolari ad un arco
-      """
+      """Find the lines tangent to a circle and perpendicular to an arc"""
       circle2 = QadCircle()
       circle2.set(arc2.center, arc2.radius)
 
@@ -3614,10 +3484,8 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def circleWithEllipse(circle1, ellipse2):
-      """
-      Trova le linee tangenti a un cerchio e perpendicolari ad un'ellisse
-      """
-      # da fare
+      """Find lines tangent to a circle and perpendicular to an ellipse"""
+      # TODO
       return []
 
 
@@ -3626,16 +3494,14 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def circleWithEllipseArc(circle1, ellipseArc2):
-      """
-      Trova la linee tangenti a un cerchio e perpendicolari ad un arc di ellisse
-      """
-      # da fare
+      """Find lines tangent to a circle and perpendicular to an arc of an ellipse"""
+      # TODO
       return []
 
 
    # ===============================================================================
-   # metodi per i cerchi - fine
-   # metodi per gli archi - inizio
+   # methods for circles - end
+   # methods for arcs - start
    # ===============================================================================
 
 
@@ -3644,9 +3510,7 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def arcWithInfinityLine(arc1, line2):
-      """
-      Trova la linee tangenti a un arco e perpendicolari ad una linea infinita
-      """
+      """Find the lines tangent to an arc and perpendicular to an infinite line"""
       circle1 = QadCircle()
       circle1.set(arc1.center, arc1.radius)
 
@@ -3657,7 +3521,7 @@ class QadTangPerp():
 
       if len(lines) == 1:
          if arc1.containsPt(lines[0].getStartPt()) == False: del(lines[0])
-         
+
       return lines
 
 
@@ -3666,9 +3530,7 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def arcWithLine(arc1, line2):
-      """
-      Trova la linee tangenti a un arco e perpendicolari ad una linea
-      """
+      """Find lines tangent to an arc and perpendicular to a line"""
       lines = QadTangPerp.arcWithInfinityLines(arc1, line2)
 
       if len(lines) == 2:
@@ -3676,7 +3538,7 @@ class QadTangPerp():
 
       if len(lines) == 1:
          if line2.containsPt(lines[0].getEndPt()) == False: del(lines[0])
-         
+
       return lines
 
 
@@ -3685,9 +3547,7 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def arcWithCircle(arc1, circle2):
-      """
-      Trova le linee tangenti a un arco e perpendicolari ad un cerchio
-      """
+      """Find lines tangent to an arc and perpendicular to a circle"""
       circle1 = QadCircle()
       circle1.set(arc1.center, arc1.radius)
 
@@ -3698,7 +3558,7 @@ class QadTangPerp():
 
       if len(lines) == 1:
          if arc1.containsPt(lines[0].getStartPt()) == False: del(lines[0])
-         
+
       return lines
 
 
@@ -3707,9 +3567,7 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def twoArcs(arc1, arc2):
-      """
-      Trova le linee tangenti a un arco e perpendicolari ad un altro arco
-      """
+      """Find lines tangent to one arc and perpendicular to another arc"""
       circle2 = QadCircle()
       circle2.set(arc2.center, arc2.radius)
 
@@ -3729,12 +3587,10 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def arcWithEllipse(arc1, ellipse2):
-      """
-      Trova le linee tangenti a un arco e perpendicolari ad una ellisse
-      """
+      """Find lines tangent to an arc and perpendicular to an ellipse"""
       circle1 = QadCircle()
       circle1.set(arc1.center, arc1.radius)
-      
+
       lines = QadTangPerp.circleWithEllipse(circle1, ellipse2)
 
       if len(lines) == 2:
@@ -3751,12 +3607,10 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def arcWithEllipseArc(arc1, ellipseArc2):
-      """
-      Trova le linee tangenti a un arco e perpendicolari ad un arco di ellisse
-      """
+      """Find lines tangent to an arc and perpendicular to an arc of ellipse"""
       ellipse2 = QadEllipse()
       ellipse2.set(ellipseArc2.center, ellipseArc2.majorAxisFinalPt, ellipseArc2.axisRatio)
-      
+
       lines = QadTangPerp.arcWithEllipse(arc1, ellipse2)
 
       if len(lines) == 2:
@@ -3769,8 +3623,8 @@ class QadTangPerp():
 
 
    # ===============================================================================
-   # metodi per gli archi - fine
-   # metodi per le ellissi - inizio
+   # methods for arcs - end
+   # methods for ellipses - start
    # ===============================================================================
 
 
@@ -3779,10 +3633,8 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def ellipseWithInfinityLine(ellipse1, line2):
-      """
-      Trova le linee tangenti a un'ellisse e perpendicolari ad una linea infinita
-      """
-      # da fare
+      """Find lines tangent to an ellipse and perpendicular to an infinite line"""
+      # TODO
       return []
 
 
@@ -3791,9 +3643,7 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def ellipseWithLine(ellipse1, line2):
-      """
-      Trova le linee tangenti a un'ellisse e perpendicolari ad una linea
-      """
+      """Find lines tangent to an ellipse and perpendicular to a line"""
       lines = QadTangPerp.ellipseWithInfinityLines(ellipse1, line2)
 
       if len(lines) == 2:
@@ -3801,7 +3651,7 @@ class QadTangPerp():
 
       if len(lines) == 1:
          if line2.containsPt(lines[0].getEndPt()) == False: del(lines[0])
-         
+
       return lines
 
 
@@ -3810,10 +3660,8 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def ellipseWithCircle(ellipse1, circle2):
-      """
-      Trova le linee tangenti a un'ellisse e perpendicolari ad un cerchio
-      """
-      # da fare
+      """Find lines tangent to an ellipse and perpendicular to a circle"""
+      # TODO
       return []
 
 
@@ -3822,9 +3670,7 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def ellipseWithArc(ellipse1, arc2):
-      """
-      Trova le linee tangenti a un'ellisse e perpendicolari ad un arco
-      """
+      """Find lines tangent to an ellipse and perpendicular to an arc"""
       circle2 = QadCircle()
       circle2.set(arc2.center, arc2.radius)
 
@@ -3835,7 +3681,7 @@ class QadTangPerp():
 
       if len(lines) == 1:
          if arc2.containsPt(lines[0].getEndPt()) == False: del(lines[0])
-         
+
       return lines
 
 
@@ -3844,10 +3690,8 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def twoEllipses(ellipse1, ellipse2):
-      """
-      Trova le linee tangenti a un'ellisse e perpendicolari ad un altra ellisse
-      """
-      # da fare
+      """Find lines tangent to one ellipse and perpendicular to another ellipse"""
+      # TODO
       return []
 
 
@@ -3856,12 +3700,10 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def ellipseWithEllipseArc(ellipse1, ellipseArc2):
-      """
-      Trova le linee tangenti a un'ellisse e perpendicolari ad un arco di ellisse
-      """
+      """Find lines tangent to an ellipse and perpendicular to an arc of an ellipse"""
       ellipse2 = QadEllipse()
       ellipse2.set(ellipseArc2.center, ellipseArc2.majorAxisFinalPt, ellipseArc2.axisRatio)
-      
+
       lines = QadTangPerp.twoEllipses(ellipse1, ellipse2)
 
       if len(lines) == 2:
@@ -3874,8 +3716,8 @@ class QadTangPerp():
 
 
    # ===============================================================================
-   # metodi per le ellissi - fine
-   # metodi per gli archi di ellisse - inizio
+   # methods for ellipses - end
+   # methods for ellipse arcs - start
    # ===============================================================================
 
 
@@ -3884,12 +3726,10 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def ellipseArcWithInfinityLine(ellipseArc1, line2):
-      """
-      Trova le linee tangenti a un arco di ellisse e perpendicolari ad una linea infinita
-      """
+      """Find lines tangent to an arc of ellipse and perpendicular to an infinite line"""
       ellipse1 = QadEllipse()
       ellipse1.set(ellipseArc1.center, ellipseArc1.majorAxisFinalPt, ellipseArc1.axisRatio)
-      
+
       lines = QadTangPerp.ellipseWithInfinityLine(ellipse1, line2)
 
       if len(lines) == 2:
@@ -3906,9 +3746,7 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def ellipseArcWithLine(ellipseArc1, line2):
-      """
-      Trova le linee tangenti a un arco di ellisse e perpendicolari ad una linea
-      """
+      """Find lines tangent to an arc of ellipse and perpendicular to a line"""
       lines = QadTangPerp.ellipseArcWithInfinityLine(ellipseArc1, line2)
 
       if len(lines) == 2:
@@ -3916,7 +3754,7 @@ class QadTangPerp():
 
       if len(lines) == 1:
          if line2.containsPt(lines[0].getEndPt()) == False: del(lines[0])
-         
+
       return lines
 
 
@@ -3925,12 +3763,10 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def ellipseArcWithCircle(ellipseArc1, circle2):
-      """
-      Trova le linee tangenti a un arco di ellisse e perpendicolari ad un cerchio
-      """
+      """Find lines tangent to an arc of an ellipse and perpendicular to a circle"""
       ellipse1 = QadEllipse()
       ellipse1.set(ellipseArc1.center, ellipseArc1.majorAxisFinalPt, ellipseArc1.axisRatio)
-      
+
       lines = QadTangPerp.ellipseWithCircle(ellipse1, line2)
 
       if len(lines) == 2:
@@ -3947,12 +3783,10 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def ellipseArcWithArc(ellipseArc1, arc2):
-      """
-      Trova le linee tangenti a un arco di ellisse e perpendicolari ad un arco
-      """
+      """Find lines tangent to an arc of ellipse and perpendicular to an arc"""
       ellipse1 = QadEllipse()
       ellipse1.set(ellipseArc1.center, ellipseArc1.majorAxisFinalPt, ellipseArc1.axisRatio)
-      
+
       lines = QadTangPerp.ellipseWithArc(ellipse1, arc2)
 
       if len(lines) == 2:
@@ -3969,12 +3803,10 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def ellipseArcWithEllipse(ellipseArc1, ellipse2):
-      """
-      Trova le linee tangenti a un arco di ellisse e perpendicolari ad un'ellisse
-      """
+      """Find lines tangent to an arc of ellipse and perpendicular to an ellipse"""
       ellipse1 = QadEllipse()
       ellipse1.set(ellipseArc1.center, ellipseArc1.majorAxisFinalPt, ellipseArc1.axisRatio)
-      
+
       lines = QadTangPerp.twoEllipses(ellipse1, ellipse2)
 
       if len(lines) == 2:
@@ -3991,12 +3823,10 @@ class QadTangPerp():
    # ===============================================================================
    @staticmethod
    def twoEllipseArcs(ellipseArc1, ellipseArc2):
-      """
-      Trova le linee tangenti a un arco di ellisse e perpendicolari ad un altro arco di ellisse
-      """
+      """Find lines tangent to one arc of ellipse and perpendicular to another arc of ellipse"""
       ellipse1 = QadEllipse()
       ellipse1.set(ellipseArc1.center, ellipseArc1.majorAxisFinalPt, ellipseArc1.axisRatio)
-      
+
       lines = QadTangPerp.ellipseWithEllipseArc(ellipse1, ellipseArc2)
 
       if len(lines) == 2:
@@ -4011,15 +3841,14 @@ class QadTangPerp():
    # ============================================================================
    # bestTwoBasicGeomObjects
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def bestTwoBasicGeomObjects(object1, tanPt1, object2, perPt2):
+      """Find the line tangent to one basic geometric object and perpendicular to another basic geometric object
+            (which has the starting/ending points that are respectively closest to the points tanPt1 and perPt2):
+            line, arc, ellipse arc, circle, ellipse.
+            tanPt1 = tangency geometry selection point
+            perPt2 = perpendicularity geometry selection point
       """
-      Trova la linea tangente a un oggetto geometrico di base e perpendicolarie ad un altro oggetto geometrico di base
-      (che ha i punti inziale/finale che rispettivamente sono più vicini ai punti tanPt1 e perPt2):
-      linea, arco, arco di ellisse, cerchio, ellisse.
-      tanPt1 = punto di selezione geometria di tangenza
-      perPt2 = punto di selezione geometria di perpendicolarità
-      """               
       if object1.whatIs() == "CIRCLE":
          if object2.whatIs() == "LINE":
             return getLineWithStartEndPtsClosestToPts(QadTangPerp.circleWithLine(object1, object2), tanPt1, perPt2)
@@ -4031,7 +3860,7 @@ class QadTangPerp():
             return getLineWithStartEndPtsClosestToPts(QadTangPerp.circleWithEllipse(object1, object2), tanPt1, perPt2)
          elif object2.whatIs() == "ELLIPSE_ARC":
             return getLineWithStartEndPtsClosestToPts(QadTangPerp.circleWithEllipseArc(object1, object2), tanPt1, perPt2)
-         
+
       elif object1.whatIs() == "ARC":
          if object2.whatIs() == "LINE":
             return getLineWithStartEndPtsClosestToPts(QadTangPerp.arcWithLine(object1, object2), tanPt1, perPt2)
@@ -4067,23 +3896,22 @@ class QadTangPerp():
             return getLineWithStartEndPtsClosestToPts(QadTangPerp.ellipseArcWithEllipse(object1, object2), tanPt1, perPt2)
          elif object2.whatIs() == "ELLIPSE_ARC":
             return getLineWithStartEndPtsClosestToPts(QadTangPerp.twoEllipseArcs(object1, object2), tanPt1, perPt2)
-   
+
       return None
 
 
    # ============================================================================
    # bestTwoBasicGeomObjectExtensions
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def bestTwoBasicGeomObjectExtensions(object1, tanPt1, object2, perPt2):
+      """Finds lines tangent to the extent of a basic geometric object and perpendicular to an extent
+            of another basic geometric object (which has the starting/ending points that respectively
+            are closest to the points tanPt1 and perPt2):
+            line (becomes infinite line), arc (becomes circle), ellipse arc (becomes ellipse), circle, ellipse.
+            tanPt1 = tangency geometry selection point
+            perPt2 = perpendicularity geometry selection point
       """
-      Trova le linee tangenti all'estensione di un oggetto geometrico di base e perpendicolari ad un'estensione
-      di un altro oggetto geometrico di base (che ha i punti inziale/finale che rispettivamente 
-      sono più vicini ai punti tanPt1 e perPt2):
-      linea (diventa linea infinita), arco (diventa cerchio), arco di ellisse (diventa ellisse), cerchio, ellisse.
-      tanPt1 = punto di selezione geometria di tangenza
-      perPt2 = punto di selezione geometria di perpendicolarità
-      """      
       if object1.whatIs() == "CIRCLE":
          if object2.whatIs() == "LINE":
             return getLineWithStartEndPtsClosestToPts(QadTangPerp.circleWithInfinityLine(object2, object1), tanPt1, perPt2)
@@ -4099,7 +3927,7 @@ class QadTangPerp():
             ellipse = QadEllipse()
             ellipse.set(object2.center, object2.majorAxisFinalPt, object2.axisRatio)
             return getLineWithStartEndPtsClosestToPts(QadTangPerp.circleWithEllipse(object1, ellipse), tanPt1, perPt2)
-         
+
       elif object1.whatIs() == "ARC":
          circle1 = QadCircle()
          circle1.set(object1.center, object1.radius)
@@ -4138,22 +3966,22 @@ class QadTangPerp():
             ellipse2 = QadEllipse()
             ellipse2.set(object2.center, object2.majorAxisFinalPt, object2.axisRatio)
             return getLineWithStartEndPtsClosestToPts(QadTangPerp.twoEllipses(ellipse1, ellipse2), tanPt1, perPt2)
-   
+
       return None
 
 
 # ===============================================================================
 # QadPerpPerp class
-# rappresenta una classe che calcola le linee perpendicolari ad un oggetto e perpendicolari ad un altro oggetto
+# represents a class that calculates lines perpendicular to one object and perpendicular to another object
 # ===============================================================================
 class QadPerpPerp():
-    
+
    def __init__(self):
       pass
 
 
    # ===============================================================================
-   # metodi per le linee infinite - inizio
+   # methods for infinite lines - start
    # ===============================================================================
 
 
@@ -4162,16 +3990,14 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def infinityLineWithCircle(infinityLine1, circle2):
-      """
-      La funzione ritorna la linea perpendicolare tra la linea1 considerata linea infinita ed un cerchio.
-      """
-      # linea perpendicolare ad una linea e ad un cerchio
+      """The function returns the perpendicular line between line1 considered an infinite line and a circle."""
+      # line perpendicular to a line and a circle
       ptPer1 = QadPerpendicularity.fromPointToInfinityLine(circle2.center, infinityLine1)
       angle = qad_utils.getAngleBy2Pts(circle2.center, ptPer1)
       ptPer2 = qad_utils.getPolarPointByPtAngle(circle2.center, angle, circle2.radius)
       line = QadLine()
       line.set(ptPer1, ptPer2)
-      return line 
+      return line
 
 
    # ===============================================================================
@@ -4179,9 +4005,7 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def infinityLineWithArc(infinityLine1, arc2):
-      """
-      La funzione ritorna la linea perpendicolare alla linea1 considerata linea infinita ed un arco.
-      """
+      """The function returns the line perpendicular to line1 considered an infinite line and an arc."""
       circle = QadCircle()
       circle.set(arc2.center, arc2.radius)
       line = QadPerpPerp.infinityLineWithCircle(infinityLine1, circle)
@@ -4195,11 +4019,10 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def infinityLineWithEllipse(infinityLine1, ellipse2):
+      """The function returns the lines perpendicular to line1 considered infinite line and an ellipse.
+            (up to 4 lines)
       """
-      La funzione ritorna le linee perpendicolari alla linea1 considerata linea infinita ed un'ellisse.
-      (fino a 4 linee)
-      """
-      # da fare
+      # TODO
       return []
 
 
@@ -4208,14 +4031,13 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def infinityLineWithEllipseArc(infinityLine1, ellipseArc2):
-      """
-      La funzione ritorna le linee perpendicolari alla linea 1 considerata linea infinita ed un arco di ellisse.
-      (fino a 4 linee)
+      """The function returns the lines perpendicular to line 1 considered infinite line and an arc of ellipse.
+            (up to 4 lines)
       """
       ellipse = QadEllipse()
       ellipse.set(ellipseArc2.center, ellipseArc2.majorAxisFinalPt, ellipseArc2.axisRatio)
       lines = QadPerpPerp.infinityLineWithEllipse(infinityLine1, ellipse)
-      
+
       if len(lines) == 4:
          if ellipseArc2.isPtOnEllipseArcOnlyByAngle(lines[3].getEndPt()) == False: del(lines[3])
       if len(lines) == 3:
@@ -4224,13 +4046,13 @@ class QadPerpPerp():
          if ellipseArc2.isPtOnEllipseArcOnlyByAngle(lines[1].getEndPt()) == False: del(lines[1])
       if len(lines) == 1:
          if ellipseArc2.isPtOnEllipseArcOnlyByAngle(lines[0].getEndPt()) == False: del(lines[0])
-      
+
       return lines
 
 
    # ===============================================================================
-   # metodi per le linee infinite - fine
-   # metodi per i segmenti - inizio
+   # methods for infinite lines - end
+   # segment methods - start
    # ===============================================================================
 
    # ===============================================================================
@@ -4238,9 +4060,7 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def lineWithLine(line1, perPt1, line2, perPt2):
-      """
-      La funzione ritorna la linea perpendicolare ad un segmento ad un segmento.
-      """
+      """The function returns the line perpendicular to a segment to a segment."""
       ang1 = qad_utils.normalizeAngle(qad_utils.getAngleBy2Pts(line1.getStartPt(), line1.getEndPt()), math.pi)
       ang2 = qad_utils.normalizeAngle(qad_utils.getAngleBy2Pts(line2.getStartPt(), line2.getEndPt()), math.pi)
       if qad_utils.TanDirectionNear(ang1, ang2) == True:
@@ -4255,9 +4075,7 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def lineWithCircle(line1, circle2):
-      """
-      La funzione ritorna la linea perpendicolare ad un segmento ed un cerchio.
-      """
+      """The function returns the line perpendicular to a segment and a circle."""
       line = QadPerpPerp.infinityLineWithCircle(line1, circle2)
       if line is None: return None
       if line1.containsPt(line.getStartPt()): return line
@@ -4269,9 +4087,7 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def lineWithArc(line1, arc2):
-      """
-      La funzione ritorna la linea perpendicolare ad un segmento ed un arco.
-      """
+      """The function returns the line perpendicular to a segment and an arc."""
       circle = QadCircle()
       circle.set(arc2.center, arc2.radius)
       line = QadPerpPerp.lineWithCircle(line1, circle)
@@ -4285,9 +4101,8 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def lineWithEllipse(line1, ellipse2):
-      """
-      La funzione ritorna le linee perpendicolari ad un segmento ed un'ellisse.
-      (fino a 4 linee)
+      """The function returns lines perpendicular to a segment and an ellipse.
+            (up to 4 lines)
       """
       lines = QadPerpPerp.infinityLineWithEllipse(line1, ellipse2)
 
@@ -4299,7 +4114,7 @@ class QadPerpPerp():
          if line1.containsPt(lines[1].getStartPt()) == False: del(lines[1])
       if len(lines) == 1:
          if line1.containsPt(lines[0].getStartPt()) == False: del(lines[0])
-      
+
       return lines
 
 
@@ -4308,9 +4123,8 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def lineWithEllipseArc(line1, ellipseArc2):
-      """
-      La funzione ritorna le linee perpendicolari ad un segmento ed un arco di ellisse.
-      (fino a 4 linee)
+      """The function returns lines perpendicular to a segment and an arc of an ellipse.
+            (up to 4 lines)
       """
       lines = QadPerpPerp.infinityLineWithEllipseArc(line1, ellipseArc)
 
@@ -4322,13 +4136,13 @@ class QadPerpPerp():
          if line1.containsPt(lines[1].getStartPt()) == False: del(lines[1])
       if len(lines) == 1:
          if line1.containsPt(lines[0].getStartPt()) == False: del(lines[0])
-      
+
       return lines
 
 
    # ===============================================================================
-   # metodi per i segmenti - fine
-   # metodi per i cerchi - inizio
+   # segment methods - end
+   # methods for circles - start
    # ===============================================================================
 
 
@@ -4337,9 +4151,7 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def twoCircles(circle1, circle2):
-      """
-      La funzione ritorna la linea perpendicolare tra due cerchi
-      """
+      """The function returns the perpendicular line between two circles"""
       angle = qad_utils.getAngleBy2Pts(circle1.center, circle2.center)
       ptPer1 = qad_utils.getPolarPointByPtAngle(circle1.center, angle, circle1.radius)
       ptPer2 = qad_utils.getPolarPointByPtAngle(circle2.center, angle, -circle2.radius)
@@ -4353,9 +4165,7 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def circleWithArc(circle1, arc2):
-      """
-      La funzione ritorna la linea perpendicolare ad un cerchio ed un arco
-      """
+      """The function returns the line perpendicular to a circle and an arc"""
       circle = QadCircle()
       circle.set(arc2.center, arc2.radius)
       line = QadPerpPerp.twoCircles(circle1, circle)
@@ -4369,9 +4179,8 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def circleWithEllipse(circle1, ellipse2):
-      """
-      La funzione ritorna le linee perpendicolari tra un cerchio ed un'ellisse
-      (fino a 4 linee)
+      """The function returns the perpendicular lines between a circle and an ellipse
+            (up to 4 lines)
       """
       perpPts = QadPerpendicularity.fromPointToEllipse(circle1.center, ellipse2)
       lines = []
@@ -4389,14 +4198,13 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def circleWithEllipseArc(circle1, ellipseArc2):
-      """
-      La funzione ritorna le linee perpendicolari ad un cerchio ed un'ellisse
-      (fino a 4 linee)
+      """The function returns lines perpendicular to a circle and an ellipse
+            (up to 4 lines)
       """
       ellipse = QadEllipse()
       ellipse.set(ellipseArc2.center, ellipseArc2.majorAxisFinalPt, ellipseArc2.axisRatio)
       lines = QadPerpPerp.circleWithEllipse(circle1, ellipse)
-      
+
       if len(lines) == 4:
          if ellipseArc2.isPtOnEllipseArcOnlyByAngle(lines[3].getEndPt()) == False: del(lines[3])
       if len(lines) == 3:
@@ -4405,13 +4213,13 @@ class QadPerpPerp():
          if ellipseArc2.isPtOnEllipseArcOnlyByAngle(lines[1].getEndPt()) == False: del(lines[1])
       if len(lines) == 1:
          if ellipseArc2.isPtOnEllipseArcOnlyByAngle(lines[0].getEndPt()) == False: del(lines[0])
-      
+
       return lines
 
 
    # ===============================================================================
-   # metodi per i cerchi - fine
-   # metodi per gli archi - inizio
+   # methods for circles - end
+   # methods for arcs - start
    # ===============================================================================
 
 
@@ -4420,9 +4228,7 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def twoArcs(arc1, arc2):
-      """
-      La funzione ritorna le linee perpendicolari a due archi
-      """
+      """The function returns lines perpendicular to two arcs"""
       circle1 = QadCircle()
       circle1.set(arc1.center, arc1.radius)
       line = QadPerpPerp.circleWithArc(circle1, arc2)
@@ -4436,9 +4242,8 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def arcWithEllipse(arc1, ellipse2):
-      """
-      La funzione ritorna le linee perpendicolari ad un arco ed un'ellisse
-      (fino a 4 linee)
+      """The function returns lines perpendicular to an arc and an ellipse
+            (up to 4 lines)
       """
       circle = QadCircle()
       circle.set(arc1.center, arc1.radius)
@@ -4452,7 +4257,7 @@ class QadPerpPerp():
          if arc1.isPtOnArcOnlyByAngle(lines[1].getStartPt()) == False: del(lines[1])
       if len(lines) == 1:
          if arc1.isPtOnArcOnlyByAngle(lines[0].getStartPt()) == False: del(lines[0])
-      
+
       return lines
 
 
@@ -4461,14 +4266,13 @@ class QadPerpPerp():
    # ===============================================================================
    @staticmethod
    def arcWithEllipseArc(arc1, ellipseArc2):
-      """
-      La funzione ritorna le linee perpendicolari ad un arco ed un arco di ellisse
-      (fino a 4 linee)
+      """The function returns lines perpendicular to an arc and an arc of an ellipse
+            (up to 4 lines)
       """
       circle1 = QadCircle()
       circle1.set(arc1.center, arc1.radius)
       lines = QadPerpPerp.circleWithEllipseArc(circle1, ellipseArc2)
-      
+
       if len(lines) == 4:
          if arc1.isPtOnArcOnlyByAngle(lines[3].getStartPt()) == False: del(lines[3])
       if len(lines) == 3:
@@ -4477,30 +4281,29 @@ class QadPerpPerp():
          if arc1.isPtOnArcOnlyByAngle(lines[1].getStartPt()) == False: del(lines[1])
       if len(lines) == 1:
          if arc1.isPtOnArcOnlyByAngle(lines[0].getStartPt()) == False: del(lines[0])
-      
+
       return lines
 
 
    # ===============================================================================
-   # metodi per gli archi - fine
+   # methods for arcs - end
    # ===============================================================================
 
 
    # ============================================================================
    # bestTwoBasicGeomObjects
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def bestTwoBasicGeomObjects(object1, perPt1, object2, perPt2):
-      """
-      Trova la linea perpendicolare a un oggetto geometrico di base e perpendicolare ad un altro oggetto geometrico di base
-      (che ha i punti inziale/finale che rispettivamente sono più vicini ai punti tanPt1 e perPt2):
-      linea, arco, arco di ellisse, cerchio, ellisse.
-      perPt1 = punto di selezione geometria 1 di perpendicolarità
-      perPt2 = punto di selezione geometria 2 di perpendicolarità
+      """Find the line perpendicular to one basic geometric object and perpendicular to another basic geometric object
+            (which has the starting/ending points that are respectively closest to the points tanPt1 and perPt2):
+            line, arc, ellipse arc, circle, ellipse.
+            perPt1 = geometry selection point 1 of perpendicularity
+            perPt2 = geometry selection point 2 of perpendicularity
       """
       if object1.whatIs() == "LINE":
          if object2.whatIs() == "LINE":
-            return QadPerpPerp.lineWithLine(object1, perPt1, object2, perPt2)         
+            return QadPerpPerp.lineWithLine(object1, perPt1, object2, perPt2)
          elif object2.whatIs() == "CIRCLE":
             return QadPerpPerp.lineWithCircle(object1, object2)
          elif object2.whatIs() == "ARC":
@@ -4517,7 +4320,7 @@ class QadPerpPerp():
             return getLineWithStartEndPtsClosestToPts(QadPerpPerp.lineWithEllipse(object1, object2), perPt1, perPt2)
          elif object2.whatIs() == "ELLIPSE_ARC":
             return getLineWithStartEndPtsClosestToPts(QadPerpPerp.lineWithEllipseArc(object1, object2), perPt1, perPt2)
-         
+
       if object1.whatIs() == "CIRCLE":
          if object2.whatIs() == "LINE":
             result = QadPerpPerp.lineWithCircle(object2, object1)
@@ -4531,7 +4334,7 @@ class QadPerpPerp():
             return getLineWithStartEndPtsClosestToPts(QadPerpPerp.circleWithEllipse(object1, object2), perPt1, perPt2)
          elif object2.whatIs() == "ELLIPSE_ARC":
             return getLineWithStartEndPtsClosestToPts(QadPerpPerp.circleWithEllipseArc(object1, object2), perPt1, perPt2)
-         
+
       elif object1.whatIs() == "ARC":
          if object2.whatIs() == "LINE":
             result = QadPerpPerp.lineWithArc(object2, object1)
@@ -4583,23 +4386,22 @@ class QadPerpPerp():
             lines = QadPerpPerp.arcWithEllipseArc(object2, object1)
             for line in lines: line.reverse()
             return getLineWithStartEndPtsClosestToPts(lines, perPt1, perPt2)
-   
+
       return None
 
 
    # ============================================================================
    # bestTwoBasicGeomObjectExtensions
    # ============================================================================
-   @staticmethod   
+   @staticmethod
    def bestTwoBasicGeomObjectExtensions(object1, tanPt1, object2, perPt2):
+      """Finds the line perpendicular to the extent of a basic geometric object and perpendicular to an extent
+            of another basic geometric object (which has the starting/ending points which are respectively
+            closest to the points perPt1 and perPt2):
+            line (becomes infinite line), arc (becomes circle), ellipse arc (becomes ellipse), circle, ellipse.
+            perPt1 = geometry selection point 1 of perpendicularity
+            perPt2 = geometry selection point 2 of perpendicularity
       """
-      Trova la linea perpendicolare all'estensione di un oggetto geometrico di base e perpendicolare ad un'estensione
-      di un altro oggetto geometrico di base (che ha i punti inziale/finale che rispettivamente sono 
-      più vicini ai punti perPt1 e perPt2):
-      linea (diventa linea infinita), arco (diventa cerchio), arco di ellisse (diventa ellisse), cerchio, ellisse.
-      perPt1 = punto di selezione geometria 1 di perpendicolarità
-      perPt2 = punto di selezione geometria 2 di perpendicolarità
-      """      
       if object1.whatIs() == "LINE":
          if object2.whatIs() == "CIRCLE":
             return QadPerpPerp.infinityLineWithCircle(object1, object2)
@@ -4613,7 +4415,7 @@ class QadPerpPerp():
             ellipse2 = QadEllipse()
             ellipse2.set(object2.center, object2.majorAxisFinalPt, object2.axisRatio)
             return getLineWithStartEndPtsClosestToPts(QadPerpPerp.infinityLineWithEllipse(object1, ellipse2), perPt1, perPt2)
-         
+
       if object1.whatIs() == "CIRCLE":
          if object2.whatIs() == "LINE":
             result = QadPerpPerp.infinityLineWithCircle(object2, object1)
@@ -4631,7 +4433,7 @@ class QadPerpPerp():
             ellipse2 = QadEllipse()
             ellipse2.set(object2.center, object2.majorAxisFinalPt, object2.axisRatio)
             return getLineWithStartEndPtsClosestToPts(QadPerpPerp.circleWithEllipse(object1, ellipse2), perPt1, perPt2)
-         
+
       elif object1.whatIs() == "ARC":
          circle1 = QadCircle()
          circle1.set(object1.center, object1.radius)
@@ -4685,7 +4487,7 @@ class QadPerpPerp():
             lines = QadPerpPerp.circleWithEllipse(circle2, ellipse1)
             for line in lines: line.reverse()
             return getLineWithStartEndPtsClosestToPts(lines, perPt1, perPt2)
-   
+
       return None
 
 
@@ -4693,9 +4495,8 @@ class QadPerpPerp():
 # getLineWithStartEndPtsClosestToPts
 # ===============================================================================
 def getLineWithStartEndPtsClosestToPts(lines, pt1, pt2):
-   """
-   Data ua lista di linee ritorna la linea che ha punto iniziale e finale rispettivamente
-   più vicini a pt1 e pt2 (la funzione usa la media delle distanze).
+   """Given a list of lines, it returns the line that has the initial and final point respectively
+      closest to pt1 and pt2 (the function uses the average of the distances).
    """
    if len(lines) == 0:
       return None
@@ -4703,9 +4504,9 @@ def getLineWithStartEndPtsClosestToPts(lines, pt1, pt2):
    Avg = sys.float_info.max
    for line in lines:
       d1 = qad_utils.getDistance(line.getStartPt(), pt1)
-      d2 = qad_utils.getDistance(line.getEndPt(), pt2)         
-      currAvg = (d1 + d2) / 2.0           
-      if currAvg < Avg: # mediamente più vicino
+      d2 = qad_utils.getDistance(line.getEndPt(), pt2)
+      currAvg = (d1 + d2) / 2.0
+      if currAvg < Avg: # closer on average
          Avg = currAvg
          result = line
 
@@ -4716,36 +4517,35 @@ def getLineWithStartEndPtsClosestToPts(lines, pt1, pt2):
 # getQadGeomClosestPart
 # ===============================================================================
 def getQadGeomClosestPart(qadGeom, pt):
-   """
-   la funzione ritorna una lista con 
-   (<minima distanza>
-    <punto più vicino>
-    <indice della geometria più vicina>
-    <indice della sotto-geometria più vicina>
-    <indice della parte della sotto-geometria più vicina>
-    <"a sinistra di" se il punto é alla sinista della parte con i seguenti valori:
-    -   < 0 = sinistra (per linea, arco o arco di ellisse) o interno (per cerchi, ellissi)
-    -   > 0 = destra (per linea, arco o arco di ellisse) o esterno (per cerchi, ellissi)
-    )
+   """the function returns a list with
+      (<minimum distance>
+       <nearest point>
+       <nearest geometry index>
+       <index of the closest sub-geometry>
+       <index of the closest sub-geometry part>
+       <"to the left of" if the point is to the left of the part with the following values:
+       - < 0 = left (for line, arc or ellipse arc) or inside (for circles, ellipses)
+       - > 0 = right (for line, arc or ellipse arc) or outside (for circles, ellipses)
+       )
    """
    geomType = qadGeom.whatIs()
    if geomType == "POINT" or geomType == "LINE" or geomType == "ARC" or \
       geomType == "CIRCLE" or geomType == "ELLIPSE_ARC" or geomType == "ELLIPSE":
-      # la funzione ritorna una lista con (<distanza minima><punto di distanza minima>)
+      # the function returns a list with (<minimum distance><minimum distance point>)
       result = QadMinDistance.fromPointToBasicGeomObject(pt, qadGeom)
       dist = result[0]
       minDistPoint = result[1]
-      
+
       if geomType == "LINE" or geomType == "ARC" or geomType == "ELLIPSE_ARC":
-         # < 0 "a sinistra di" se il punto é alla sinista della parte (< 0 -> sinistra, > 0 -> destra)
+         # < 0 "to the left of" if the point is to the left of the part (< 0 -> left, > 0 -> right)
          leftOf = qadGeom.leftOf(pt)
-      elif geomType == "CIRCLE" or geomType == "ELLIPSE_ARC" or geomType == "ELLIPSE": # cerchio o ellisse
-         leftOf = qadGeom.whereIsPt(pt) # -1 interno, 0 sulla circonferenza, 1 esterno
+      elif geomType == "CIRCLE" or geomType == "ELLIPSE_ARC" or geomType == "ELLIPSE": # circle or ellipse
+         leftOf = qadGeom.whereIsPt(pt) # -1 inside, 0 sulla circonferenza, 1 outside
       else:
          leftOf = None
-         
+
       return (dist, minDistPoint, 0, 0, 0, leftOf)
-   
+
    elif qadGeom.whatIs() == "POLYLINE":
       dist = sys.float_info.max
       i = 0
@@ -4756,10 +4556,10 @@ def getQadGeomClosestPart(qadGeom, pt):
             minDistPoint = result[1]
             partIndex = i
             leftOf = result[5]
-         i = i + 1 
-      
+         i = i + 1
+
       return (dist, minDistPoint, 0, 0, partIndex, leftOf)
-   
+
    elif qadGeom.whatIs() == "POLYGON":
       dist = sys.float_info.max
       i = 0
@@ -4771,10 +4571,10 @@ def getQadGeomClosestPart(qadGeom, pt):
             partIndex = result[4]
             leftOf = result[5]
             subGeomIndex = i
-         i = i + 1 
-      
+         i = i + 1
+
       return (dist, minDistPoint, 0, subGeomIndex, partIndex, leftOf)
-   
+
    elif qadGeom.whatIs() == "MULTI_POINT":
       dist = sys.float_info.max
       i = 0
@@ -4784,7 +4584,7 @@ def getQadGeomClosestPart(qadGeom, pt):
             dist = result[0]
             minDistPoint = result[1]
             geomIndex = i
-         i = i + 1 
+         i = i + 1
 
       return (dist, minDistPoint, geomIndex, 0, 0, None)
 
@@ -4799,10 +4599,10 @@ def getQadGeomClosestPart(qadGeom, pt):
             geomIndex = i
             partIndex = result[4]
             leftOf = result[5]
-         i = i + 1 
+         i = i + 1
 
       return (dist, minDistPoint, geomIndex, 0, partIndex, leftOf)
-      
+
    elif qadGeom.whatIs() == "MULTI_POLYGON":
       dist = sys.float_info.max
       i = 0
@@ -4815,32 +4615,31 @@ def getQadGeomClosestPart(qadGeom, pt):
             subGeomIndex = result[3]
             partIndex = result[4]
             leftOf = result[5]
-         i = i + 1 
-            
+         i = i + 1
+
       return (dist, minDistPoint, geomIndex, subGeomIndex, partIndex, leftOf)
-      
+
    else:
-      return (None, None, None, None, None, None) 
+      return (None, None, None, None, None, None)
 
 
 # ===============================================================================
 # getQadGeomClosestVertex
 # ===============================================================================
 def getQadGeomClosestVertex(qadGeom, pt):
-   """
-   la funzione ritorna una lista con 
-   (<minima distanza>
-    <punto del vertice più vicino>
-    <indice della geometria più vicina>
-    <indice della sotto-geometria più vicina>
-    <indice della parte della sotto-geometria più vicina>
-    <indice del vertice più vicino>
-    )
+   """the function returns a list with
+      (<minimum distance>
+       <nearest vertex point>
+       <nearest geometry index>
+       <index of the closest sub-geometry>
+       <index of the closest sub-geometry part>
+       <nearest vertex index>
+       )
    """
    geomType = qadGeom.whatIs()
    if geomType == "POINT":
       return (qad_utils.getDistance(qadGeom, pt), qadGeom, 0, 0, 0, 0)
-   
+
    elif geomType == "LINE" or geomType == "ARC" or geomType == "ELLIPSE_ARC":
       startPt = qadGeom.getStartPt()
       endPt = qadGeom.getEndPt()
@@ -4850,7 +4649,7 @@ def getQadGeomClosestVertex(qadGeom, pt):
          return (d1, startPt, 0, 0, 0, 0)
       else:
          return (d2, endPt, 0, 0, 0, 1)
-   
+
    elif qadGeom.whatIs() == "POLYLINE":
       dist = sys.float_info.max
       i = 0
@@ -4861,10 +4660,10 @@ def getQadGeomClosestVertex(qadGeom, pt):
             minDistPoint = result[1]
             partIndex = i
             vertexIndex = partIndex + result[5]
-         i = i + 1 
-      
+         i = i + 1
+
       return (dist, minDistPoint, 0, 0, partIndex, vertexIndex)
-   
+
    elif qadGeom.whatIs() == "POLYGON":
       dist = sys.float_info.max
       i = 0
@@ -4876,10 +4675,10 @@ def getQadGeomClosestVertex(qadGeom, pt):
             partIndex = result[4]
             vertexIndex = result[5]
             subGeomIndex = i
-         i = i + 1 
-      
+         i = i + 1
+
       return (dist, minDistPoint, 0, subGeomIndex, partIndex, vertexIndex)
-   
+
    elif qadGeom.whatIs() == "MULTI_POINT":
       dist = sys.float_info.max
       i = 0
@@ -4907,7 +4706,7 @@ def getQadGeomClosestVertex(qadGeom, pt):
          i = i + 1
 
       return (dist, minDistPoint, geomIndex, 0, partIndex, vertexIndex)
-      
+
    elif qadGeom.whatIs() == "MULTI_POLYGON":
       dist = sys.float_info.max
       i = 0
@@ -4921,15 +4720,15 @@ def getQadGeomClosestVertex(qadGeom, pt):
             partIndex = result[4]
             vertexIndex = result[5]
          i = i + 1
-            
+
       return (dist, minDistPoint, geomIndex, subGeomIndex, partIndex, vertexIndex)
-      
+
    else:
-      # la funzione ritorna una lista con (<distanza minima><punto di distanza minima>)
+      # the function returns a list with (<minimum distance><minimum distance point>)
       result = QadMinDistance.fromPointToBasicGeomObject(pt, qadGeom)
       dist = result[0]
       minDistPoint = result[1]
-      
+
       return (dist, minDistPoint, 0, 0, None, None)
 
 
@@ -4937,26 +4736,24 @@ def getQadGeomClosestVertex(qadGeom, pt):
 # getGeomBetween2Pts
 # ===============================================================================
 def getQadGeomBetween2Pts(qadGeom, startPt, endPt):
-   """
-   Ritorna una sotto geometria che parte dal punto startPt e finisce al punto endPt seguendo il tracciato della geometria.
-   """
-   # la funzione ritorna una lista con 
-   # (<minima distanza>
-   # <punto più vicino>
-   # <indice della geometria più vicina>
-   # <indice della sotto-geometria più vicina>
-   # se geometria chiusa è tipo polyline la lista contiene anche
-   # <indice della parte della sotto-geometria più vicina>
-   # <"a sinistra di" se il punto é alla sinista della parte (< 0 -> sinistra, > 0 -> destra)
+   """Returns a sub-geometry that starts from the startPt point and ends at the endPt point following the geometry path."""
+   # the function returns a list with
+   # (<minimum distance>
+   # <nearest point>
+   # <nearest geometry index>
+   # <index of the nearest sub-geometry>
+   # if closed geometry is polyline type the list also contains
+   # <index of the closest sub-geometry part>
+   # <"to the left of" if the point is to the left of the part (< 0 -> left, > 0 -> right)
    dummy = getQadGeomClosestPart(qadGeom, startPt)
    ptEnd = dummy[1]
-   # ritorna la sotto-geometria
+   # returns the sub-geometry
    g = getQadGeomAt(qadGeom, dummy[2], dummy[3])
 
-   geomType = g.whatIs()  
+   geomType = g.whatIs()
    if geomType == "LINE" or geomType == "ARC" or geomType == "ELLIPSE_ARC":
       return g.getGeomBetween2Pts(startPt, endPt)
-   
+
    elif qadGeom.whatIs() == "POLYLINE":
       return g.getGeomBetween2Pts(startPt, endPt)
 
@@ -4968,7 +4765,7 @@ def getQadGeomBetween2Pts(qadGeom, startPt, endPt):
       arc1.set(g.center, g.radius, angle1, angle2)
       arc2 = QadArc()
       arc2.set(g.center, g.radius, angle2, angle1)
-      
+
       if arc1.length() < arc2.length():
          if qad_utils.ptNear(arc1.getStartPt(), startPt) == False: arc1.reversed = True
          return arc1
@@ -4984,7 +4781,7 @@ def getQadGeomBetween2Pts(qadGeom, startPt, endPt):
       arc1.set(g.center, g.majorAxisFinalPt, g.axisRatio, angle1, angle2)
       arc2 = QadEllipseArc()
       arc2.set(g.center, g.majorAxisFinalPt, g.axisRatio, angle2, angle1)
-      
+
       if arc1.length() < arc2.length():
          if qad_utils.ptNear(arc1.getStartPt(), startPt) == False: arc1.reversed = True
          return arc1
@@ -4997,9 +4794,8 @@ def getQadGeomBetween2Pts(qadGeom, startPt, endPt):
 # appendPtOnTheSameTanDirectionOnly
 # ===============================================================================
 def appendPtOnTheSameTanDirectionOnly(line, pts, resultList):
-   """
-   Aggiunge i punti della lista pts solo se sono nella stessa direzione della tangente della linea.
-   Serve, ad esempio, per aggiungere i punti di intersezione sulla estensione della prima ed ultima linea diuna polilinea.
+   """Adds points from the pts list only if they are in the same direction as the tangent of the line.
+      It is used, for example, to add the intersection points on the extension of the first and last line of a polyline.
    """
    angle = line.getTanDirectionOnPt()
    for pt in pts:

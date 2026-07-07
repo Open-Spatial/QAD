@@ -9,14 +9,14 @@
 
 [general]
 name=QAD
-email=gam17@riseup.net
-author=gam17
-qgisMinimumVersion=3.40
+email=support@openspatial.com
+author=Open Spatial Pty Ltd
+qgisMinimumVersion=4.0
 description=Quantum Aided Design: cad like commands in QGIS
 about=Quantum Aided Design: cad like commands in QGIS
-version=3.0.8
-tracker=https://github.com/gam17/QAD/issues
-repository=https://github.com/gam17/QAD
+version=5.0.5
+tracker=https://github.com/Open-Spatial/QAD_QT6/issues
+repository=https://github.com/Open-Spatial/QAD_QT6
 
 # end of mandatory metadata
 
@@ -35,6 +35,4 @@ experimental=False
 # deprecated flag (applies to the whole plugin, not just a single version
 deprecated=False
 
-qgisMaximumVersion=3.99
-
-   
+qgisMaximumVersion=4.99

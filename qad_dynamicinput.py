@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per gestire l'input dinamico
- 
+ class to manage dynamic input
+
                               -------------------
         begin                : 2017-07-27
         copyright            : iiiii
@@ -51,43 +51,43 @@ from .qad_dim import QadDimStyles
 # ===============================================================================
 class QadDynamicInputContextEnum():
    NONE               = 0
-   COMMAND            = 1   # richiesta di un comando
-   EDIT               = 2   # richiesta in editazione
+   COMMAND            = 1   # request for a command
+   EDIT               = 2   # request for editing
 
 
 # ===============================================================================
 # QadDynamicInputEditEnum class.
 # ===============================================================================
-class QadDynamicInputEditEnum(): # vedi initGui che dichiara un vettore lungo quanto sono i valori di QadDynamicInputEditEnum
-   CMD_LINE_EDIT        = 0 # usato per inserire un comando
-   PROMPT_EDIT          = 1 # usato per messaggi e scelta opzioni di comando
-   EDIT                 = 2 # usato per richiesta generica di un valore (es. raggio, scala, rotazione)
-   EDIT_X               = 3 # usato per coordinata X
-   EDIT_Y               = 4 # usato per coordinata Y
-   EDIT_Z               = 5 # usato per coordinata Z
-   # usato per distanza dal punto precedente se segmento, usato per lunghezza raggio nel punto finale della parte precedente se arco
-   # oppure lunghezza raggio nel punto medio se parte precedente e successiva sono lo stesso arco
+class QadDynamicInputEditEnum(): # see initGui which declares a vector as long as the values of QadDynamicInputEditEnum
+   CMD_LINE_EDIT        = 0 # used to enter a command
+   PROMPT_EDIT          = 1 # used for messages and command option selection
+   EDIT                 = 2 # used for generic request of a value (e.g. radius, scale, rotation)
+   EDIT_X               = 3 # used for X coordinate
+   EDIT_Y               = 4 # used for Y coordinate
+   EDIT_Z               = 5 # used for Z coordinate
+   # used for distance from the previous point if segment, used for radius length at the final point of the previous part if arc
+   # or radius length at the midpoint if the previous and following part are the same arc
    EDIT_DIST_PREV_PT    = 6
-   # usato per distanza relativa alla posizione precedente dello stesso punto nel verso dal punto precedente se segmento
-   # usato per lunghezza raggio nel punto iniziale della parte precedente se arco
+   # used for distance relative to the previous position of the same point in the direction from the previous point if segment
+   # used for radius length at the starting point of the previous part if arc
    EDIT_REL_DIST_PREV_PT = 7
-   # usato per angolo dal punto precedente se segmento, usato per angolo arco nel punto finale della parte precedente se arco
+   # used for angle from previous point if segment, used for arc angle at the final point of previous part if arc
    EDIT_ANG_PREV_PT     = 8
-   # usato per angolo relativo all'angolo dal punto precedente se segmento
-   # usato per angolo totale arco se parte precedente e successiva sono lo stesso arco
+   # used for angle relative to angle from previous point if segment
+   # used for total arc angle if previous and following part are the same arc
    EDIT_REL_ANG_PREV_PT = 9
-   # usato per distanza dal punto successivo se segmento, 
-   # usato per lunghezza raggio nel punto iniziale della parte successiva se arco
-   EDIT_DIST_NEXT_PT    = 10 
-   # usato per distanza relativa alla posizione precedente dello stesso punto nel verso dal punto successivo se segmento
-   # usato per lunghezza raggio nel punto finale della parte successiva se arco
-   EDIT_REL_DIST_NEXT_PT = 11 
-   EDIT_ANG_NEXT_PT     = 12 # usato per angolo dal punto successivo, usato per angolo arco nel punto iniziale della parte successiva
-   EDIT_REL_ANG_NEXT_PT = 13 # usato per angolo relativo all'angolo dal punto successivo se segmento
-   EDIT_SYMBOL_COORD_TYPE = 14 # usato per indicare se coordinata assoluta "#" o relativa "@"
+   # used for distance to next point if segment,
+   # used for radius length at the starting point of the next part if arc
+   EDIT_DIST_NEXT_PT    = 10
+   # used for distance relative to the previous position of the same point in the direction from the next point if segment
+   # used for radius length at the end point of the next part if arc
+   EDIT_REL_DIST_NEXT_PT = 11
+   EDIT_ANG_NEXT_PT     = 12 # used for angle from next point, used for arc angle at start point of next part
+   EDIT_REL_ANG_NEXT_PT = 13 # used for angle relative to angle from next point if segment
+   EDIT_SYMBOL_COORD_TYPE = 14 # used to indicate whether absolute "#" or relative "@" coordinate
 
 
-# ogni QadDynamicInputEdit è gestita dalle funzioni di QadDynamicEditInput:
+# each QadDynamicInputEdit is managed by QadDynamicEditInput functions:
 # initGui, setFocus, setNextCurrentEdit, setPrevCurrentEdit, show, mouseMoveEvent, moveCtrls
 
 
@@ -96,15 +96,15 @@ class QadDynamicInputEditEnum(): # vedi initGui che dichiara un vettore lungo qu
 # ===============================================================================
 class QadDynamicEdit(QTextEdit):
 #    """
-#    Classe che gestisce l'input dinamico in una QTextEdit
+#    Class that handles dynamic input in a QTextEdit
 #    """
-   
+
    def __init__(self, QadDynamicInputObj):
       QTextEdit.__init__(self, QadDynamicInputObj.canvas)
       self.QadDynamicInputObj = QadDynamicInputObj
       self.plugIn = QadDynamicInputObj.plugIn
       self.canvas = QadDynamicInputObj.canvas
-      
+
       self.font_size = 8 + QadVariables.get(QadMsg.translate("Environment variables", "TOOLTIPSIZE"))
       height = self.font_size + 15
 
@@ -115,8 +115,8 @@ class QadDynamicEdit(QTextEdit):
       self.setAcceptRichText(False)
       self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
       self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-      self.error = False # indica se il valore contenuto nella edit è errato
-      self.lockedPos = False # indica se la posizione della edit è bloccata
+      self.error = False # indicates if the value contained in the edit is incorrect
+      self.lockedPos = False # indicates whether the edit position is locked
 
 
    # ============================================================================
@@ -124,8 +124,8 @@ class QadDynamicEdit(QTextEdit):
    # ============================================================================
    def focusInEvent(self, e):
       pass
-   
-   
+
+
    # ============================================================================
    # reset
    # ============================================================================
@@ -140,12 +140,12 @@ class QadDynamicEdit(QTextEdit):
    # ============================================================================
    def setColors(self, foregroundColor = None, backGroundColor = None, borderColor = None, \
                  selectionColor = None, selectionBackGroundColor = None, opacity = 100):
-      # se i colori sono None allora non vengono alterati
-      # caso particolare per borderColor = "" non viene disegnato
-      # opacity = 0-100      
+      # if the colors are None then they are not altered
+      # special case for borderColor = "" is not drawn
+      # opacity = 0-100
       oldFmt = self.styleSheet().split(";")
       fmt = "rgba({0},{1},{2},{3}%)"
-      
+
       if foregroundColor is not None:
          c = QColor(foregroundColor)
          rgbStrForeColor = "color: " + fmt.format(str(c.red()), str(c.green()), str(c.blue()), str(opacity)) + ";"
@@ -155,7 +155,7 @@ class QadDynamicEdit(QTextEdit):
             if f.find("color:") == 0:
                rgbStrForeColor = f + ";"
                break
-            
+
       if backGroundColor is not None:
          c = QColor(backGroundColor)
          rgbStrBackColor = "background-color: " + fmt.format(str(c.red()), str(c.green()), str(c.blue()), str(opacity)) + ";"
@@ -166,14 +166,14 @@ class QadDynamicEdit(QTextEdit):
                rgbStrBackColor = f + ";"
                break
 
-      # se è in stato di errore il bordo deve essere rosso largo 2 pixel
+      # if it is in error state the border must be red 2 pixels wide
       if self.error:
-         c = QColor(Qt.red)
+         c = QColor(Qt.GlobalColor.red)
          rgbStrBorderColor = "border-color: " + fmt.format(str(c.red()), str(c.green()), str(c.blue()), str(opacity)) + ";"
          fmtBorder = "border:2px;border-style:solid;"
       else:
          if borderColor is not None:
-            if borderColor == "": # senza bordo
+            if borderColor == "": # without border
                rgbStrBorderColor = ""
                fmtBorder = "border:0px;border-style:solid;"
             else:
@@ -218,7 +218,7 @@ class QadDynamicEdit(QTextEdit):
             rgbStrSelectionColor + \
             rgbStrSelectionBackColor + \
             "font-size: " + str(self.font_size) + "pt;"
-            
+
       self.setStyleSheet(fmt)
 
 
@@ -227,11 +227,11 @@ class QadDynamicEdit(QTextEdit):
       boundingRect = fm.boundingRect(self.toPlainText())
       width = int(boundingRect.width() * 1.2) + 5
       height = boundingRect.height()
-      
+
       canvasRect = self.canvas.rect()
       if width > canvasRect.width():
          width = canvasRect.width()
-      
+
       self.resize(width, height)
       if updateCtrlsPos: self.QadDynamicInputObj.moveCtrls()
 
@@ -240,7 +240,7 @@ class QadDynamicEdit(QTextEdit):
    # selectAllText
    # ============================================================================
    def selectAllText(self):
-      # seleziono tutto il testo
+      # I select all the text
       cursor = self.textCursor()
       cursor.movePosition(QTextCursor.End, QTextCursor.MoveAnchor)
       cursor.movePosition(QTextCursor.Start, QTextCursor.KeepAnchor)
@@ -273,20 +273,20 @@ class QadDynamicEdit(QTextEdit):
    # ============================================================================
    def removeItems(self):
       pass
-   
+
 
 # ===============================================================================
 # QadDynamicInputCmdLineEdit
 # ===============================================================================
 class QadDynamicInputCmdLineEdit(QadDynamicEdit):
 #    """
-#    Classe che gestisce l'input dinamico della sola linea di comando
+#    Class that handles command line-only dynamic input
 #    """
-   
+
    def __init__(self, QadDynamicInputObj):
       QadDynamicEdit.__init__(self, QadDynamicInputObj)
       self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-             
+
       self.historyIndex = 0
 
       self.timerForCmdSuggestWindow = QTimer()
@@ -298,7 +298,7 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
       self.infoVars = []
 
       self.cmdSuggestWindow = None
-      
+
       foregroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "CMDLINEFORECOLOR")))
       backGroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "CMDLINEBACKCOLOR")))
       borderColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBORDERCOLOR")))
@@ -308,23 +308,23 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
 
 
    def initCmdVarsList(self):
-      # lista composta da elementi con:
-      # <nome locale comando>, <nome inglese comando>, <icona>, <note>
+      # list composed of elements with:
+      # <command local name>, <command English name>, <icon>, <notes>
       self.infoCmds = []
       for cmdName in self.plugIn.getCommandNames():
          cmd = self.plugIn.getCommandObj(cmdName[0])
          if cmd is not None:
             self.infoCmds.append([cmdName[0], cmd.getEnglishName(), cmd.getIcon(), cmd.getNote()])
-            
-      # Creo la finestra per il suggerimento delle variabili di ambiente
-      # lista composta da elementi con:
-      # <nome variabile>, "", <icona>, <note>
+
+      # create the window for suggesting environment variables
+      # list composed of elements with:
+      # <variable name>, "", <icon>, <notes>
       self.infoVars = []
       icon = QIcon(":/plugins/qad/icons/variable.svg")
       for varName in QadVariables.getVarNames():
          var = QadVariables.getVariable(varName)
          self.infoVars.append([varName, "", icon, var.descr])
-      
+
 
    def show(self, mode):
       if mode == False:
@@ -337,22 +337,22 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
 #             self.showMsg("")
          QTextEdit.setVisible(self, True)
          self.setFocus()
-         
+
 
    # ============================================================================
    # showMsg
    # ============================================================================
    def showMsg(self, msg, dummy1 = False, dummy2 = False, updateCtrlsPos = True):
-      # la funzione showMsg viene usata da showMsg(self, cmd) nella classe QadCmdSuggestWindow
-      # la quale comunica sia con QadEdit che con QadDynamicInputCmdLineEdit
-      # per compatibilità con la showMsg di QadEdit devo aggiungere due parametri fittizi (dummy, dummy2)
+      # the showMsg function is used by showMsg(self, cmd) in the QadCmdSuggestWindow class
+      # which communicates with both QadEdit and QadDynamicInputCmdLineEdit
+      # for compatibility with QadEdit's showMsg I have to add two dummy parameters (dummy, dummy2)
       QadDynamicEdit.showMsg(self, msg, dummy1, dummy2, updateCtrlsPos)
 
 
    # ============================================================================
    # showEvaluateMsg
    # ============================================================================
-   def showEvaluateMsg(self, msg, append = False): # per compatibilità con QadCmdSuggestListView.mouseReleaseEvent
+   def showEvaluateMsg(self, msg, append = False): # for compatibility with QadCmdSuggestListView.mouseReleaseEvent
       return self.QadDynamicInputObj.showEvaluateMsg(msg)
 
 
@@ -360,65 +360,61 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
    # showCmdSuggestWindow
    # ============================================================================
    def showCmdSuggestWindow(self, mode = True, filter = ""):
-      if mode == False: # se spengo la finestra
+      if mode == False: # if I turn off the window
          self.timerForCmdSuggestWindow.stop()
-               
+
       inputSearchOptions = QadVariables.get(QadMsg.translate("Environment variables", "INPUTSEARCHOPTIONS"))
-      # inputSearchOptions & QadINPUTSEARCHOPTIONSEnum.ON = Turns on all automated keyboard features when typing at the Command prompt
-      # inputSearchOptions & QadINPUTSEARCHOPTIONSEnum.DISPLAY_LIST = Displays a list of suggestions as keystrokes are entered
+      # inputSearcOptions & QadINPUTSEARCHOPTIONSEnum.ON = Turns on all automated keyboard features when typing at the Command prompt
+      # inputSearcOptions & QadINPUTSEARCHOPTIONSEnum.DISPLAY_LIST = Displays a list of suggestions as keystrokes are entered
       if (inputSearchOptions & QadINPUTSEARCHOPTIONSEnum.ON and inputSearchOptions & QadINPUTSEARCHOPTIONSEnum.DISPLAY_LIST) and \
           mode == True:
          if self.cmdSuggestWindow is None:
-            # Creo la finestra per il suggerimento dei comandi
+            # create the command suggestion window
             self.initCmdVarsList()
             self.cmdSuggestWindow = QadCmdSuggestWindow(self.canvas, self, self.infoCmds, self.infoVars)
             self.cmdSuggestWindow.initGui()
-         
+
          if self.cmdSuggestWindow.setFilter(filter) == 0:
             self.lockedPos = False;
             self.cmdSuggestWindow.show(False)
             return
-            
+
          dataHeight = self.cmdSuggestWindow.getDataHeight()
          if dataHeight > 0:
             self.cmdSuggestWindow.cmdNamesListView.setMinimumHeight(self.cmdSuggestWindow.cmdNamesListView.sizeHintForRow(0))
-         
+
          dataWidth = 200
-      
-         # Ricavo la posizione dell'angolo in alto a sin della QTextEdit relativa al suo parent
+
+         # I get the position of the top left corner of the QTextEdit relative to its parent
          editRect = self.geometry()
-         ptEditRect = QPoint(editRect.left(), editRect.top())
-         if self.parentWidget():
-            ptEditRect = self.parentWidget().mapToGlobal(QPoint(editRect.left(), editRect.top()))
-         ptUp = QApplication.desktop().mapFromGlobal(ptEditRect)
-         
+         ptUp = self.mapToGlobal(QPoint(0, 0))
+
          spaceUp = ptUp.y() if ptUp.y() - dataHeight < 0 else dataHeight
 
          ptDown = QPoint(ptUp.x(), ptUp.y() + editRect.height())
-         desktopRect = QApplication.desktop().screenGeometry()
+         desktopRect = qad_utils.getScreenGeometry(self, ptUp)
          spaceDown = desktopRect.height() - ptDown.y() if ptDown.y() + dataHeight > desktopRect.height() else dataHeight
 
-         # verifico se c'è più spazio sopra o sotto la finestra
+         # check if there is more space above or below the window
          if spaceUp > spaceDown:
             pt = QPoint(ptUp.x(), ptUp.y() - spaceUp)
             dataHeight = spaceUp
          else:
             pt = QPoint(ptDown.x(), ptDown.y())
             dataHeight = spaceDown
-         
-         if pt.x() + dataWidth > desktopRect.width(): # se sborda oltre il limite di destra
-            if desktopRect.width() - dataWidth < 0: # se anche spostando la finestra a sinistra sborda a sinisitra
+
+         if pt.x() + dataWidth > desktopRect.width(): # if it goes beyond the right limit
+            if desktopRect.width() - dataWidth < 0: # if even by moving the window to the left it projects to the left
                pt.setX(0)
                dataWidth = desktopRect.width()
             else:
                pt.setX(desktopRect.width() - dataWidth)
-            
-         pt = QApplication.desktop().mapToGlobal(pt)
+
          self.cmdSuggestWindow.move(pt)
          self.cmdSuggestWindow.resize(dataWidth, dataHeight)
-            
+
          self.cmdSuggestWindow.show(True)
-         self.lockedPos = True # quando la finestra dei suggerimenti è aperta la posizione si blocca
+         self.lockedPos = True # when the suggestion window is open the position freezes
       else:
          if self.cmdSuggestWindow is not None:
             self.lockedPos = False
@@ -428,15 +424,15 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
    def showCmdAutoComplete(self, filter = ""):
       # autocompletamento
       self.timerForCmdAutoComplete.stop()
-      
+
       # autocompletamento
       inputSearchOptions = QadVariables.get(QadMsg.translate("Environment variables", "INPUTSEARCHOPTIONS"))
       filterLen = len(filter)
       if filterLen < 2:
          return
-      
-      # inputSearchOptions & QadINPUTSEARCHOPTIONSEnum.ON = Turns on all automated keyboard features when typing at the Command prompt
-      # inputSearchOptions & QadINPUTSEARCHOPTIONSEnum.AUTOCOMPLETE = Automatically appends suggestions as each keystroke is entered after the second keystroke.
+
+      # inputSearcOptions & QadINPUTSEARCHOPTIONSEnum.ON = Turns on all automated keyboard features when typing at the Command prompt
+      # inputSearcOptions & QadINPUTSEARCHOPTIONSEnum.AUTOCOMPLETE = Automatically appends suggestions as each keystroke is entered after the second keystroke.
       if inputSearchOptions & QadINPUTSEARCHOPTIONSEnum.ON and inputSearchOptions & QadINPUTSEARCHOPTIONSEnum.AUTOCOMPLETE:
          if filterLen >= 2:
             cmdName, qty = self.plugIn.getMoreUsedCmd(filter)
@@ -450,7 +446,7 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
       cursor = self.textCursor()
       #cursor.movePosition(QTextCursor.End, QTextCursor.KeepAnchor)
       self.setTextCursor(cursor)
-      if filterLen < len(cmdName): # se c'è qualcosa da aggiungere
+      if filterLen < len(cmdName): # if there is anything to add
          self.insertPlainText(cmdName[filterLen:])
       else:
          self.insertPlainText("")
@@ -461,7 +457,7 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
 
 
    def showNextCmd(self):
-      # mostra il comando successivo nella lista dei comandi usati
+      # shows the next command in the list of used commands
       cmdsHistory = self.plugIn.cmdsHistory
       cmdsHistoryLen = len(cmdsHistory)
       if self.historyIndex < cmdsHistoryLen and cmdsHistoryLen > 0:
@@ -469,9 +465,9 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
          if self.historyIndex < cmdsHistoryLen:
             self.showMsg(cmdsHistory[self.historyIndex])
 
-                         
+
    def showPreviousCmd(self):
-      # mostra il comando precedente nella lista dei comandi usati
+      # shows the previous command in the list of used commands
       cmdsHistory = self.plugIn.cmdsHistory
       cmdsHistoryLen = len(cmdsHistory)
       if self.historyIndex > 0 and cmdsHistoryLen > 0:
@@ -481,7 +477,7 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
 
 
    def showLastCmd(self):
-      # mostra e ritorna l'ultimo comando nella lista dei comandi usati
+      # shows and returns the last command in the list of used commands
       cmdsHistory = self.plugIn.cmdsHistory
       cmdsHistoryLen = len(cmdsHistory)
       if cmdsHistoryLen > 0:
@@ -495,17 +491,17 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
    # keyPressEvent
    # ============================================================================
    def keyPressEvent(self, e):
-      
-      if self.plugIn.shortCutManagement(e): # se è stata gestita una sequenza di tasti scorciatoia
+
+      if self.plugIn.shortCutManagement(e): # if a shortcut key sequence has been handled
          return
-      
+
       # if Up or Down is pressed
       if self.isVisibleCmdSuggestWindow() and \
          (e.key() == Qt.Key_Down or e.key() == Qt.Key_Up or e.key() == Qt.Key_PageDown or e.key() == Qt.Key_PageUp or
           e.key() == Qt.Key_End or e.key() == Qt.Key_Home):
          self.cmdSuggestWindow.keyPressEvent(e)
          return
-      else:  # nascondo la finestra di suggerimento
+      else:  # I hide the suggestion window
          self.lockedPos = False
          self.showCmdSuggestWindow(False)
 
@@ -514,7 +510,7 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
          self.historyIndex = len(cmdsHistory)
          self.QadDynamicInputObj.abort()
          return
-      
+
       # if Return or Space is pressed, then perform the commands
       if e.key() == Qt.Key_Return or e.key() == Qt.Key_Space or e.key == Qt.Key_Enter:
          self.entered()
@@ -522,21 +518,21 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
       # if Up or Down is pressed
       elif e.key() == Qt.Key_Down:
          self.showNextCmd()
-         return # per non far comparire la finestra di suggerimento
+         return # to prevent the suggestion window from appearing
       elif e.key() == Qt.Key_Up:
          self.showPreviousCmd()
-         return # per non far comparire la finestra di suggerimento
+         return # to prevent the suggestion window from appearing
       else:
          if (e.key() != Qt.Key_Tab and e.key() != Qt.Key_Backtab) or \
             e.text() != "":
             # all other keystrokes get sent to the input line
             QTextEdit.keyPressEvent(self, e)
-            self.refreshWidth()         
-   
-      # leggo il tempo di ritardo in msec
+            self.refreshWidth()
+
+      # I read the delay time in msec
       inputSearchDelay = QadVariables.get(QadMsg.translate("Environment variables", "INPUTSEARCHDELAY"))
-      
-      # lista suggerimento dei comandi simili
+
+      # suggestion list of similar commands
       currMsg = self.toPlainText()
       shot1 = lambda: self.showCmdSuggestWindow(True, currMsg)
 
@@ -546,19 +542,19 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
       self.timerForCmdSuggestWindow.timeout.connect(shot1)
       self.timerForCmdSuggestWindow.start(inputSearchDelay)
 
-      if e.text().isalnum(): # autocompletamento se è stato premuto un tasto alfanumerico
+      if e.text().isalnum(): # autocomplete if an alphanumeric key has been pressed
          shot2 = lambda: self.showCmdAutoComplete(self.toPlainText())
          del self.timerForCmdAutoComplete
          self.timerForCmdAutoComplete = QTimer()
          self.timerForCmdAutoComplete.setSingleShot(True)
-         
+
          self.timerForCmdAutoComplete.timeout.connect(shot2)
          self.timerForCmdAutoComplete.start(inputSearchDelay)
 
 
    def entered(self):
-      if self.QadDynamicInputObj.refreshResult() == True: # ricalcolo il risultato
-         self.QadDynamicInputObj.showEvaluateMsg(self.QadDynamicInputObj.resStr) # uso il risultato in formato stringa
+      if self.QadDynamicInputObj.refreshResult() == True: # I recalculate the result
+         self.QadDynamicInputObj.showEvaluateMsg(self.QadDynamicInputObj.resStr) # I use the result in string format
       self.reset()
       cmdsHistory = self.plugIn.cmdsHistory
       self.historyIndex = len(cmdsHistory)
@@ -575,15 +571,15 @@ class QadDynamicInputCmdLineEdit(QadDynamicEdit):
 # ===============================================================================
 class QadDynamicInputPromptEdit(QadDynamicEdit):
 #    """
-#    Classe che gestisce l'input dinamico del prompt dei messaggi e scelta opzioni di comando
+#    Class that handles dynamic message prompt input and choice of command options
 #    """
-    
+
    def __init__(self, QadDynamicInputObj):
       QadDynamicEdit.__init__(self, QadDynamicInputObj)
- 
+
       foregroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITFORECOLOR")))
       backGroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBACKCOLOR")))
-      borderColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBORDERCOLOR")))      
+      borderColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBORDERCOLOR")))
       opacity = 100 - QadVariables.get(QadMsg.translate("Environment variables", "TOOLTIPTRANSPARENCY"))
       self.setColors(foregroundColor, backGroundColor, borderColor, backGroundColor, foregroundColor, opacity)
       self.show(False)
@@ -594,33 +590,33 @@ class QadDynamicInputPromptEdit(QadDynamicEdit):
          QTextEdit.setVisible(self, False)
       else:
          QTextEdit.setVisible(self, True)
-      
- 
+
+
 #    # ============================================================================
 #    # keyPressEvent
 #    # ============================================================================
 #    def keyPressEvent(self, e):
 #       pass
-   
+
 
 # ===============================================================================
 # QadDynamicInputEdit
 # ===============================================================================
 class QadDynamicInputEdit(QadDynamicEdit):
 #    """
-#    Classe che gestisce l'input dinamico di un valore
+#    Class that handles the dynamic input of a value
 #    """
-    
+
    def __init__(self, QadDynamicInputObj):
       QadDynamicEdit.__init__(self, QadDynamicInputObj)
       self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
 
-      # il default è un numero reale non nullo 
+      # the default is a non-zero real number
       self.inputMode = QadInputModeEnum.NOT_NULL
       self.inputType = QadInputTypeEnum.FLOAT
-      
-      self.lockable = True # indica se il valore della edit può essere bloccato
-      self.__lockedValue = False # indica se il valore contenuto nella edit è bloccato
+
+      self.lockable = True # indicates whether the edit value can be locked
+      self.__lockedValue = False # indicates whether the value contained in the edit is locked
 
       foregroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITFORECOLOR")))
       backGroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBACKCOLOR")))
@@ -628,18 +624,18 @@ class QadDynamicInputEdit(QadDynamicEdit):
       opacity = 100 - QadVariables.get(QadMsg.translate("Environment variables", "TOOLTIPTRANSPARENCY"))
       self.setColors(foregroundColor, backGroundColor, borderColor, backGroundColor, foregroundColor, opacity)
 
-      # icona di lock      
+      # icona di lock
       fm = QFontMetrics(self.currentFont())
       height = self.height() - 4
       self.LockedIcon = QLabel(self)
       self.LockedIcon.resize(height, height)
       self.LockedIcon.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-      self.LockedIcon.setStyleSheet("border:0px;"); # senza bordo
+      self.LockedIcon.setStyleSheet("border:0px;"); # without border
       pixmap = QPixmap(":/plugins/qad/icons/locked.svg").scaled(height, height)
       self.LockedIcon.setPixmap(pixmap)
 
       self.lineMarkerColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNTRECKINGVECTORCOLOR")))
-      self.lineMarkers = [] # lista dei RubberBand visualizzati
+      self.lineMarkers = [] # list of RubberBands displayed
 
       self.show(False)
 
@@ -652,23 +648,23 @@ class QadDynamicInputEdit(QadDynamicEdit):
 
 
    def setLockedValue(self, mode):
-      # ritorna True e l'operazione ha avuto successo
+      # True returns and the operation was successful
       if self.lockable == False: return False
       if self.__lockedValue != mode:
          self.__lockedValue = mode
          self.LockedIcon.setVisible(self.__lockedValue)
       self.refreshWidth()
-      
+
 
    def isLockedValue(self):
       return self.__lockedValue
-      
+
 
    # ============================================================================
    # removeItems
    # ============================================================================
    def removeItems(self):
-      # svuoto la linea di marker rimuovendoli dal canvas
+      # I empty the line of markers by removing them from the canvas
       for lineMarker in self.lineMarkers:
          lineMarker.hide()
          self.plugIn.canvas.scene().removeItem(lineMarker)
@@ -708,19 +704,19 @@ class QadDynamicInputEdit(QadDynamicEdit):
       height = self.height()
       fm = QFontMetrics(self.currentFont())
       boundingRect = fm.boundingRect(self.toPlainText())
-      width = int(boundingRect.width() * 1.2) + 5     
-      
+      width = int(boundingRect.width() * 1.2) + 5
+
       dimLockedIcon = self.LockedIcon.height()
       offset = 2
       if self.isLockedValue():
-         width = width + dimLockedIcon + offset # per icona di lock
+         width = width + dimLockedIcon + offset # for lock icon
       else:
-         width = width + offset # per icona di lock
-      
+         width = width + offset # for lock icon
+
       canvasRect = self.canvas.rect()
       if width > canvasRect.width():
          width = canvasRect.width()
-      
+
       self.resize(width, height)
       self.LockedIcon.move(width - dimLockedIcon - offset, height - dimLockedIcon - 2)
       if updateCtrlsPos: self.QadDynamicInputObj.moveCtrls()
@@ -730,53 +726,53 @@ class QadDynamicInputEdit(QadDynamicEdit):
    # keyPressEvent
    # ============================================================================
    def keyPressEvent(self, e):
-      if self.plugIn.shortCutManagement(e): # se è stata gestita una sequenza di tasti scorciatoia
+      if self.plugIn.shortCutManagement(e): # if a shortcut key sequence has been handled
          return
-      
+
       if e.key() == Qt.Key_Tab:
          if self.checkValid() is not None:
-            # mi sposto sulla edit successiva
+            # move to the next edit
             self.QadDynamicInputObj.setNextCurrentEdit()
-         else: # valore errato
+         else: # incorrect value
             pass
-         
+
       elif e.key() == Qt.Key_Backtab:
          if self.checkValid() is not None:
             self.QadDynamicInputObj.setPrevCurrentEdit()
-         else: # valore errato
+         else: # incorrect value
             pass
-         
+
       elif e.key() == Qt.Key_Return or e.key == Qt.Key_Enter:
-         self.QadDynamicInputObj.keyPressEvent(e) # lo faccio gestire da QadDynamicInputObj
+         self.QadDynamicInputObj.keyPressEvent(e) # I have it handled by QadDynamicInputObj
 #          if self.isLockedValue() == True:
 #             value = self.toPlainText()
 #             snapType = str2snapTypeEnum(value)
-#             if snapType != -1: # se é stato forzato uno snap
-#                self.QadDynamicInputObj.keyPressEvent(e) # lo faccio gestire da QadDynamicInputObj
+#             if snapType != -1: # if a snap was forced
+#                self.QadDynamicInputObj.keyPressEvent(e) # I let QadDynamicInputObj handle it
 #             elif self.checkValid() is not None:
-#                self.QadDynamicInputObj.keyPressEvent(e) # lo faccio gestire da QadDynamicInputObj
+#                self.QadDynamicInputObj.keyPressEvent(e) # I let QadDynamicInputObj handle it
 #          else:
-#             self.QadDynamicInputObj.keyPressEvent(e) # lo faccio gestire da QadDynamicInputObj
-            
+#             self.QadDynamicInputObj.keyPressEvent(e) # I let QadDynamicInputObj handle it
+
       elif (e.key() == Qt.Key_Down or e.key() == Qt.Key_Up or e.key() == Qt.Key_PageDown or e.key() == Qt.Key_PageUp or \
             e.key() == Qt.Key_End or e.key() == Qt.Key_Home):
-         pass # al momento si è deciso di non mostrare il menu delle opzioni del comando attivo da qui
-      
-      elif e.key() == Qt.Key_Comma: # ","
-         self.QadDynamicInputObj.keyPressEvent(e) # lo faccio gestire da QadDynamicInputObj
+         pass # at the moment it has been decided not to show the options menu of the active command from here
 
-      # se non si tratta di stringa e si tratta di un carattere speciale
+      elif e.key() == Qt.Key_Comma: # ","
+         self.QadDynamicInputObj.keyPressEvent(e) # I have it handled by QadDynamicInputObj
+
+      # if it is not a string and it is a special character
       elif not (self.inputType & QadInputTypeEnum.STRING) and \
            (e.text() == "@" or e.text() == "#" or e.text() == "<"):
-            self.QadDynamicInputObj.keyPressEvent(e) # lo faccio gestire da QadDynamicInputObj
-                  
+            self.QadDynamicInputObj.keyPressEvent(e) # I have it handled by QadDynamicInputObj
+
       elif e.key() == Qt.Key_Escape:
          self.QadDynamicInputObj.abort()
-                        
+
       elif e.text() != "":
          previousTxt = self.toPlainText()
          QTextEdit.keyPressEvent(self, e)
-         if self.lockable: # se è possibile modificare lo stato di lock
+         if self.lockable: # if it is possible to change the lock state
             currentTxt = self.toPlainText()
             if currentTxt == "":
                self.setLockedValue(False)
@@ -784,102 +780,102 @@ class QadDynamicInputEdit(QadDynamicEdit):
                self.setLockedValue(True)
          else:
             self.refreshWidth()
-      
-      
+
+
    # ============================================================================
    # focusInEvent
    # ============================================================================
    def focusInEvent(self, e):
-      # cambio il colore
-      foregroundColor = QColor(Qt.black)
-      backGroundColor = QColor(Qt.white)
+      # change the color
+      foregroundColor = QColor(Qt.GlobalColor.black)
+      backGroundColor = QColor(Qt.GlobalColor.white)
       borderColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBORDERCOLOR")))
       opacity = 100 - QadVariables.get(QadMsg.translate("Environment variables", "TOOLTIPTRANSPARENCY"))
-      selectionColor = QColor(Qt.white)
+      selectionColor = QColor(Qt.GlobalColor.white)
       selectionBackGroundColor = QColor(51, 153, 255) # azzurro (R=51 G=153 B=255)
       self.setColors(foregroundColor, backGroundColor, borderColor, selectionColor, selectionBackGroundColor, opacity)
-      self.selectAllText() # seleziono tutto il testo
-      
+      self.selectAllText() # I select all the text
+
 
    # ============================================================================
    # focusOutEvent
    # ============================================================================
    def focusOutEvent(self, e):
-      # cambio il colore
+      # change the color
       foregroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITFORECOLOR")))
       backGroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBACKCOLOR")))
       borderColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBORDERCOLOR")))
       opacity = 100 - QadVariables.get(QadMsg.translate("Environment variables", "TOOLTIPTRANSPARENCY"))
       self.setColors(foregroundColor, backGroundColor, borderColor, backGroundColor, foregroundColor, opacity)
-      # seleziono il testo
+      # I select the text
       cursor = self.textCursor()
       cursor.movePosition(QTextCursor.End, QTextCursor.MoveAnchor)
       cursor.movePosition(QTextCursor.End, QTextCursor.KeepAnchor)
       self.setTextCursor(cursor)
- 
+
 
    # ============================================================================
    # checkValid
    # ============================================================================
    def checkValid(self):
-      # ritorna None in caso di errore
+      # returns None on error
       value = self.toPlainText()
       self.error = False
-      
+
       if value == "" and (self.inputMode & QadInputModeEnum.NOT_NULL): # non permesso input nullo
          self.error = True
-         self.setColors() # ricolora con i bordi rossi perchè error=True
-         self.selectAllText() # seleziono tutto il testo
+         self.setColors() # recolors with red borders because error=True
+         self.selectAllText() # I select all the text
          return None
 
       if self.inputType & QadInputTypeEnum.INT or self.inputType & QadInputTypeEnum.LONG or \
          self.inputType & QadInputTypeEnum.FLOAT or self.inputType & QadInputTypeEnum.ANGLE:
-         if self.inputType & QadInputTypeEnum.INT: # si aspetta un numero intero
+         if self.inputType & QadInputTypeEnum.INT: # expects an integer
             value = qad_utils.str2int(value)
             if value is None:
                self.error = True
-               self.setColors() # ricolora con i bordi rossi perchè error=True
-               self.selectAllText() # seleziono tutto il testo
+               self.setColors() # recolors with red borders because error=True
+               self.selectAllText() # I select all the text
                return None
-         elif self.inputType & QadInputTypeEnum.LONG: # si aspetta un numero long
+         elif self.inputType & QadInputTypeEnum.LONG: # expects a long number
             value = qad_utils.str2long(value)
             if value is None:
                self.error = True
-               self.setColors() # ricolora con i bordi rossi perchè error=True
-               self.selectAllText() # seleziono tutto il testo
+               self.setColors() # recolors with red borders because error=True
+               self.selectAllText() # I select all the text
                return None
-         elif self.inputType & QadInputTypeEnum.FLOAT or self.inputType & QadInputTypeEnum.ANGLE: # si aspetta un numero reale
+         elif self.inputType & QadInputTypeEnum.FLOAT or self.inputType & QadInputTypeEnum.ANGLE: # expects a real number
             value = qad_utils.str2float(value)
             if value is None:
                self.error = True
-               self.setColors() # ricolora con i bordi rossi perchè error=True
-               self.selectAllText() # seleziono tutto il testo
+               self.setColors() # recolors with red borders because error=True
+               self.selectAllText() # I select all the text
                return None
-         
-         # non permesso valore = 0
-         # non permesso valore < 0
-         # non permesso valore > 0
+
+         # not allowed value = 0
+         # not allowed value < 0
+         # not allowed value > 0
          if (value == 0 and (self.inputMode & QadInputModeEnum.NOT_ZERO)) or \
             (value < 0 and (self.inputMode & QadInputModeEnum.NOT_NEGATIVE)) or \
             (value > 0 and (self.inputMode & QadInputModeEnum.NOT_POSITIVE)):
             self.error = True
-            self.setColors() # ricolora con i bordi rossi perchè error=True
-            self.selectAllText() # seleziono tutto il testo
+            self.setColors() # recolors with red borders because error=True
+            self.selectAllText() # I select all the text
             return None
 
-         if self.inputType & QadInputTypeEnum.ANGLE: # si aspetta un angolo in gradi
+         if self.inputType & QadInputTypeEnum.ANGLE: # expects an angle in degrees
             if value is not None:
                # i gradi vanno convertiti in radianti
                value = float(qad_utils.toRadians(value))
-               
+
       elif self.inputType & QadInputTypeEnum.BOOL:
          value = qad_utils.str2bool(value)
          if value is None:
             self.error = True
-            self.setColors() # ricolora con i bordi rossi perchè error=True
-            self.selectAllText() # seleziono tutto il testo
+            self.setColors() # recolors with red borders because error=True
+            self.selectAllText() # I select all the text
             return None
-   
+
       return value
 
 
@@ -887,15 +883,13 @@ class QadDynamicInputEdit(QadDynamicEdit):
    # setLinesMarker
    # ============================================================================
    def setLinesMarker(self, points):
-      """
-      Crea un marcatore lineare x una lista di punti
-      """
-      # svuoto la linea di marker rimuovendoli dal canvas
+      """Create a linear marker x a list of points"""
+      # I empty the line of markers by removing them from the canvas
       for lineMarker in self.lineMarkers:
          lineMarker.hide()
          self.plugIn.canvas.scene().removeItem(lineMarker)
       del self.lineMarkers[:]
-      
+
       lineMarker = createRubberBand(self.canvas, QgsWkbTypes.LineGeometry, True)
       lineMarker.setColor(self.lineMarkerColor)
       lineMarker.setLineStyle(Qt.DotLine)
@@ -908,17 +902,17 @@ class QadDynamicInputEdit(QadDynamicEdit):
          i = i + 1
       lineMarker.addPoint(points[i], True)
       self.lineMarkers.append(lineMarker)
-   
-   
+
+
 
 # ===============================================================================
 class QadDynamicInput(QWidget):
 # ===============================================================================
 #    """
-#    Classe base che gestisce l'input dinamico
+#    Base class that handles dynamic input
 #    """
 
-   
+
    # ============================================================================
    # __init__
    # ============================================================================
@@ -926,16 +920,16 @@ class QadDynamicInput(QWidget):
       QWidget.__init__(self, plugIn.canvas)
       self.plugIn = plugIn
       self.canvas = self.plugIn.canvas
-      self.prevPart = None # parte precedente il punto da spostare in modo grip
-      self.nextPart = None # parte successiva il punto da spostare in modo grip
+      self.prevPart = None # part preceding the point to be moved in grip mode
+      self.nextPart = None # next part the point to be moved in grip mode
 
-      self.resValue = None    # valore risultante
+      self.resValue = None    # resulting value
       self.resStr = ""        # risultato in formato stringa
-      
-      self.default = None 
+
+      self.default = None
       self.mousePos = QPoint()
       self.isVisible = False
-      
+
       self.initGui()
       self.currentEdit = None
       self.refreshOnEnvVariables()
@@ -947,7 +941,7 @@ class QadDynamicInput(QWidget):
    def __del__(self):
       self.removeItems()
 
- 
+
    # ============================================================================
    # getPrompt
    # ============================================================================
@@ -1001,19 +995,19 @@ class QadDynamicInput(QWidget):
    # refreshOnEnvVariables
    # ============================================================================
    def refreshOnEnvVariables(self):
-      # DYNDIGRIP = Controlla la visualizzazione delle quote dinamiche durante la modifica dello stiramento dei grip
+      # DYNDIGRIP = Controls the display of dynamic dimensions when editing grip stretch
       self.dynDiGrip = QadVariables.get(QadMsg.translate("Environment variables", "DYNDIGRIP"))
-      # DYNDIVIS = Controlla il numero di quote dinamiche visualizzate durante la modifica dello stiramento dei grip
+      # DYNDIVIS = Controls the number of dynamic dimensions displayed when editing grip stretch
       self.dynDiVis = QadVariables.get(QadMsg.translate("Environment variables", "DYNDIVIS"))
-      # DYNMODE = Attiva e disattiva le funzioni di input dinamico
+      # DYNMODE = Enables and disables dynamic input functions
       self.dynMode = QadVariables.get(QadMsg.translate("Environment variables", "DYNMODE"))
-      # DYNPICOORDS = Determina se l'input del puntatore utilizza un formato relativo o assoluto per le coordinate
+      # DYNPICOORDS = Determines whether pointer input uses a relative or absolute format for coordinates
       self.dynPiCoords = QadVariables.get(QadMsg.translate("Environment variables", "DYNPICOORDS"))
-      # DYNPIFORMAT = Determina se l'input del puntatore utilizza un formato polare o cartesiano per le coordinate
+      # DYNPIFORMAT = Determines whether the pointer input uses a polar or Cartesian format for coordinates
       self.dynPiFormat = QadVariables.get(QadMsg.translate("Environment variables", "DYNPIFORMAT"))
-      # DYNPIVIS = Controlla quando è visualizzato l'input puntatore
+      # DYNPIVIS = Controls when pointer input is displayed
       self.dynPiVis = QadVariables.get(QadMsg.translate("Environment variables", "DYNPIVIS"))
-      # DYNPROMPT = Controlla la visualizzazione dei messaggi di richiesta nelle descrizioni di input dinamico
+      # DYNPROMPT = Controls the display of prompts in dynamic input descriptions
       self.dynPrompt = QadVariables.get(QadMsg.translate("Environment variables", "DYNPROMPT"))
 
 
@@ -1025,109 +1019,109 @@ class QadDynamicInput(QWidget):
       foregroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITFORECOLOR")))
       backGroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBACKCOLOR")))
       borderColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBORDERCOLOR")))
-      
+
       for i in range(0, len(self.edits), 1):
-         if i == QadDynamicInputEditEnum.CMD_LINE_EDIT: # per CMD_LINE_EDIT
+         if i == QadDynamicInputEditEnum.CMD_LINE_EDIT: # for CMD_LINE_EDIT
             cmdForegroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "CMDLINEFORECOLOR")))
-            cmdBackGroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "CMDLINEBACKCOLOR")))      
+            cmdBackGroundColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "CMDLINEBACKCOLOR")))
             self.edits[QadDynamicInputEditEnum.CMD_LINE_EDIT].setColors(cmdForegroundColor, cmdBackGroundColor, None, \
                                                                         cmdBackGroundColor, cmdForegroundColor, opacity)
-         else: # tutti gli edit tranne CMD_LINE_EDIT
+         else: # all edits except CMD_LINE_EDIT
             self.edits[i].setColors(foregroundColor, backGroundColor, borderColor, backGroundColor, foregroundColor, opacity)
 
 
    def isActive(self):
-      # ritorna True se input dinamico è attivato
+      # returns True if dynamic input is enabled
       return True if self.dynMode > 0 else False
 
 
-   def isPointInputOn(self): # ritorna True se input del puntatore attivato
+   def isPointInputOn(self): # returns True if pointer input enabled
       return True if self.dynMode & 1 else False
-        
- 
-   def isDimensionalInputOn(self): # ritorna True se input di quota attivato
+
+
+   def isDimensionalInputOn(self): # returns True if dimension input activated
       return True if self.dynMode & 2 else False
-   
-   
+
+
    def isPromptActive(self):
       return True if self.isActive() and self.dynPrompt == 1 else False
 
 
-   def hasFocus(self): # ritorna True se uno widget di input ha il fuoco
+   def hasFocus(self): # returns True if an input widget has focus
       for edit in self.edits:
          if edit.hasFocus(): return True
       return False
 
-  
+
    # ============================================================================
    # initGui
    # ============================================================================
    def initGui(self):
-      # creo un array di edit
-      self.edits = [None] * 15 # vedi QadDynamicInputEditEnum quanti elementi ha
-      
-      # usato per inserire un comando
-      self.edits[QadDynamicInputEditEnum.CMD_LINE_EDIT] = QadDynamicInputCmdLineEdit(self)
-      # usato per messaggi e scelta opzioni di comando
-      self.edits[QadDynamicInputEditEnum.PROMPT_EDIT] = QadDynamicInputPromptEdit(self)
-      
-      # usato per richiesta generica (es. raggio, scala, angolo)
-      self.edits[QadDynamicInputEditEnum.EDIT] = QadDynamicInputEdit(self)
-      self.edits[QadDynamicInputEditEnum.EDIT].lockable == False # valore non bloccabile
+      # create an array of edits
+      self.edits = [None] * 15 # see QadDynamicInputEditEnum for the number of elements
 
-      # usato per indicare se coordinata assoluta "#" o relativa "@" e se cartesiana o polare "<"
+      # used to enter a command
+      self.edits[QadDynamicInputEditEnum.CMD_LINE_EDIT] = QadDynamicInputCmdLineEdit(self)
+      # used for messages and command option selection
+      self.edits[QadDynamicInputEditEnum.PROMPT_EDIT] = QadDynamicInputPromptEdit(self)
+
+      # used for generic request (e.g. radius, scale, angle)
+      self.edits[QadDynamicInputEditEnum.EDIT] = QadDynamicInputEdit(self)
+      self.edits[QadDynamicInputEditEnum.EDIT].lockable == False # non-lockable value
+
+      # used to indicate whether absolute coordinate "#" or relative "@" and whether Cartesian or polar "<"
       self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE] = QadDynamicInputEdit(self)
       self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].inputMode = QadInputModeEnum.NONE
-      self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].inputType = QadInputTypeEnum.STRING      
-      # usato per coordinata X
+      self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].inputType = QadInputTypeEnum.STRING
+      # used for X coordinate
       self.edits[QadDynamicInputEditEnum.EDIT_X] = QadDynamicInputEdit(self)
       self.edits[QadDynamicInputEditEnum.EDIT_X].inputMode = QadInputModeEnum.NOT_NULL
       self.edits[QadDynamicInputEditEnum.EDIT_X].inputType = QadInputTypeEnum.FLOAT
-      # usato per coordinata Y
+      # used for Y coordinate
       self.edits[QadDynamicInputEditEnum.EDIT_Y] = QadDynamicInputEdit(self)
       self.edits[QadDynamicInputEditEnum.EDIT_Y].inputMode = QadInputModeEnum.NOT_NULL
       self.edits[QadDynamicInputEditEnum.EDIT_Y].inputType = QadInputTypeEnum.FLOAT
-      # usato per coordinata Z
+      # used for Z coordinate
       self.edits[QadDynamicInputEditEnum.EDIT_Z] = QadDynamicInputEdit(self)
       self.edits[QadDynamicInputEditEnum.EDIT_Z].inputMode = QadInputModeEnum.NOT_NULL
       self.edits[QadDynamicInputEditEnum.EDIT_Z].inputType = QadInputTypeEnum.FLOAT
 
-      # usato per distanza dal punto precedente
+      # used for distance from previous point
       self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT] = QadDynamicInputEdit(self)
       self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].inputMode = QadInputModeEnum.NOT_NULL
       self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].inputType = QadInputTypeEnum.FLOAT
-      
-      # usato per distanza in più o in meno rispetto la distanza dal punto precedente
+
+      # used for distance more or less than the distance from the previous point
       self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT] = QadDynamicInputEdit(self)
       self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].inputMode = QadInputModeEnum.NOT_NULL
       self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].inputType = QadInputTypeEnum.FLOAT
-           
-      # usato per angolo dal punto precedente
+
+      # used for corner from previous point
       self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT] = QadDynamicInputEdit(self)
       self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].inputMode = QadInputModeEnum.NOT_NULL
       self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].inputType = QadInputTypeEnum.ANGLE
-      
-      # usato per angolo in più o in meno rispetto l'angolo dal punto precedente
+
+      # used for angle more or less than the angle from the previous point
       self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT] = QadDynamicInputEdit(self)
       self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].inputMode = QadInputModeEnum.NOT_NULL
       self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].inputType = QadInputTypeEnum.ANGLE
 
-      # usato per distanza dal punto successivo
+      # used for distance to next point
       self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT] = QadDynamicInputEdit(self)
       self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].inputMode = QadInputModeEnum.NOT_NULL
       self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].inputType = QadInputTypeEnum.FLOAT
-           
-      # usato per distanza in più o in meno rispetto la distanza dal punto successivo
+
+      # used for distance more or less than the distance to the next point
       self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT] = QadDynamicInputEdit(self)
       self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].inputMode = QadInputModeEnum.NOT_NULL
       self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].inputType = QadInputTypeEnum.FLOAT
-           
-      # usato per angolo dal punto successivo
+
+      # used for corner from next point
       self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT] = QadDynamicInputEdit(self)
       self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].inputMode = QadInputModeEnum.NOT_NULL
       self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].inputType = QadInputTypeEnum.ANGLE
-      
-      # usato per angolo in più o in meno rispetto l'angolo dal punto successivo
+
+      # used for angle more or less than the angle from the next point
       self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT] = QadDynamicInputEdit(self)
       self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].inputMode = QadInputModeEnum.NOT_NULL
       self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].inputType = QadInputTypeEnum.ANGLE
@@ -1143,25 +1137,25 @@ class QadDynamicInput(QWidget):
    # ============================================================================
    # getInitialNdxEdit
    # ============================================================================
-   # restituisce la posizione del controllo iniziale
+   # returns the position of the initial control
    def getInitialNdxEdit(self):
       return # da virtualizzare
-   
-   
+
+
    # ============================================================================
    # setInitialFocus
    # ============================================================================
    def setInitialFocus(self):
       for edit in self.edits:
          edit.setReadOnly(True)
-         
+
       self.currentEdit = self.getInitialNdxEdit()
-            
+
       if self.currentEdit is not None:
          widget = self.edits[self.currentEdit]
          widget.setReadOnly(False)
          #widget.setWindowFlags(widget.windowFlags() | Qt.WindowStaysOnTopHint)
-         if widget.hasFocus(): # se ha già il fuoco coloro la casella e basta
+         if widget.hasFocus(): # if it already has fire, I color the box and that's it
             widget.focusInEvent(None)
          else:
             widget.setFocus()
@@ -1173,13 +1167,13 @@ class QadDynamicInput(QWidget):
    # setFocus
    # ============================================================================
    def setFocus(self):
-      if self.currentEdit is None: # se non è settato quale edit è il corrente
+      if self.currentEdit is None: # if it is not set which edit is the current one
          self.setInitialFocus()
          return
-      
+
       for edit in self.edits:
          edit.setReadOnly(True)
-      
+
       self.edits[self.currentEdit].setReadOnly(False)
       self.edits[self.currentEdit].setFocus()
 
@@ -1187,7 +1181,7 @@ class QadDynamicInput(QWidget):
    # ============================================================================
    # getNextNdxEditSequence
    # ============================================================================
-   # restituisce la posizione del controllo successivo usando la sequenza
+   # returns the position of the next control using the sequence
    def getNextNdxEditSequence(self, currentEdit):
       return # da virtualizzare
 
@@ -1202,7 +1196,7 @@ class QadDynamicInput(QWidget):
    # ============================================================================
    # getPrevNdxEditSequence
    # ============================================================================
-   # restituisce la posizione del controllo precedente usando la sequenza
+   # returns the position of the previous control using the sequence
    def getPrevNdxEditSequence(self, currentEdit):
       return # da virtualizzare
 
@@ -1218,7 +1212,7 @@ class QadDynamicInput(QWidget):
    # isCoordWidgetVisib
    # ============================================================================
    def isCoordWidgetVisib(self):
-      # ritorna se devono essere mostrati i widget relativi alle coordinate
+      # returns whether coordinate widgets should be shown
       return # da virtualizzare
 
 
@@ -1246,8 +1240,8 @@ class QadDynamicInput(QWidget):
       if self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].isLockedValue(): return True
       if self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].isLockedValue(): return True
       return False
-   
-   
+
+
    # ============================================================================
    # setDefault
    # ============================================================================
@@ -1293,7 +1287,7 @@ class QadDynamicInput(QWidget):
    # moveCtrls
    # ============================================================================
    def moveCtrls(self, mousePos = None):
-      # sposta tutti i widget visibili a seconda del contesto
+      # move all visible widgets depending on the context
       # da virtualizzare
       return
 
@@ -1302,32 +1296,32 @@ class QadDynamicInput(QWidget):
    # getPosAndLineMarkerForLine
    # ============================================================================
    def getPosAndLineMarkerForLine(self, pt1, pt2, offset, editWidget):
-      # Restituisce la posizione di un widget edit che verrà posto nel punto medio di una linea
-      # avente pt1 come punto iniziale, pt2 come punto finale ma spostata di un offset.
-      # La funzione restituisce anche le linee da usare come marker line
-      # le coordinate devono essere espresse in map coordinate
-      angle = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # senza tolleranza
+      # Returns the position of an edit widget that will be placed at the midpoint of a line
+      # having pt1 as the starting point, pt2 as the ending point but shifted by an offset.
+      # The function also returns the lines to use as marker lines
+      # coordinates must be expressed in map coordinates
+      angle = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # without tolerance
       if angle >= 0 and angle < math.pi:
          angle = angle + math.pi / 2
       else:
          angle = angle - math.pi / 2
-         
+
       pt = qad_utils.getMiddlePoint(pt1, pt2)
-      
+
       editPt = qad_utils.getPolarPointByPtAngle(pt, angle, offset)
       editPt = self.canvas.getCoordinateTransform().transform(editPt) # Transform the point from map (world) coordinates to device coordinates
-      
+
       editWidth = editWidget.width()
       editHeight = editWidget.height()
       x = editPt.x() - (editWidth / 2)
       y = editPt.y() - (editHeight / 2)
-      
+
       x, y = self.adjustEditPosition(x, y, editWidth, editHeight)
       editPt = QPoint(x, y);
-            
+
       pt1Corner = qad_utils.getPolarPointByPtAngle(pt1, angle, offset)
       pt2Corner = qad_utils.getPolarPointByPtAngle(pt2, angle, offset)
-      
+
       return editPt, [pt1, pt1Corner, pt2Corner, pt2]
 
 
@@ -1335,19 +1329,19 @@ class QadDynamicInput(QWidget):
    # getPosAndLineMarkerForArc
    # ============================================================================
    def getPosAndLineMarkerForArc(self, start, center, end, offset, editWidget, LineMarkerOnlyArc = False):
-      # Restituisce la posizione di un widget edit che verrà posto nel punto medio di un arco
-      # avente start, il punto iniziale, center come centro e end come punto finale
-      # La funzione restituisce anche le linee che formano l'arco da usare come marker line
-      # se LineMarkerOnlyArc = True allora verrà restituito solo l'arco altrimenti 
-      # verrà aggiunta una linea che parte dal centro dell'arco
+      # Returns the position of an edit widget that will be placed at the midpoint of an arc
+      # having start, the initial point, center as the center and end as the final point
+      # The function also returns the lines that form the arc to use as marker lines
+      # if LineMarkerOnlyArc = True then only the arc will be returned otherwise
+      # a line will be added starting from the center of the arc
       arc1 = QadArc()
       if arc1.fromStartCenterEndPts(start, center, end) == False:
          return self.getPosAndLineMarkerForLine(center, end, offset, editWidget)
-       
+
       arc2 = QadArc()
       if arc2.fromStartCenterEndPts(end, center, start) == False:
          return self.getPosAndLineMarkerForLine(center, end, offset, editWidget)
-         
+
       if arc1.length() <= arc2.length():
          arc1.radius = arc1.radius + offset
          pos, lineMarker = self.getPosAndLineMarkerForArcObj(arc1, editWidget)
@@ -1358,7 +1352,7 @@ class QadDynamicInput(QWidget):
          pos, lineMarker = self.getPosAndLineMarkerForArcObj(arc2, editWidget)
          if LineMarkerOnlyArc == False and lineMarker is not None:
             lineMarker.append(center)
-            
+
       return pos, lineMarker
 
 
@@ -1366,19 +1360,19 @@ class QadDynamicInput(QWidget):
    # getPosAndLineMarkerForArcObj
    # ============================================================================
    def getPosAndLineMarkerForArcObj(self, arc, editWidget):
-      # Restituisce la posizione di un widget edit che verrà posto nel punto medio di un arco
-      # La funzione restituisce anche le linee che formano l'arco da usare come marker line
+      # Returns the position of an edit widget that will be placed at the midpoint of an arc
+      # The function also returns the lines that form the arc to use as marker lines
       editPt = arc.getMiddlePt()
       editPt = self.canvas.getCoordinateTransform().transform(editPt) # Transform the point from map (world) coordinates to device coordinates
-      
+
       editWidth = editWidget.width()
       editHeight = editWidget.height()
       x = editPt.x() - (editWidth / 2)
       y = editPt.y() - (editHeight / 2)
-      
+
       x, y = self.adjustEditPosition(x, y, editWidth, editHeight)
       editPt = QPoint(x, y)
-      
+
       return editPt, arc.asPolyline()
 
 
@@ -1386,7 +1380,7 @@ class QadDynamicInput(QWidget):
    # adjustEditPosition
    # ============================================================================
    def adjustEditPosition(self, x, y, width, height):
-      # aggiusta la posizione di un widget edit in modo che non esca dalla finestra canvas
+      # adjust the position of an edit widget so that it does not leave the canvas window
       canvasRect = self.plugIn.canvas.rect()
       offsetY = height
 
@@ -1394,13 +1388,13 @@ class QadDynamicInput(QWidget):
       else:
          overflow = x + width - canvasRect.width()
          if overflow > 0: x = x - overflow
-      
+
       if y < 0: y = 0
       else:
          overflow = y + height + offsetY - canvasRect.height()
          if overflow > 0: y = y - overflow
 
-      # per evitare che il mouse si sovrapponga sposto il widget sopra il mouse (mi tengo 5 pixel di offset intorno al widget)
+      # to prevent the mouse from overlapping I move the widget above the mouse (I keep 5 pixels of offset around the widget)
       if self.mousePos is not None:
          if self.mousePos.x() >= x - 5 and self.mousePos.x() <= x + width + 5 and \
             self.mousePos.y() >= y - 5 and self.mousePos.y() <= y + height + 5:
@@ -1408,7 +1402,7 @@ class QadDynamicInput(QWidget):
                y = self.mousePos.y() - height - offsetY
             else:
                y = self.mousePos.y() + offsetY
-      
+
       return int(x), int(y)
 
 
@@ -1416,8 +1410,8 @@ class QadDynamicInput(QWidget):
    # refreshResult
    # ============================================================================
    def refreshResult(self, mousePos = None):
-      # calcola il risultato e restituisce True se l'operazione ha successo
-      # il risultato è anche impostato in self.resValue e, in formato stringa, in self.resStr
+      # calculates the result and returns True if the operation is successful
+      # the result is also set in self.resValue and, in string format, in self.resStr
       # da virtualizzare
       return
 
@@ -1457,7 +1451,7 @@ class QadDynamicInput(QWidget):
 class QadDynamicCmdInput(QadDynamicInput):
 # ===============================================================================
 #    """
-#    Classe base che gestisce l'input dinamico per input di un nuovo comando
+#    Base class that handles dynamic input for new command input
 #    """
 
 
@@ -1466,14 +1460,14 @@ class QadDynamicCmdInput(QadDynamicInput):
    # ============================================================================
    def __init__(self, plugIn):
       QadDynamicInput.__init__(self, plugIn)
-      
-      self.resValue = None    # valore risultante
+
+      self.resValue = None    # resulting value
       self.resStr = ""        # risultato in formato stringa
-      
-      self.default = None 
+
+      self.default = None
       self.mousePos = QPoint()
       self.isVisible = False
-      
+
       self.initGui()
       self.currentEdit = None
 
@@ -1482,26 +1476,26 @@ class QadDynamicCmdInput(QadDynamicInput):
    # reset
    # ============================================================================
    def reset(self, default = None):
-      # la funzione non deve resettare self.prevPart, self.nextPart
+      # the function should not reset self.prevPart, self.nextPart
       self.currentEdit = None
 
       for i in range(0, len(self.edits), 1):
          self.edits[i].reset()
-         
-      # aggiorno tutti i colori dei controlli
+
+      # update all control colors
       self.setColors()
-      # se esiste un valore di default lo imposto
+      # if there is a default value set it
       if default is not None:
          self.setDefault(default)
 
-      # commentato perchè crea problemi quando si seleziona un oggetto e si va con il mouse un un punto di grip (deseleziona l'oggetto)
-      #self.plugIn.clearCurrentObjsSelection() 
+      # commented because it creates problems when you select an object and move the mouse to a grip point (deselects the object)
+      #self.plugIn.clearCurrentObjsSelection()
 
 
    # ============================================================================
    # getInitialNdxEdit
    # ============================================================================
-   # restituisce la posizione del controllo iniziale
+   # returns the position of the initial control
    def getInitialNdxEdit(self):
       return QadDynamicInputEditEnum.CMD_LINE_EDIT
 
@@ -1509,7 +1503,7 @@ class QadDynamicCmdInput(QadDynamicInput):
    # ============================================================================
    # getNextNdxEditSequence
    # ============================================================================
-   # restituisce la posizione del controllo successivo usando la sequenza
+   # returns the position of the next control using the sequence
    def getNextNdxEditSequence(self, currentEdit):
       return QadDynamicInputEditEnum.CMD_LINE_EDIT
 
@@ -1518,7 +1512,7 @@ class QadDynamicCmdInput(QadDynamicInput):
    # setNextCurrentEdit
    # ============================================================================
    def setNextCurrentEdit(self):
-      if self.currentEdit is None: # se non è settato quale edit è il corrente
+      if self.currentEdit is None: # if it is not set which edit is the current one
          self.setInitialFocus()
          return
 
@@ -1530,7 +1524,7 @@ class QadDynamicCmdInput(QadDynamicInput):
    # ============================================================================
    # getPrevNdxEditSequence
    # ============================================================================
-   # restituisce la posizione del controllo precedente usando la sequenza
+   # returns the position of the previous control using the sequence
    def getPrevNdxEditSequence(self, currentEdit):
       return QadDynamicInputEditEnum.CMD_LINE_EDIT
 
@@ -1539,7 +1533,7 @@ class QadDynamicCmdInput(QadDynamicInput):
    # setPrevCurrentEdit
    # ============================================================================
    def setPrevCurrentEdit(self):
-      if self.currentEdit is None: # se non è settato quale edit è il corrente
+      if self.currentEdit is None: # if it is not set which edit is the current one
          self.setInitialFocus()
          return
 
@@ -1552,8 +1546,8 @@ class QadDynamicCmdInput(QadDynamicInput):
    # isCoordWidgetVisib
    # ============================================================================
    def isCoordWidgetVisib(self):
-      # ritorna se devono essere mostrati i widget relativi alle coordinate
-      # se è abilitato l'input del puntatore e la visualizzazione delle coordinate è impostata da dynPiVis = 2 (visualizza sempre)
+      # returns whether coordinate widgets should be shown
+      # if pointer input is enabled and coordinate display is set by dynPiVis = 2 (always display)
       if self.isPointInputOn() and self.dynPiVis == 2:
          return True
       else:
@@ -1564,9 +1558,9 @@ class QadDynamicCmdInput(QadDynamicInput):
    # isDimensionalWidgetVisib
    # ============================================================================
    def isDimensionalWidgetVisib(self):
-      # se non è abilitato l'input di quota
+      # if height input is not enabled
       if self.isDimensionalInputOn() == False: return False
-      # se esiste una parte precedente o una parte successiva
+      # whether there is a preceding part or a subsequent part
       if self.prevPart is not None or self.nextPart is not None:
          return True
       else:
@@ -1585,11 +1579,11 @@ class QadDynamicCmdInput(QadDynamicInput):
    # setPrevNextPart
    # ============================================================================
    def setPrevNextPart(self, entity, gripPoint):
-      # entity è di tipo QadEntity
-      # gripPoint è di tipo QadEntityGripPoint
+      # entity is of type QadEntity
+      # gripPoint is of type QadEntityGripPoint
       prevPart = None
       nextPart = None
-      # verifico se l'entità appartiene ad uno stile di quotatura
+      # check if the entity belongs to a dimensioning style
       if QadDimStyles.isDimEntity(entity):
          pass
       else:
@@ -1604,34 +1598,34 @@ class QadDynamicCmdInput(QadDynamicInput):
                   nextPart = qadGeom.copy()
                elif qad_utils.ptNear(qadGeom.getEndPt(), gripPoint.getPoint()):
                   prevPart = qadGeom.copy()
-                  
+
          elif qadGeomType == "POLYLINE":
             prevPart, nextPart = qadGeom.getPrevNextLinearObjectsAtVertex(gripPoint.nVertex)
             if (gripPoint.gripType == QadGripPointTypeEnum.LINE_MID_POINT or \
                 gripPoint.gripType == QadGripPointTypeEnum.ARC_MID_POINT) and \
                nextPart is not None:
                prevPart = nextPart.copy()
-            
+
          elif qadGeomType == "CIRCLE":
             if qadGeom.isPtOnCircle(gripPoint.getPoint()):
                prevPart = QadLine()
                prevPart.set(qadGeom.center, gripPoint.getPoint())
-            
+
          elif qadGeomType == "ELLIPSE":
             if qadGeom.containsPt(gripPoint.getPoint()):
                prevPart = QadLine()
                prevPart.set(qadGeom.center, gripPoint.getPoint())
-               
+
       self.setPrevPart(prevPart)
       self.setNextPart(nextPart)
-      
+
 
    # ============================================================================
    # show
    # ============================================================================
    def show(self, mode, mousePos = None, prompt = None, default = None):
-      # se si tratta di rendere invisibile lo faccio indipendentemente dal fatto che sia attivo o meno
-      # (serve per gestire F12)
+      # if it's about making invisible I do it regardless of whether it's active or not
+      # (used to manage F12)
       if mode == False:
          self.isVisible = False
          for edit in self.edits:
@@ -1640,64 +1634,64 @@ class QadDynamicCmdInput(QadDynamicInput):
 
       if self.isActive() == False: return False
 
-      # se viene passata la posizione del mouse la funzione
-      # resetta lo stato dell'input dinamico (errori, fuoco)
+      # if the mouse position is passed the function
+      # resets dynamic input state (errors, fire)
       if mousePos is not None:
          self.reset(default)
 
       if prompt is not None:
-         self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].showMsg(prompt, False, False, False) # senza aggiornare la posizione dei controlli
-      
+         self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].showMsg(prompt, False, False, False) # without updating the position of the controls
+
       self.isVisible = True
 
       visibList = [False] * len(self.edits)
-      
+
       if self.isPromptActive() and len(self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].toPlainText()) > 0:
          visibList[QadDynamicInputEditEnum.PROMPT_EDIT] = True
 
       if len(self.edits[QadDynamicInputEditEnum.CMD_LINE_EDIT].toPlainText()) > 0:
          visibList[QadDynamicInputEditEnum.CMD_LINE_EDIT] = True
       else:
-         # se devo visualizzare i widget delle coordinate
+         # if I need to display coordinate widgets
          if self.isCoordWidgetVisib():
             visibList[QadDynamicInputEditEnum.EDIT_X] = True
             visibList[QadDynamicInputEditEnum.EDIT_Y] = True
-         # se devo mostrare i widget delle quote
+         # if I need to show the odds widgets
          if self.isDimensionalWidgetVisib():
             if self.prevPart is not None:
                gType = self.prevPart.whatIs()
                if gType == "LINE":
-                  visibList[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT] = True # usato per lunghezza segmento precedente
-               elif gType == "ARC": # arco
-                  visibList[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT] = True # usato per lunghezza raggio arco
-                  visibList[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT] = True # usato per lunghezza raggio arco                  
-                  visibList[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT] = True # usato per angolo arco nel punto finale della parte precedente
-   
+                  visibList[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT] = True # used for previous segment length
+               elif gType == "ARC": # arc
+                  visibList[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT] = True # used for arc radius length
+                  visibList[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT] = True # used for arc radius length
+                  visibList[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT] = True # used for arc corner at the end point of the previous part
+
             if self.nextPart is not None:
                gType = self.nextPart.whatIs()
                if gType == "LINE":
-                  visibList[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT] = True # usato per lunghezza segmento successivo
-               elif gType == "ARC": # arco
-                  # se nextPart e prevPart sono uguali 
+                  visibList[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT] = True # used for next segment length
+               elif gType == "ARC": # arc
+                  # if nextPart and prevPart are equal
                   if self.prevPart is not None and self.nextPart == self.prevPart:
-                     visibList[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT] = True # usato per angolo totale arco
-                     visibList[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT] = False # usato per lunghezza raggio arco parte precedente                                                   
+                     visibList[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT] = True # used for total arc angle
+                     visibList[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT] = False # used for arc radius length previous part
                   else:
-                     visibList[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT] = True # usato per lunghezza raggio arco
-                     visibList[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT] = True # usato per lunghezza raggio arco                                       
-                  visibList[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT] = True # usato per angolo arco nel punto iniziale della parte successiva
-                     
+                     visibList[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT] = True # used for arc radius length
+                     visibList[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT] = True # used for arc radius length
+                  visibList[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT] = True # used for arc corner at the starting point of the next part
+
       for i in range(0, len(self.edits), 1):
          self.edits[i].show(visibList[i])
-      
+
       self.setFocus()
-      
+
       # riposiziono i widget
       if mousePos is None:
          self.mouseMoveEvent(self.canvas.mouseLastXY())
       else:
          self.mouseMoveEvent(mousePos)
-      
+
       return self.isVisible
 
 
@@ -1706,19 +1700,19 @@ class QadDynamicCmdInput(QadDynamicInput):
    # ============================================================================
    def showErr(self, err = ""):
       if self.isActive() == False: return
-      
+
       self.edits[QadDynamicInputEditEnum.CMD_LINE_EDIT].show(False)
       if self.isPromptActive():
          self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].error = True
-         self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].setColors() # ricolora con i bordi rossi perchè error=True
+         self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].setColors() # recolors with red borders because error=True
          self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].show(True)
          self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].showMsg(err)
-      
+
          self.canvas.setFocus()
 
-      self.moveCtrls() # per riposizionare i controlli
+      self.moveCtrls() # to reposition the controls
 
-   
+
    # ============================================================================
    # mouseMoveEvent
    # ============================================================================
@@ -1726,93 +1720,93 @@ class QadDynamicCmdInput(QadDynamicInput):
       if self.isActive() == False or self.isVisible == False: return
 
       point = self.canvas.getCoordinateTransform().toMapCoordinates(mousePos) # posizione
-            
-      # se i widget delle coordinate sono visibili
+
+      # if coordinate widgets are visible
       if self.edits[QadDynamicInputEditEnum.EDIT_X].isVisible():
-         self.edits[QadDynamicInputEditEnum.EDIT_X].showMsg(qad_utils.numToStringFmt(point.x()), False, False, False) # senza aggiornare la posizione dei controlli
-         self.edits[QadDynamicInputEditEnum.EDIT_Y].showMsg(qad_utils.numToStringFmt(point.y()), False, False, False) # senza aggiornare la posizione dei controlli
-               
+         self.edits[QadDynamicInputEditEnum.EDIT_X].showMsg(qad_utils.numToStringFmt(point.x()), False, False, False) # without updating the position of the controls
+         self.edits[QadDynamicInputEditEnum.EDIT_Y].showMsg(qad_utils.numToStringFmt(point.y()), False, False, False) # without updating the position of the controls
+
       if self.prevPart is not None:
          gType = self.prevPart.whatIs()
          if gType == "LINE":
             if self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].isVisible():
-               # usato per lunghezza segmento precedente
-               self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(self.prevPart.length()), False, False, False) # senza aggiornare la posizione dei controlli
+               # used for previous segment length
+               self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(self.prevPart.length()), False, False, False) # without updating the position of the controls
          elif gType == "ARC":
             if self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].isVisible():
-               # usato per lunghezza raggio arco
-               self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(self.prevPart.radius), False, False, False) # senza aggiornare la posizione dei controlli
-               
+               # used for arc radius length
+               self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(self.prevPart.radius), False, False, False) # without updating the position of the controls
+
             if self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].isVisible():
-               # usato per lunghezza raggio arco
-               self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(self.prevPart.radius), False, False, False) # senza aggiornare la posizione dei controlli
-               
+               # used for arc radius length
+               self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(self.prevPart.radius), False, False, False) # without updating the position of the controls
+
             if self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].isVisible():
-               # usato per angolo arco nel punto finale della parte precedente
+               # used for arc corner at the end point of the previous part
                if self.prevPart.reversed:
                   angle = self.prevPart.startAngle
                else:
                   angle = self.prevPart.endAngle
-                  
+
                if angle >= math.pi and angle < 2 * math.pi:
                   angle = 2 * math.pi - angle
                msg = qad_utils.numToStringFmt(qad_utils.toDegrees(angle)) + u'\N{DEGREE SIGN}' # simbolo dei gradi
-               self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].showMsg(msg, False, False, False) # senza aggiornare la posizione dei controlli
-               
+               self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].showMsg(msg, False, False, False) # without updating the position of the controls
+
       if self.nextPart is not None:
          gType = self.nextPart.whatIs()
          if gType == "LINE":
             if self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].isVisible():
-               # usato per lunghezza segmento successivo
-               self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(self.nextPart.length()), False, False, False) # senza aggiornare la posizione dei controlli
+               # used for next segment length
+               self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(self.nextPart.length()), False, False, False) # without updating the position of the controls
          elif gType == "ARC":
             if self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].isVisible():
-               # usato per lunghezza raggio arco
-               self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(self.nextPart.radius), False, False, False) # senza aggiornare la posizione dei controlli
-               
+               # used for arc radius length
+               self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(self.nextPart.radius), False, False, False) # without updating the position of the controls
+
             if self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].isVisible():
-               # usato per lunghezza raggio arco
-               self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(self.nextPart.radius), False, False, False) # senza aggiornare la posizione dei controlli
-               
+               # used for arc radius length
+               self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(self.nextPart.radius), False, False, False) # without updating the position of the controls
+
             if self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].isVisible():
-               # usato per angolo arco nel punto iniziale della parte successiva
+               # used for arc corner at the starting point of the next part
                if self.nextPart.reversed:
                   angle = self.nextPart.endAngle
                else:
                   angle = self.nextPart.startAngle
-                  
+
                if angle >= math.pi and angle < 2 * math.pi:
                   angle = 2 * math.pi - angle
                msg = qad_utils.numToStringFmt(qad_utils.toDegrees(angle)) + u'\N{DEGREE SIGN}' # simbolo dei gradi
-               self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].showMsg(msg, False, False, False) # senza aggiornare la posizione dei controlli
+               self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].showMsg(msg, False, False, False) # without updating the position of the controls
 
-            # se nextPart e prevPart sono uguali 
+            # if nextPart and prevPart are equal
             if self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].isVisible():
-               # usato per angolo totale arco
+               # used for total arc angle
                msg = qad_utils.numToStringFmt(qad_utils.toDegrees(self.nextPart.totalAngle())) + u'\N{DEGREE SIGN}' # simbolo dei gradi
-               self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].showMsg(msg, False, False, False) # senza aggiornare la posizione dei controlli
+               self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].showMsg(msg, False, False, False) # without updating the position of the controls
 
 
       if self.currentEdit is not None:
-         self.edits[self.currentEdit].focusInEvent(None) # riporto il fuoco sul controllo corrente
+         self.edits[self.currentEdit].focusInEvent(None) # I bring the focus back to the current control
 
       self.moveCtrls(mousePos)
-      
+
       return
 
-      
+
    # ============================================================================
    # moveCtrls
    # ============================================================================
    def moveCtrls(self, mousePos = None):
-      # sposta tutti i widget visibili a seconda del contesto
-      if mousePos is not None:         
+      # move all visible widgets depending on the context
+      if mousePos is not None:
          self.mousePos.setX(mousePos.x())
          self.mousePos.setY(mousePos.y())
 
       height = self.edits[QadDynamicInputEditEnum.CMD_LINE_EDIT].height()
       offset = 5
-      
+
       width = 0
       if self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].isVisible():
          width += self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].width()
@@ -1827,15 +1821,15 @@ class QadDynamicCmdInput(QadDynamicInput):
          if width > 0 : width += offset
          offsetX_cmdLineEdit = width
          width += self.edits[QadDynamicInputEditEnum.CMD_LINE_EDIT].width()
-         
+
       x, y = self.adjustEditPosition(x, y, width, height)
-                  
+
       if self.edits[QadDynamicInputEditEnum.CMD_LINE_EDIT].isVisible():
          self.edits[QadDynamicInputEditEnum.CMD_LINE_EDIT].move(x + offsetX_cmdLineEdit, y)
 
       if self.edits[QadDynamicInputEditEnum.EDIT_X].isVisible() or \
          self.edits[QadDynamicInputEditEnum.EDIT_Y].isVisible():
-         
+
          if self.edits[QadDynamicInputEditEnum.EDIT_X].isVisible():
             if width > 0 : width += offset
             offsetX_editX = width
@@ -1844,9 +1838,9 @@ class QadDynamicCmdInput(QadDynamicInput):
             if width > 0 : width += offset
             offsetX_editY = width
             width += self.edits[QadDynamicInputEditEnum.EDIT_Y].width()
-            
+
          x, y = self.adjustEditPosition(x, y, width, height)
-            
+
          if self.edits[QadDynamicInputEditEnum.EDIT_X].isVisible(): self.edits[QadDynamicInputEditEnum.EDIT_X].move(x + offsetX_editX, y)
          if self.edits[QadDynamicInputEditEnum.EDIT_Y].isVisible(): self.edits[QadDynamicInputEditEnum.EDIT_Y].move(x + offsetX_editY, y)
 
@@ -1857,26 +1851,26 @@ class QadDynamicCmdInput(QadDynamicInput):
       if self.prevPart is not None:
          p1 = None
          offset = (height * 2) * self.canvas.mapSettings().mapUnitsPerPixel()
-         gType = self.prevPart.whatIs() 
+         gType = self.prevPart.whatIs()
 
          if gType == "LINE":
             if self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].isVisible():
-               # usato per lunghezza segmento precedente
+               # used for previous segment length
                p1 = self.prevPart.getStartPt()
                p2 = self.prevPart.getEndPt()
          elif gType == "ARC":
             center = self.prevPart.center
             if self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].isVisible():
-               # usato per angolo arco nel punto finale della parte precedente
+               # used for arc corner at the end point of the previous part
                p2 = self.prevPart.getEndPt()
                p1 = QgsPointXY(center.x() + self.prevPart.radius, center.y())
                editPt, lineMarkers = self.getPosAndLineMarkerForArc(p1, center, p2, offset, \
                                                                     self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT])
-               
+
                if editPt is not None:
                   self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].move(editPt.x(), editPt.y())
                   del editPt
-               if lineMarkers is not None: # se non nullo disegno la linea di marker aggiugendo una linea
+               if lineMarkers is not None: # if not zero I draw the marker line by adding a line
                   if qad_utils.ptNear(lineMarkers[0], center):
                      lineMarkers.append(center)
                   else:
@@ -1885,22 +1879,22 @@ class QadDynamicCmdInput(QadDynamicInput):
                   del lineMarkers
 
             if self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].isVisible():
-               # usato per lunghezza raggio arco nel punto iniziale della parte precedente
+               # used for arc radius length at the starting point of the previous part
                p1 = self.prevPart.center
                p2 = self.prevPart.getStartPt()
                editPt, lineMarkers = self.getPosAndLineMarkerForLine(p1, p2, \
                                                                      0, self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT])
                self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].move(editPt.x(), editPt.y())
                del editPt
-               # disegno la linea di marker
+               # I draw the marker line
                self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].setLinesMarker(lineMarkers)
                del lineMarkers
 
             if self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].isVisible():
-               # usato per lunghezza raggio arco nel punto finale della parte precedente
-               # oppure lunghezza raggio nel punto medio se parte precedente e successiva coincidono
+               # used for arc radius length at the end point of the previous part
+               # or radius length at the midpoint if the previous and subsequent parts coincide
                p1 = self.prevPart.center
-               # se nextPart e prevPart sono uguali 
+               # if nextPart and prevPart are equal
                if self.nextPart is not None and self.nextPart == self.prevPart:
                   p2 = self.prevPart.getMiddlePt()
                else:
@@ -1915,33 +1909,33 @@ class QadDynamicCmdInput(QadDynamicInput):
                                                                   offset, self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT])
             self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].move(editPt.x(), editPt.y())
             del editPt
-            # disegno la linea di marker
+            # I draw the marker line
             self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].setLinesMarker(lineMarkers)
             del lineMarkers
-               
+
       if self.nextPart is not None:
          p1 = None
          offset = (height * 2) * self.canvas.mapSettings().mapUnitsPerPixel()
          gType = self.nextPart.whatIs()
-         
+
          if gType == "LINE":
             if self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].isVisible():
-               # usato per lunghezza segmento precedente
+               # used for previous segment length
                p1 = self.nextPart.getStartPt()
                p2 = self.nextPart.getEndPt()
          elif gType == "ARC":
             center = self.nextPart.center
             if self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].isVisible():
-               # usato per angolo arco nel punto iniziale della parte successiva
+               # used for arc corner at the starting point of the next part
                p2 = self.nextPart.getStartPt()
                p1 = QgsPointXY(center.x() + self.nextPart.radius, center.y())
                editPt, lineMarkers = self.getPosAndLineMarkerForArc(p1, center, p2, offset, \
                                                                     self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT])
-               
+
                if editPt is not None:
                   self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].move(editPt.x(), editPt.y())
                   del editPt
-               if lineMarkers is not None: # se non nullo disegno la linea di marker aggiugendo una linea
+               if lineMarkers is not None: # if not zero I draw the marker line by adding a line
                   if qad_utils.ptNear(lineMarkers[0], center):
                      lineMarkers.append(center)
                   else:
@@ -1949,9 +1943,9 @@ class QadDynamicCmdInput(QadDynamicInput):
                   self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].setLinesMarker(lineMarkers)
                   del lineMarkers
 
-            # se nextPart e prevPart sono uguali 
+            # if nextPart and prevPart are equal
             if self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].isVisible():
-               # usato per angolo totale arco
+               # used for total arc angle
                offsetArc = height * self.canvas.mapSettings().mapUnitsPerPixel()
                totalArc = QadArc(self.nextPart)
                totalArc.radius = totalArc.radius + offsetArc
@@ -1959,38 +1953,38 @@ class QadDynamicCmdInput(QadDynamicInput):
                if editPt is not None:
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].move(editPt.x(), editPt.y())
                   del editPt
-               if lineMarkers is not None: # se non nullo disegno la linea di marker aggiugendo una linea
+               if lineMarkers is not None: # if not zero I draw the marker line by adding a line
                   lineMarkers.append(center)
                   lineMarkers.insert(0, center)
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].setLinesMarker(lineMarkers)
                   del lineMarkers
 
             if self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].isVisible():
-               # usato per lunghezza raggio arco nel punto finale della parte successiva
+               # used for arc radius length at the end point of the next part
                p1 = self.nextPart.center
                p2 = self.nextPart.getEndPt()
                editPt, lineMarkers = self.getPosAndLineMarkerForLine(p1, p2, \
                                                                      0, self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT])
                self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].move(editPt.x(), editPt.y())
                del editPt
-               # disegno la linea di marker
+               # I draw the marker line
                self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].setLinesMarker(lineMarkers)
                del lineMarkers
-               
+
             if self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].isVisible():
-               # usato per lunghezza raggio arco nel punto iniziale della parte successiva
+               # used for arc radius length at the starting point of the next part
                p1 = self.nextPart.center
                p2 = self.nextPart.getStartPt()
                offset = 0
             else:
                p1 = None
-               
+
          if p1 is not None:
             editPt, lineMarkers = self.getPosAndLineMarkerForLine(p1, p2, \
                                                                   offset, self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT])
             self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].move(editPt.x(), editPt.y())
             del editPt
-            # disegno la linea di marker
+            # I draw the marker line
             self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].setLinesMarker(lineMarkers)
             del lineMarkers
 
@@ -1999,8 +1993,8 @@ class QadDynamicCmdInput(QadDynamicInput):
    # refreshResult
    # ============================================================================
    def refreshResult(self, mousePos = None):
-      # calcola il risultato e restituisce True se l'operazione ha successo
-      # il risultato è anche impostato in self.resValue e, in formato stringa, in self.resStr
+      # calculates the result and returns True if the operation is successful
+      # the result is also set in self.resValue and, in string format, in self.resStr
       self.resStr = self.resValue = self.edits[QadDynamicInputEditEnum.CMD_LINE_EDIT].toPlainText()
       return True
 
@@ -2011,9 +2005,9 @@ class QadDynamicCmdInput(QadDynamicInput):
    def keyPressEvent(self, e):
       if self.currentEdit is None:
          return
-               
+
       if e.key() == Qt.Key_Return or e.key == Qt.Key_Enter:
-         msg = self.resStr if self.refreshResult() == True else "" # ricalcolo il risultato e lo uso in formato stringa
+         msg = self.resStr if self.refreshResult() == True else "" # I recalculate the result and use it in string format
          self.showEvaluateMsg(msg)
       else:
          if e.text() != "":
@@ -2026,10 +2020,10 @@ class QadDynamicCmdInput(QadDynamicInput):
 class QadDynamicEditInput(QadDynamicInput):
 # ===============================================================================
 #    """
-#    Classe che gestisce l'input dinamico
+#    Class that handles dynamic input
 #    """
 
-   
+
    # ============================================================================
    # __init__
    # ============================================================================
@@ -2037,17 +2031,17 @@ class QadDynamicEditInput(QadDynamicInput):
       QadDynamicInput.__init__(self, plugIn)
 
       self.context = context
-      self.prevPoint = None # punto usato come punto precedente durante la digitazione dei punti di un nuovo oggetto (in map coordinate)
-      
-      self.resPt = QgsPointXY() # punto risultante
-      
+      self.prevPoint = None # point used as previous point when typing the points of a new object (in map coordinates)
+
+      self.resPt = QgsPointXY() # resulting point
+
       self.inputMode = QadInputModeEnum.NONE
       self.inputType = QadInputTypeEnum.NONE
       self.keyWords = []
       self.englishKeyWords = []
-      
+
       self.initGui()
-      # flag che determina se la forzatura della visibilità dei widget per l'inserimento delle coordinate di un punto (x,y,z)
+      # flag that determines whether forcing the visibility of widgets by inserting the coordinates of a point (x,y,z)
       self.forcedCoordWidgetVisib = False
 
 
@@ -2065,8 +2059,8 @@ class QadDynamicEditInput(QadDynamicInput):
          else:
             self.prevPoint.setX(pt.x())
             self.prevPoint.setY(pt.y())
-         
-          
+
+
    # ============================================================================
    # removeItems
    # ============================================================================
@@ -2079,19 +2073,19 @@ class QadDynamicEditInput(QadDynamicInput):
    # reset
    # ============================================================================
    def reset(self, default = None):
-      # la funzione non deve resettare self.prevPoint, self.prevPart, self.nextPart
+      # the function must not reset self.prevPoint, self.prevPart, self.nextPart
       self.currentEdit = None
       self.forcedCoordWidgetVisib = False
 
       for i in range(0, len(self.edits), 1):
          self.edits[i].reset()
-         
+
       self.edits[QadDynamicInputEditEnum.EDIT].inputType = self.inputType
       self.edits[QadDynamicInputEditEnum.EDIT].inputMode = self.inputMode
-         
-      # aggiorno tutti i colori dei controlli
+
+      # update all control colors
       self.setColors()
-      # se esiste un valore di default lo imposto
+      # if there is a default value set it
       if default is not None:
          self.setDefault(default)
 
@@ -2099,45 +2093,45 @@ class QadDynamicEditInput(QadDynamicInput):
    # ============================================================================
    # getInitialNdxEdit
    # ============================================================================
-   # restituisce la posizione del controllo iniziale
+   # returns the position of the initial control
    def getInitialNdxEdit(self):
       if self.inputType & QadInputTypeEnum.STRING or self.inputType & QadInputTypeEnum.BOOL or \
          self.inputType & QadInputTypeEnum.INT or self.inputType & QadInputTypeEnum.LONG or \
          self.inputType & QadInputTypeEnum.FLOAT or self.inputType & QadInputTypeEnum.ANGLE:
          return QadDynamicInputEditEnum.EDIT
-         
+
       elif self.inputType & QadInputTypeEnum.POINT2D or self.inputType & QadInputTypeEnum.POINT3D:
-         # se devo visualizzare i widget delle coordinate
+         # if I need to display coordinate widgets
          if self.isCoordWidgetVisib():
             return QadDynamicInputEditEnum.EDIT_X
-         # se devo mostrare i widget delle quote
+         # if I need to show the odds widgets
          elif self.isDimensionalWidgetVisib():
-            # se esiste un punto precedente
-            if self.prevPoint is not None: # si tratta di inserimento di un nuovo punto a fine linea
+            # if a previous point exists
+            if self.prevPoint is not None: # involves inserting a new point at the end of the line
                return QadDynamicInputEditEnum.EDIT_DIST_PREV_PT
-            else: # spostamento di un punto in modalità grip
-               if self.dynDiVis == 0 or self.dynDiVis == 1: # solo una quota alla volta (0) o due quota alla volta (1)
+            else: # moving a point in grip mode
+               if self.dynDiVis == 0 or self.dynDiVis == 1: # only one dimension at a time (0) or two dimensions at a time (1)
                   if self.prevPart is not None and self.prevPart.whatIs() == "LINE":
                      return QadDynamicInputEditEnum.EDIT_DIST_PREV_PT
                   elif self.nextPart is not None and self.nextPart.whatIs() == "LINE":
                      return QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT
-               elif self.dynDiVis == 2: # come definito dalla variabile dynDiGrip
-                  if self.dynDiGrip & 1: # quota risultante (distanza dal punto precedente)
+               elif self.dynDiVis == 2: # as defined by the dynDiGrip variable
+                  if self.dynDiGrip & 1: # resulting elevation (distance from the previous point)
                      if self.prevPart is not None and self.prevPart.whatIs() == "LINE":
                         return QadDynamicInputEditEnum.EDIT_DIST_PREV_PT
                      elif self.nextPart is not None and self.nextPart.whatIs() == "LINE":
                         return QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT
-                  elif self.dynDiGrip & 2: # quota modifica lunghezza (distanza dalla posizione precedente dello stesso punto)
+                  elif self.dynDiGrip & 2: # length change dimension (distance from the previous position of the same point)
                      if self.prevPart is not None and self.prevPart.whatIs() == "LINE":
                         return QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT
                      elif self.nextPart is not None and self.nextPart.whatIs() == "LINE":
                         return QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT
-                  elif self.dynDiGrip & 4: # quota angolo assoluto
+                  elif self.dynDiGrip & 4: # absolute angle dimension
                      if self.prevPart is not None and self.prevPart.whatIs() == "LINE":
                         return QadDynamicInputEditEnum.EDIT_ANG_PREV_PT
                      elif self.nextPart is not None and self.nextPart.whatIs() == "LINE":
                         return QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT
-                  elif self.dynDiGrip & 8: # quota modifica angolo (angolo relativo all'angolo con il punto precedente)
+                  elif self.dynDiGrip & 8: # angle modification dimension (angle relative to the angle with the previous point)
                      if self.prevPart is not None and self.prevPart.whatIs() == "LINE":
                         return QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT
                      elif self.nextPart is not None and self.nextPart.whatIs() == "LINE":
@@ -2149,7 +2143,7 @@ class QadDynamicEditInput(QadDynamicInput):
    # ============================================================================
    # getNextNdxEditSequence
    # ============================================================================
-   # restituisce la posizione del controllo successivo usando la sequenza
+   # returns the position of the next control using the sequence
    def getNextNdxEditSequence(self, currentEdit):
       editSequence = [QadDynamicInputEditEnum.CMD_LINE_EDIT, \
                       QadDynamicInputEditEnum.EDIT, \
@@ -2170,22 +2164,22 @@ class QadDynamicEditInput(QadDynamicInput):
       while True:
          i = 0 if i >= maxLimit else i + 1 # ciclico
          if i == start: break
-         
-         # se i widgets di quota sono visibili come definito dalla variabile dynDiGrip o
-         # si stanno visualizzando i widgets delle coordinate
-         # allora i widgets sono già tutti visibili
+
+         # whether dimension widgets are visible as defined by the dynDiGrip variable o
+         # the coordinates widgets are being displayed
+         # then all widgets are already visible
          if (self.isDimensionalWidgetVisib() == False and self.dynDiVis == 2) or \
-            self.isCoordWidgetVisib(): 
+            self.isCoordWidgetVisib():
             if self.edits[editSequence[i]].isVisible(): # controllo visibile successivo
                return editSequence[i]
          else:
             if self.isDimensionalWidgetVisib() and self.dynDiVis != 2:
-               # si tratta di inserimento di un nuovo punto a fine linea
+               # involves inserting a new point at the end of the line
                if self.prevPoint is not None:
                   if editSequence[i] == QadDynamicInputEditEnum.EDIT_DIST_PREV_PT or \
                      editSequence[i] == QadDynamicInputEditEnum.EDIT_ANG_PREV_PT:
                      return editSequence[i]
-               else: # se si era in modalità grip
+               else: # if you were in grip mode
                   if (self.prevPart is not None and self.prevPart.whatIs() == "LINE" and \
                       (editSequence[i] == QadDynamicInputEditEnum.EDIT_DIST_PREV_PT or \
                        editSequence[i] == QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT or \
@@ -2197,51 +2191,51 @@ class QadDynamicEditInput(QadDynamicInput):
                        editSequence[i] == QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT or \
                        editSequence[i] == QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT)):
                      return editSequence[i]
-                  
+
       return editSequence[currentEdit]
-      
-      
+
+
    # ============================================================================
    # setNextCurrentEdit
    # ============================================================================
    def setNextCurrentEdit(self):
-      if self.currentEdit is None: # se non è settato quale edit è il corrente
+      if self.currentEdit is None: # if it is not set which edit is the current one
          self.setInitialFocus()
          return
 
       nextEdit = self.getNextNdxEditSequence(self.currentEdit)
-      
-      # se i widgets di quota sono visibili come definito dalla variabile dynDiGrip o
-      # si stanno visualizzando i widgets delle coordinate
-      # allora i widgets sono già tutti visibili
+
+      # whether dimension widgets are visible as defined by the dynDiGrip variable o
+      # the coordinates widgets are being displayed
+      # then all widgets are already visible
       if (self.isDimensionalWidgetVisib() == False and self.dynDiVis == 2) or \
-         self.isCoordWidgetVisib(): 
+         self.isCoordWidgetVisib():
          self.currentEdit = nextEdit
       else:
          if self.isDimensionalWidgetVisib() and self.dynDiVis != 2:
-            if self.dynDiVis == 0: # solo una quota alla volta
-               # spengo il controllo corrente
+            if self.dynDiVis == 0: # only one share at a time
+               # I turn off the current control
                self.edits[self.currentEdit].show(False)
                self.currentEdit = nextEdit
-               # visualizzo il controllo successivo
+               # I display the next control
                self.edits[self.currentEdit].show(True)
-               self.mouseMoveEvent(self.canvas.mouseLastXY()) # posiziono gli attributi che, essendo prima spenti, hanno una posizione non aggiornata  
-            elif self.dynDiVis == 1: # solo due quota alla volta
-               # spengo il controllo corrente
+               self.mouseMoveEvent(self.canvas.mouseLastXY()) # I position the attributes that, being previously turned off, have an out-of-date position
+            elif self.dynDiVis == 1: # only two dimensions at a time
+               # I turn off the current control
                self.edits[self.currentEdit].show(False)
                self.currentEdit = nextEdit
                nextEdit = self.getNextNdxEditSequence(nextEdit)
-               # visualizzo il controllo successivo del successivo
+               # I display the next control of the next
                self.edits[nextEdit].show(True)
-               self.mouseMoveEvent(self.canvas.mouseLastXY()) # posiziono gli attributi che, essendo prima spenti, hanno una posizione non aggiornata
-               
+               self.mouseMoveEvent(self.canvas.mouseLastXY()) # I position the attributes that, being previously turned off, have an out-of-date position
+
       self.setFocus()
 
 
    # ============================================================================
    # getPrevNdxEditSequence
    # ============================================================================
-   # restituisce la posizione del controllo precedente usando la sequenza
+   # returns the position of the previous control using the sequence
    def getPrevNdxEditSequence(self, currentEdit):
       editSequence = [QadDynamicInputEditEnum.CMD_LINE_EDIT, \
                       QadDynamicInputEditEnum.EDIT, \
@@ -2262,21 +2256,21 @@ class QadDynamicEditInput(QadDynamicInput):
       while True:
          i = maxLimit if i <= 0 else i - 1 # ciclico
          if i == start: break
-         
-         # se i widgets di quota sono visibili come definito dalla variabile dynDiGrip o
-         # si stanno visualizzando i widgets delle coordinate
-         # allora i widgets sono già tutti visibili
+
+         # whether dimension widgets are visible as defined by the dynDiGrip variable o
+         # the coordinates widgets are being displayed
+         # then all widgets are already visible
          if (self.isDimensionalWidgetVisib() == False and self.dynDiVis == 2) or \
-            self.isCoordWidgetVisib(): 
+            self.isCoordWidgetVisib():
             if self.edits[editSequence[i]].isVisible(): # controllo visibile successivo
                return editSequence[i]
          else:
             if self.isDimensionalWidgetVisib() and self.dynDiVis != 2:
-               if self.prevPoint is not None: # si tratta di inserimento di un nuovo punto a fine linea
+               if self.prevPoint is not None: # involves inserting a new point at the end of the line
                   if editSequence[i] == QadDynamicInputEditEnum.EDIT_DIST_PREV_PT or \
                      editSequence[i] == QadDynamicInputEditEnum.EDIT_ANG_PREV_PT:
                      return editSequence[i]
-               else: # se si era in modalità grip
+               else: # if you were in grip mode
                   if (self.prevPart is not None and self.prevPart.whatIs() == "LINE" and \
                       (editSequence[i] == QadDynamicInputEditEnum.EDIT_DIST_PREV_PT or \
                        editSequence[i] == QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT or \
@@ -2288,7 +2282,7 @@ class QadDynamicEditInput(QadDynamicInput):
                        editSequence[i] == QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT or \
                        editSequence[i] == QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT)):
                      return editSequence[i]
-                  
+
       return editSequence[currentEdit]
 
 
@@ -2296,36 +2290,36 @@ class QadDynamicEditInput(QadDynamicInput):
    # setPrevCurrentEdit
    # ============================================================================
    def setPrevCurrentEdit(self):
-      if self.currentEdit is None: # se non è settato quale edit è il corrente
+      if self.currentEdit is None: # if it is not set which edit is the current one
          self.setInitialFocus()
          return
 
       prevEdit = self.getPrevNdxEditSequence(self.currentEdit)
-      
-      # se i widgets di quota sono visibili come definito dalla variabile dynDiGrip o
-      # si stanno visualizzando i widgets delle coordinate
-      # allora i widgets sono già tutti visibili
+
+      # whether dimension widgets are visible as defined by the dynDiGrip variable o
+      # the coordinates widgets are being displayed
+      # then all widgets are already visible
       if (self.isDimensionalWidgetVisib() == False and self.dynDiVis == 2) or \
-         self.isCoordWidgetVisib(): 
+         self.isCoordWidgetVisib():
          self.currentEdit = prevEdit
       else:
          if self.isDimensionalWidgetVisib() and self.dynDiVis != 2:
-            if self.dynDiVis == 0: # solo una quota alla volta
-               # spengo il controllo corrente
+            if self.dynDiVis == 0: # only one share at a time
+               # I turn off the current control
                self.edits[self.currentEdit].show(False)
                self.currentEdit = prevEdit
-               # visualizzo il controllo successivo
+               # I display the next control
                self.edits[self.currentEdit].show(True)
-               self.mouseMoveEvent(self.canvas.mouseLastXY()) # posiziono gli attributi che, essendo prima spenti, hanno una posizione non aggiornata
-            elif self.dynDiVis == 1: # solo due quota alla volta
-               # spengo il controllo corrente
+               self.mouseMoveEvent(self.canvas.mouseLastXY()) # I position the attributes that, being previously turned off, have an out-of-date position
+            elif self.dynDiVis == 1: # only two dimensions at a time
+               # I turn off the current control
                self.edits[self.currentEdit].show(False)
                self.currentEdit = prevEdit
                prevEdit = self.getNextNdxEditSequence(prevEdit)
-               # visualizzo il controllo precedente del precedente
+               # I display the previous control of the previous one
                self.edits[prevEdit].show(True)
-               self.mouseMoveEvent(self.canvas.mouseLastXY()) # posiziono gli attributi che, essendo prima spenti, hanno una posizione non aggiornata
-               
+               self.mouseMoveEvent(self.canvas.mouseLastXY()) # I position the attributes that, being previously turned off, have an out-of-date position
+
       self.setFocus()
 
 
@@ -2333,15 +2327,15 @@ class QadDynamicEditInput(QadDynamicInput):
    # isCoordWidgetVisib
    # ============================================================================
    def isCoordWidgetVisib(self):
-      # ritorna se devono essere mostrati i widget relativi alle coordinate
-      
-      # se non è ammessa la restituzione di un punto
+      # returns whether coordinate widgets should be shown
+
+      # if the refund of a point is not allowed
       if not (self.inputType & QadInputTypeEnum.POINT2D) and not(self.inputType & QadInputTypeEnum.POINT3D):
          return False
-      # se la visualizzazione delle coordinate è forzata 
+      # if the display of coordinates is forced
       if self.forcedCoordWidgetVisib: return True
-      # se (non esiste nè un punto precedente, una parte precedente, una successiva oppure non è abilitato l'input di quota) ed è abilitato l'input del puntatore oppure se
-      # la visualizzazione delle coordinate è forzata         
+      # if (there is neither a previous point, a previous part, a subsequent part or the dimension input is not enabled) and the pointer input is enabled or if
+      # the display of coordinates is forced
       if (((self.prevPoint is None and self.prevPart is None and self.nextPart is None) or self.isDimensionalInputOn() == False) and \
           self.isPointInputOn()):
          return True
@@ -2353,22 +2347,22 @@ class QadDynamicEditInput(QadDynamicInput):
    # isDimensionalWidgetVisib
    # ============================================================================
    def isDimensionalWidgetVisib(self):
-      # se non è ammessa la restituzione di un punto
+      # if the refund of a point is not allowed
       if not (self.inputType & QadInputTypeEnum.POINT2D) and not(self.inputType & QadInputTypeEnum.POINT3D):
          return False
-      # se non è abilitato l'input di quota
+      # if height input is not enabled
       if self.isDimensionalInputOn() == False: return False
 
-      # la visualizzazione delle coordinate non deve essere forzata
+      # the display of coordinates must not be forced
       if self.forcedCoordWidgetVisib: return False
 
-      # se il widget di input generico deve essere invisibile
+      # if the generic input widget should be invisible
       if self.inputType & QadInputTypeEnum.STRING or self.inputType & QadInputTypeEnum.BOOL or \
          self.inputType & QadInputTypeEnum.INT or self.inputType & QadInputTypeEnum.LONG or \
          self.inputType & QadInputTypeEnum.FLOAT or self.inputType & QadInputTypeEnum.ANGLE:
          return False
-      
-      # se esiste un punto precedente oppure una parte precedente o una parte successiva
+
+      # if there is a previous point or a previous part or a subsequent part
       if self.prevPoint is not None or self.prevPart is not None or self.nextPart is not None:
          return True
       else:
@@ -2380,21 +2374,21 @@ class QadDynamicEditInput(QadDynamicInput):
    # ============================================================================
    def setDefault(self, default):
       self.default = default
-      
-      # se il risultato non dipende dalla posizione del mouse
+
+      # if the result does not depend on the mouse position
       if self.context == QadDynamicInputContextEnum.COMMAND:
          self.edits[QadDynamicInputEditEnum.CMD_LINE_EDIT].showMsg(self.default)
-         
+
       elif self.inputType & QadInputTypeEnum.STRING or self.inputType & QadInputTypeEnum.BOOL or \
            self.inputType & QadInputTypeEnum.INT or self.inputType & QadInputTypeEnum.LONG or \
            self.inputType & QadInputTypeEnum.FLOAT or self.inputType & QadInputTypeEnum.ANGLE:
-         # se si tratta di un numero
+         # if it is a number
          if type(self.default) == int or type(self.default) == long or type(self.default) == float:
             if self.inputType & QadInputTypeEnum.ANGLE:
                self.edits[QadDynamicInputEditEnum.EDIT].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(self.default)))
             else:
                self.edits[QadDynamicInputEditEnum.EDIT].showMsg(qad_utils.numToStringFmt(self.default))
-         # se si tratta di un punto
+         # if it is a point
          elif type(self.default) == QgsPointXY:
             self.edits[QadDynamicInputEditEnum.EDIT].showMsg(qad_utils.pointToStringFmt(self.default))
          else:
@@ -2405,8 +2399,8 @@ class QadDynamicEditInput(QadDynamicInput):
    # show
    # ============================================================================
    def show(self, mode, mousePos = None, prompt = None, default = None):
-      # se si tratta di rendere invisibile lo faccio indipendentemente dal fatto che sia attivo o meno
-      # (serve per gestire F12)
+      # if it's about making invisible I do it regardless of whether it's active or not
+      # (used to manage F12)
       if mode == False:
          self.isVisible = False
          for edit in self.edits:
@@ -2415,40 +2409,40 @@ class QadDynamicEditInput(QadDynamicInput):
 
       if self.isActive() == False: return False
 
-      # se viene passata la posizione del mouse la funzione
-      # resetta lo stato dell'input dinamico (errori, fuoco)
+      # if the mouse position is passed the function
+      # resets dynamic input state (errors, fire)
       if mousePos is not None:
          self.reset(default)
 
       if prompt is not None:
-         self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].showMsg(prompt, False, False, False) # senza aggiornare la posizione dei controlli
-      
+         self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].showMsg(prompt, False, False, False) # without updating the position of the controls
+
       self.isVisible = True
 
       visibList = [False] * len(self.edits)
-      
+
       if self.isPromptActive() and len(self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].toPlainText()) > 0:
          visibList[QadDynamicInputEditEnum.PROMPT_EDIT] = True
 
-      # se richiede un numero reale o un angolo e 
-      # la visualizzazione delle coordinate non è forzata
+      # whether it requires a real number or an angle e
+      # the display of coordinates is not forced
       if (self.inputType & QadInputTypeEnum.FLOAT or self.inputType & QadInputTypeEnum.ANGLE) and \
             not self.forcedCoordWidgetVisib:
          visibList[QadDynamicInputEditEnum.EDIT] = True
 
-      # se devo visualizzare i widget delle coordinate        
+      # if I need to display coordinate widgets
       elif self.isCoordWidgetVisib():
          if self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].toPlainText() != "":
             visibList[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE] = True
-            
+
          visibList[QadDynamicInputEditEnum.EDIT_X] = True
          visibList[QadDynamicInputEditEnum.EDIT_Y] = True
          if self.inputType & QadInputTypeEnum.POINT3D:
             visibList[QadDynamicInputEditEnum.EDIT_Z] = True
-      # se devo mostrare i widget delle quote
+      # if I need to show the odds widgets
       elif self.isDimensionalWidgetVisib():
-         if self.prevPoint is not None: # si tratta di inserimento di un nuovo punto a fine linea
-            if self.dynDiVis == 0: # solo una quota alla volta
+         if self.prevPoint is not None: # involves inserting a new point at the end of the line
+            if self.dynDiVis == 0: # only one share at a time
                if self.currentEdit is None:
                   visibList[self.getInitialNdxEdit()] = True
                else:
@@ -2456,69 +2450,69 @@ class QadDynamicEditInput(QadDynamicInput):
             else:
                visibList[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT] = True
                visibList[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT] = True
-         else: # spostamento di un punto in modalità grip
-            if self.dynDiVis == 0: # solo una quota alla volta
+         else: # moving a point in grip mode
+            if self.dynDiVis == 0: # only one share at a time
                if self.currentEdit is None:
                   first = self.getInitialNdxEdit()
                else:
                   first = self.currentEdit
-               
+
                if first is not None:
                   visibList[first] = True
-                  
-            elif self.dynDiVis == 1: # solo due quota alla volta               
+
+            elif self.dynDiVis == 1: # only two dimensions at a time
                if self.currentEdit is None:
                   first = self.getInitialNdxEdit()
                else:
                   first = self.currentEdit
-                  
+
                if first is not None:
                   visibList[first] = True
                   second = self.getNextNdxEditSequence(first)
                   if second is not None:
                      visibList[second] = True
-                  
-            elif self.dynDiVis == 2: # come definito dalla variabile dynDiGrip
-               if self.dynDiGrip & 1: # quota risultante (distanza dal punto precedente)
+
+            elif self.dynDiVis == 2: # as defined by the dynDiGrip variable
+               if self.dynDiGrip & 1: # resulting elevation (distance from the previous point)
                   if self.prevPart is not None and self.prevPart.whatIs() == "LINE":
                      visibList[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT] = True
                   if self.nextPart is not None and self.nextPart.whatIs() == "LINE":
                      visibList[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT] = True
-               if self.dynDiGrip & 2: # quota modifica lunghezza (distanza dalla posizione precedente dello stesso punto)
+               if self.dynDiGrip & 2: # length change dimension (distance from the previous position of the same point)
                   if self.prevPart is not None and self.prevPart.whatIs() == "LINE":
                      visibList[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT] = True
                   if self.nextPart is not None and self.nextPart.whatIs() == "LINE":
                      visibList[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT] = True
-               if self.dynDiGrip & 4: # quota angolo assoluto
+               if self.dynDiGrip & 4: # absolute angle dimension
                   if self.prevPart is not None and self.prevPart.whatIs() == "LINE":
                      visibList[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT] = True
                   if self.nextPart is not None and self.nextPart.whatIs() == "LINE":
                      visibList[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT] = True
-               if self.dynDiGrip & 8: # quota modifica angolo (angolo relativo all'angolo con il punto precedente)
+               if self.dynDiGrip & 8: # angle modification dimension (angle relative to the angle with the previous point)
                   if self.prevPart is not None and self.prevPart.whatIs() == "LINE":
                      visibList[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT] = True
                   if self.nextPart is not None and self.nextPart.whatIs() == "LINE":
                      visibList[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT] = True
-                     
-#             # eccezione per questo flag che viene considerato indipendentemente dal valore di self.dynDiVis
-#             if self.dynDiGrip & 16: # lunghezza raggio
+
+#             # exception for this flag which is considered regardless of the value of self.dynDiVis
+#             if self.dynDiGrip & 16: # radius length
 #                if self.prevPart is not None and self.prevPart.whatIs() == "ARC":
-#                   # usato per lunghezza raggio nel punto finale della parte precedente
-#                   # oppure lunghezza raggio nel punto medio se parte precedente e successiva sono lo stesso arco
+#                   # used for radius length at the end point of the previous part
+#                   # or radius length at midpoint if previous and following part are the same arc
 #                   visibList[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT] = True
-#                   # usato per lunghezza raggio nel punto iniziale della parte precedente
+#                   # used for radius length at the starting point of the previous part
 #                   visibList[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT] = True
 #                if self.nextPart is not None and self.nextPart.whatIs() == "ARC":
-#                   # se nextPart e prevPart sono uguali 
+#                   # if nextPart and prevPart are equal
 #                   if self.prevPart is not None and self.nextPart == self.prevPart:
-#                      # usato per lunghezza raggio nel punto iniziale della parte precedente
+#                      # used for radius length at the starting point of the previous part
 #                      visibList[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT] = False
 #                   else:
-#                      # usato per lunghezza raggio nel punto iniziale della parte successiva
+#                      # used for radius length at starting point of next part
 #                      visibList[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT] = True
-#                      # usato per lunghezza raggio nel punto finale della parte successiva
+#                      # used for radius length at the end point of the next part
 #                      visibList[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT] = True
-                     
+
 
       elif self.inputType & QadInputTypeEnum.STRING or self.inputType & QadInputTypeEnum.BOOL or \
            self.inputType & QadInputTypeEnum.INT or self.inputType & QadInputTypeEnum.LONG or \
@@ -2527,15 +2521,15 @@ class QadDynamicEditInput(QadDynamicInput):
 
       for i in range(0, len(self.edits), 1):
          self.edits[i].show(visibList[i])
-      
+
       self.setFocus()
-      
+
       # riposiziono i widget
       if mousePos is None:
          self.mouseMoveEvent(self.canvas.mouseLastXY())
       else:
          self.mouseMoveEvent(mousePos)
-      
+
       return self.isVisible
 
 
@@ -2544,14 +2538,14 @@ class QadDynamicEditInput(QadDynamicInput):
    # ============================================================================
    def showErr(self, err = ""):
       if self.isActive() == False: return
-      
+
       if self.currentEdit is not None:
          self.edits[self.currentEdit].error = True
-         self.edits[self.currentEdit].setColors() # ricolora con i bordi rossi perchè error=True
+         self.edits[self.currentEdit].setColors() # recolors with red borders because error=True
 
-      self.moveCtrls() # per riposizionare i controlli
-   
-   
+      self.moveCtrls() # to reposition the controls
+
+
    # ============================================================================
    # showInputMsg
    # ============================================================================
@@ -2559,14 +2553,14 @@ class QadDynamicEditInput(QadDynamicInput):
                     default = None, keyWords = "", inputMode = QadInputModeEnum.NONE):
       if self.isActive() == False: return False
 
-      # context va inizializzato prima dal comando
+      # context must be initialized first by the command
       self.inputType = inputType
       self.inputMode = inputMode
       self.keyWords = []
       self.englishKeyWords = []
-      
+
       if (keyWords is not None) and len(keyWords) > 0:
-         # carattere separatore tra le parole chiave in lingua locale e quelle in inglese 
+         # separator character between local language and English keywords
          localEnglishKeyWords = keyWords.split("_")
          self.keyWords = localEnglishKeyWords[0].split("/") # carattere separatore delle parole chiave
          if len(localEnglishKeyWords) > 1:
@@ -2587,210 +2581,210 @@ class QadDynamicEditInput(QadDynamicInput):
       if self.isActive() == False or self.isVisible == False: return
 
       self.refreshResult(mousePos)
-            
-      # se i widget delle coordinate sono visibili
+
+      # if coordinate widgets are visible
       if self.edits[QadDynamicInputEditEnum.EDIT_X].isVisible():
-         if self.prevPoint is None: # se non è settato nell'input dinamico lo cerco nel plugin (cosa che fa anche refreshResult)
+         if self.prevPoint is None: # if it is not set in the dynamic input I look for it in the plugin (which refreshResult also does)
             if self.plugIn.lastPoint is None:
                prevPt = QgsPointXY(0,0)
             else:
-               prevPt = self.plugIn.lastPoint 
+               prevPt = self.plugIn.lastPoint
          else:
             prevPt = self.prevPoint
-         
-         # se si tratta di coordinate relative
+
+         # if they are relative coordinates
          relative = True if self.dynPiCoords == 0 else False
-         # se si tratta di coordinate polari
+         # if they are polar coordinates
          polar = True if self.dynPiFormat == 0 else False
          if self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].isVisible():
             coordType = self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].toPlainText()
             if "@" in coordType: relative = True
             elif "#" in coordType: relative = False
             polar = True if "<" in coordType else False
-         else: # se non è esplicito che sia relativo ma lo è per via di dynPiCoords
-            prevPt = self.prevPoint # se non c'è il punto precedente impostato nell'input dinamico 
+         else: # if it is not explicit that it is relative but it is because of dynPiCoords
+            prevPt = self.prevPoint # if there is no previous point set in the dynamic input
             if prevPt is None:
                relative = False
                polar = False
 
-         if polar == False: # se sono coordinate cartesiane
+         if polar == False: # if they are Cartesian coordinates
             if self.edits[QadDynamicInputEditEnum.EDIT_X].isLockedValue() == False:
-               # se si tratta di coordinate relative
+               # if they are relative coordinates
                if relative:
-                  self.edits[QadDynamicInputEditEnum.EDIT_X].showMsg(qad_utils.numToStringFmt(self.resPt.x() - prevPt.x()), False, False, False) # senza aggiornare la posizione dei controlli
+                  self.edits[QadDynamicInputEditEnum.EDIT_X].showMsg(qad_utils.numToStringFmt(self.resPt.x() - prevPt.x()), False, False, False) # without updating the position of the controls
                else:
-                  self.edits[QadDynamicInputEditEnum.EDIT_X].showMsg(qad_utils.numToStringFmt(self.resPt.x()), False, False, False) # senza aggiornare la posizione dei controlli
+                  self.edits[QadDynamicInputEditEnum.EDIT_X].showMsg(qad_utils.numToStringFmt(self.resPt.x()), False, False, False) # without updating the position of the controls
 
             if self.edits[QadDynamicInputEditEnum.EDIT_Y].isLockedValue() == False:
-               # se si tratta di coordinate relative
+               # if they are relative coordinates
                if relative:
-                  self.edits[QadDynamicInputEditEnum.EDIT_Y].showMsg(qad_utils.numToStringFmt(self.resPt.y() - prevPt.y()), False, False, False) # senza aggiornare la posizione dei controlli
+                  self.edits[QadDynamicInputEditEnum.EDIT_Y].showMsg(qad_utils.numToStringFmt(self.resPt.y() - prevPt.y()), False, False, False) # without updating the position of the controls
                else:
-                  self.edits[QadDynamicInputEditEnum.EDIT_Y].showMsg(qad_utils.numToStringFmt(self.resPt.y()), False, False, False) # senza aggiornare la posizione dei controlli
+                  self.edits[QadDynamicInputEditEnum.EDIT_Y].showMsg(qad_utils.numToStringFmt(self.resPt.y()), False, False, False) # without updating the position of the controls
 
             if self.edits[QadDynamicInputEditEnum.EDIT_Z].isVisible() and \
                self.edits[QadDynamicInputEditEnum.EDIT_Z].isLockedValue() == False:
-                  # se si tratta di coordinate relative
+                  # if they are relative coordinates
                   if relative:
-                     self.edits[QadDynamicInputEditEnum.EDIT_Z].showMsg(qad_utils.numToStringFmt(self.resPt.z() - prevPt.z()), False, False, False) # senza aggiornare la posizione dei controlli
+                     self.edits[QadDynamicInputEditEnum.EDIT_Z].showMsg(qad_utils.numToStringFmt(self.resPt.z() - prevPt.z()), False, False, False) # without updating the position of the controls
                   else:
-                     self.edits[QadDynamicInputEditEnum.EDIT_Z].showMsg(qad_utils.numToStringFmt(self.resPt.z()), False, False, False) # senza aggiornare la posizione dei controlli
+                     self.edits[QadDynamicInputEditEnum.EDIT_Z].showMsg(qad_utils.numToStringFmt(self.resPt.z()), False, False, False) # without updating the position of the controls
          elif prevPt is not None: # coordinate polari
-            # nel caso di coordinate polari EDIT_X contiene la distanza dal punto precedente o da 0,0
+            # in the case of polar coordinates EDIT_X contains the distance from the previous point or from 0.0
             if self.edits[QadDynamicInputEditEnum.EDIT_X].isLockedValue() == False:
                if relative:
                   dist = qad_utils.getDistance(prevPt, self.resPt)
                else:
                   dist = qad_utils.getDistance(QgsPointXY(0, 0), self.resPt)
-               self.edits[QadDynamicInputEditEnum.EDIT_X].showMsg(qad_utils.numToStringFmt(dist), False, False, False) # senza aggiornare la posizione dei controlli
-            
-            # nel caso di coordinate polari EDIT_Y contiene l'angolo
+               self.edits[QadDynamicInputEditEnum.EDIT_X].showMsg(qad_utils.numToStringFmt(dist), False, False, False) # without updating the position of the controls
+
+            # in the case of polar coordinates EDIT_Y contains the angle
             if self.edits[QadDynamicInputEditEnum.EDIT_Y].isLockedValue() == False:
                if relative:
-                  angle = qad_utils.getAngleBy2Pts(prevPt, self.resPt, 0) # senza tolleranza
+                  angle = qad_utils.getAngleBy2Pts(prevPt, self.resPt, 0) # without tolerance
                else:
-                  angle = qad_utils.getAngleBy2Pts(QgsPointXY(0, 0), self.resPt, 0) # senza tolleranza
-               
-               self.edits[QadDynamicInputEditEnum.EDIT_Y].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(angle)), False, False, False) # senza aggiornare la posizione dei controlli
+                  angle = qad_utils.getAngleBy2Pts(QgsPointXY(0, 0), self.resPt, 0) # without tolerance
 
-      # se il widget delle quote "distanza dal punto precedente" è visibile
+               self.edits[QadDynamicInputEditEnum.EDIT_Y].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(angle)), False, False, False) # without updating the position of the controls
+
+      # if the "distance from previous point" dimensions widget is visible
       if self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].isVisible() and \
-         self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].isLockedValue() == False:        
-         if self.prevPoint is not None: # si tratta di inserimento di un nuovo punto a fine linea
+         self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].isLockedValue() == False:
+         if self.prevPoint is not None: # involves inserting a new point at the end of the line
             dist = qad_utils.getDistance(self.prevPoint, self.resPt)
-            self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(dist), False, False, False) # senza aggiornare la posizione dei controlli
+            self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(dist), False, False, False) # without updating the position of the controls
          elif self.prevPart is not None:
             gType = self.prevPart.whatIs()
-            
-            if gType == "LINE": # spostamento di un punto di un segmento in modalità grip
+
+            if gType == "LINE": # moving a point of a segment in grip mode
                dist = qad_utils.getDistance(self.prevPart.getStartPt(), self.resPt)
-               self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(dist), False, False, False) # senza aggiornare la posizione dei controlli
-            elif gType == "ARC": # spostamento di un punto di un arco in modalità grip
-               # usato per lunghezza raggio nel punto finale della parte precedente
-               # oppure lunghezza raggio nel punto medio se parte precedente e successiva sono lo stesso arco
-               self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(self.prevPart.radius), False, False, False) # senza aggiornare la posizione dei controlli
-      
-      # se il widget delle quote "angolo dal punto precedente" è visibile
+               self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(dist), False, False, False) # without updating the position of the controls
+            elif gType == "ARC": # moving a point of an arc in grip mode
+               # used for radius length at the end point of the previous part
+               # or radius length at the midpoint if the previous and following part are the same arc
+               self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(self.prevPart.radius), False, False, False) # without updating the position of the controls
+
+      # if the "angle from previous point" dimensions widget is visible
       if self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].isVisible() and \
          self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].isLockedValue() == False:
-         if self.prevPoint is not None: # si tratta di inserimento di un nuovo punto a fine linea
-            angle = qad_utils.getAngleBy2Pts(self.prevPoint, self.resPt, 0) # senza tolleranza
+         if self.prevPoint is not None: # involves inserting a new point at the end of the line
+            angle = qad_utils.getAngleBy2Pts(self.prevPoint, self.resPt, 0) # without tolerance
             if angle >= math.pi and angle < 2 * math.pi:
                angle = 2 * math.pi - angle
-            self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(angle)), False, False, False) # senza aggiornare la posizione dei controlli
-         elif self.prevPart is not None and self.prevPart.whatIs() == "LINE": # spostamento di un punto di un segmento in modalità grip
-            angle = qad_utils.getAngleBy2Pts(self.prevPart.getStartPt(), self.resPt, 0) # senza tolleranza
+            self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(angle)), False, False, False) # without updating the position of the controls
+         elif self.prevPart is not None and self.prevPart.whatIs() == "LINE": # moving a point of a segment in grip mode
+            angle = qad_utils.getAngleBy2Pts(self.prevPart.getStartPt(), self.resPt, 0) # without tolerance
             if angle >= math.pi and angle < 2 * math.pi:
                angle = 2 * math.pi - angle
-            self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(angle)), False, False, False) # senza aggiornare la posizione dei controlli
-            
-      # se il widget delle quote nel modo grip "distanza rispetto la posizione precedente dello stesso punto nel verso dal punto precedente" è visibile
+            self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(angle)), False, False, False) # without updating the position of the controls
+
+      # if the dimensions widget in grip mode "distance from the previous position of the same point in the direction from the previous point" is visible
       if self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].isVisible() and \
          self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].isLockedValue() == False:
          if self.prevPart is not None:
             gType = self.prevPart.whatIs()
-            
-            if gType == "LINE": # spostamento di un punto di un segmento in modalità grip
+
+            if gType == "LINE": # moving a point of a segment in grip mode
                dist = qad_utils.getDistance(self.prevPart.getEndPt(), self.resPt)
-               self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(dist), False, False, False) # senza aggiornare la posizione dei controlli
-            elif gType == "ARC": # spostamento di un punto di un arco in modalità grip
-               # usato per lunghezza raggio nel punto iniziale della parte precedente se arco
-               self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(self.prevPart.radius), False, False, False) # senza aggiornare la posizione dei controlli
-            
-      # se il widget delle quote nel modo grip "angolo relativo all'angolo dal punto precedente" è visibile
+               self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(dist), False, False, False) # without updating the position of the controls
+            elif gType == "ARC": # moving a point of an arc in grip mode
+               # used for radius length at the starting point of the previous part if arc
+               self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].showMsg(qad_utils.numToStringFmt(self.prevPart.radius), False, False, False) # without updating the position of the controls
+
+      # if the dimensions widget in grip mode "angle relative to angle from previous point" is visible
       if self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].isVisible() and \
          self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].isLockedValue() == False:
-         if self.prevPart is not None and self.prevPart.whatIs() == "LINE": # spostamento di un punto di un segmento in modalità grip
+         if self.prevPart is not None and self.prevPart.whatIs() == "LINE": # moving a point of a segment in grip mode
             pt1 = self.prevPart.getStartPt()
             pt2 = self.prevPart.getEndPt()
-            anglePart = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # senza tolleranza
-            angleMouse = qad_utils.getAngleBy2Pts(pt1, self.resPt, 0) # senza tolleranza
+            anglePart = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # without tolerance
+            angleMouse = qad_utils.getAngleBy2Pts(pt1, self.resPt, 0) # without tolerance
             angle = qad_utils.normalizeAngle(angleMouse - anglePart)
-            # se il mouse forma un angolo tra 180 e 360 allora l'angolo digitato va sottratto a 360 gradi 
+            # if the mouse forms an angle between 180 and 360 then the angle entered must be subtracted from 360 degrees
             if angle >= math.pi and angle < (2 * math.pi):
                angle = (2 * math.pi) - angle
-            self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(angle)), False, False, False) # senza aggiornare la posizione dei controlli
+            self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(angle)), False, False, False) # without updating the position of the controls
 
-      # se il widget delle quote nel modo grip "distanza dal punto successivo" è visibile
+      # if the dimensions widget in grip mode "distance to next point" is visible
       if self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].isVisible() and \
          self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].isLockedValue() == False:
          if self.nextPart is not None:
             gType = self.nextPart.whatIs()
-            if gType == "LINE": # spostamento di un punto di un segmento in modalità grip
+            if gType == "LINE": # moving a point of a segment in grip mode
                dist = qad_utils.getDistance(self.nextPart.getEndPt(), self.resPt)
-               self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(dist), False, False, False) # senza aggiornare la posizione dei controlli
-            elif gType == "ARC": # spostamento di un punto di un arco in modalità grip
-               # usato per lunghezza raggio nel punto iniziale della parte successiva se arco
-               self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(self.nextPart.radius), False, False, False) # senza aggiornare la posizione dei controlli
+               self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(dist), False, False, False) # without updating the position of the controls
+            elif gType == "ARC": # moving a point of an arc in grip mode
+               # used for radius length at the starting point of the next part if arc
+               self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(self.nextPart.radius), False, False, False) # without updating the position of the controls
 
-      # se il widget delle quote nel modo grip "distanza rispetto la posizione precedente dello stesso punto nel verso dal punto successivo" è visibile
+      # if the dimensions widget in grip mode "distance from the previous position of the same point in the direction from the next point" is visible
       if self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].isVisible() and \
          self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].isLockedValue() == False:
          if self.nextPart is not None:
             gType = self.nextPart.whatIs()
 
-            if gType == "LINE": # spostamento di un punto di un segmento in modalità grip
+            if gType == "LINE": # moving a point of a segment in grip mode
                dist = qad_utils.getDistance(self.nextPart.getStartPt(), self.resPt)
-               self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(dist), False, False, False) # senza aggiornare la posizione dei controlli
-            elif gType == "ARC": # spostamento di un punto di un arco in modalità grip
-               # usato per lunghezza raggio nel punto finale della parte successiva se arco
-               self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(self.nextPart.radius), False, False, False) # senza aggiornare la posizione dei controlli
+               self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(dist), False, False, False) # without updating the position of the controls
+            elif gType == "ARC": # moving a point of an arc in grip mode
+               # used for radius length at the end point of the next part if arc
+               self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].showMsg(qad_utils.numToStringFmt(self.nextPart.radius), False, False, False) # without updating the position of the controls
 
-      # se il widget delle quote "angolo dal punto successivo" è visibile
+      # if the "angle from next point" dimensions widget is visible
       if self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].isVisible() and \
          self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].isLockedValue() == False:
-         if self.nextPart is not None and self.nextPart.whatIs() == "LINE": # spostamento di un punto di un segmento in modalità grip
-            angle = qad_utils.getAngleBy2Pts(self.nextPart.getEndPt(), self.resPt, 0) # senza tolleranza
+         if self.nextPart is not None and self.nextPart.whatIs() == "LINE": # moving a point of a segment in grip mode
+            angle = qad_utils.getAngleBy2Pts(self.nextPart.getEndPt(), self.resPt, 0) # without tolerance
             if angle >= math.pi and angle < 2 * math.pi:
-               angle = 2 * math.pi - angle            
-            self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(angle)), False, False, False) # senza aggiornare la posizione dei controlli
-            
-      # se il widget delle quote nel modo grip "distanza dal punto precedente" è visibile
+               angle = 2 * math.pi - angle
+            self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(angle)), False, False, False) # without updating the position of the controls
+
+      # if the dimensions widget in grip mode "distance from previous point" is visible
       if self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].isVisible() and \
          self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].isLockedValue() == False:
-         if self.nextPart is not None and self.nextPart.whatIs() == "LINE": # spostamento di un punto di un segmento in modalità grip
+         if self.nextPart is not None and self.nextPart.whatIs() == "LINE": # moving a point of a segment in grip mode
             pt1 = self.nextPart.getEndPt()
             pt2 = self.nextPart.getStartPt()
-            anglePart = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # senza tolleranza
-            angleMouse = qad_utils.getAngleBy2Pts(pt1, self.resPt, 0) # senza tolleranza
+            anglePart = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # without tolerance
+            angleMouse = qad_utils.getAngleBy2Pts(pt1, self.resPt, 0) # without tolerance
             angle = qad_utils.normalizeAngle(angleMouse - anglePart)
-            # se il mouse forma un angolo tra 180 e 360 allora l'angolo digitato va sottratto a 360 gradi 
+            # if the mouse forms an angle between 180 and 360 then the angle entered must be subtracted from 360 degrees
             if angle >= math.pi and angle < (2 * math.pi):
                angle = (2 * math.pi) - angle
-            self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(angle)), False, False, False) # senza aggiornare la posizione dei controlli
+            self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(angle)), False, False, False) # without updating the position of the controls
 
 
       if self.edits[QadDynamicInputEditEnum.EDIT].isVisible() and \
          self.edits[QadDynamicInputEditEnum.EDIT].isLockedValue() == False and \
          self.resValue is not None:
          if self.inputType & QadInputTypeEnum.ANGLE:
-            self.edits[QadDynamicInputEditEnum.EDIT].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(self.resValue)), False, False, False) # senza aggiornare la posizione dei controlli
+            self.edits[QadDynamicInputEditEnum.EDIT].showMsg(qad_utils.numToStringFmt(qad_utils.toDegrees(self.resValue)), False, False, False) # without updating the position of the controls
          elif self.inputType & QadInputTypeEnum.FLOAT:
-            self.edits[QadDynamicInputEditEnum.EDIT].showMsg(qad_utils.numToStringFmt(self.resValue), False, False, False) # senza aggiornare la posizione dei controlli
+            self.edits[QadDynamicInputEditEnum.EDIT].showMsg(qad_utils.numToStringFmt(self.resValue), False, False, False) # without updating the position of the controls
          elif self.inputType & QadInputTypeEnum.STRING or self.inputType & QadInputTypeEnum.BOOL or \
               self.inputType & QadInputTypeEnum.INT or self.inputType & QadInputTypeEnum.LONG:
-            self.edits[QadDynamicInputEditEnum.EDIT].showMsg(unicode(self.resValue), False, False, False) # senza aggiornare la posizione dei controlli
-            
+            self.edits[QadDynamicInputEditEnum.EDIT].showMsg(unicode(self.resValue), False, False, False) # without updating the position of the controls
+
       if self.currentEdit is not None:
-         self.edits[self.currentEdit].focusInEvent(None) # riporto il fuoco sul controllo corrente
+         self.edits[self.currentEdit].focusInEvent(None) # I bring the focus back to the current control
 
       self.moveCtrls(mousePos)
-      
+
       return
 
-      
+
    # ============================================================================
    # moveCtrls
    # ============================================================================
    def moveCtrls(self, mousePos = None):
-      # sposta tutti i widget visibili a seconda del contesto
-      if mousePos is not None:         
+      # move all visible widgets depending on the context
+      if mousePos is not None:
          self.mousePos.setX(mousePos.x())
          self.mousePos.setY(mousePos.y())
 
       height = self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].height()
       offset = 5
-      
+
       width = 0
       if self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].isVisible():
          width += self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].width()
@@ -2798,15 +2792,15 @@ class QadDynamicEditInput(QadDynamicInput):
       x = self.mousePos.x() + height
       y = self.mousePos.y() + height
 
-      # se si sta richiedendo un punto tramite una qualunque sua coordinata
+      # if you are requesting a point via any of its coordinates
       if self.edits[QadDynamicInputEditEnum.EDIT_X].isVisible() or \
          self.edits[QadDynamicInputEditEnum.EDIT_Y].isVisible() or \
          self.edits[QadDynamicInputEditEnum.EDIT_Z].isVisible():
-         
+
          if self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].isVisible():
             if width > 0 : width += offset
             offsetX_editSymbolCoord = width
-            width += self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].width()            
+            width += self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].width()
          if self.edits[QadDynamicInputEditEnum.EDIT_X].isVisible():
             if width > 0 : width += offset
             offsetX_editX = width
@@ -2819,9 +2813,9 @@ class QadDynamicEditInput(QadDynamicInput):
             if width > 0 : width += offset
             offsetX_editZ = width
             width += self.edits[QadDynamicInputEditEnum.EDIT_Z].width()
-            
+
          x, y = self.adjustEditPosition(x, y, width, height)
-            
+
          if self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].isVisible(): self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].move(x + offsetX_editSymbolCoord, y)
          if self.edits[QadDynamicInputEditEnum.EDIT_X].isVisible(): self.edits[QadDynamicInputEditEnum.EDIT_X].move(x + offsetX_editX, y)
          if self.edits[QadDynamicInputEditEnum.EDIT_Y].isVisible(): self.edits[QadDynamicInputEditEnum.EDIT_Y].move(x + offsetX_editY, y)
@@ -2834,14 +2828,14 @@ class QadDynamicEditInput(QadDynamicInput):
             if width > 0 : width += offset
             offsetX_edit = width
             width += self.edits[QadDynamicInputEditEnum.EDIT].width()
-            
+
          x, y = self.adjustEditPosition(x, y, width, height)
-         
+
          if self.edits[QadDynamicInputEditEnum.EDIT].isVisible(): self.edits[QadDynamicInputEditEnum.EDIT].move(x + offsetX_edit, y)
-         
+
       elif self.inputType & QadInputTypeEnum.ANGLE:
          if self.edits[QadDynamicInputEditEnum.EDIT].isVisible():
-            if self.prevPoint is not None: # si tratta di inserimento di un nuovo punto a fine linea
+            if self.prevPoint is not None: # involves inserting a new point at the end of the line
                point = self.resPt # posizione
                start = QgsPointXY(self.prevPoint.x() + qad_utils.getDistance(self.prevPoint, point), self.prevPoint.y())
                editPt, lineMarkers = self.getPosAndLineMarkerForArc(start, self.prevPoint, point, 0, \
@@ -2849,29 +2843,29 @@ class QadDynamicEditInput(QadDynamicInput):
                if editPt is not None:
                   self.edits[QadDynamicInputEditEnum.EDIT].move(editPt.x(), editPt.y())
                   del editPt
-               if lineMarkers is not None: # se non nullo disegno la linea di marker
+               if lineMarkers is not None: # if not zero I draw the marker line
                   self.edits[QadDynamicInputEditEnum.EDIT].setLinesMarker(lineMarkers)
                   del lineMarkers
             else:
                if width > 0 : width += offset
                offsetX_edit = width
-               width += self.edits[QadDynamicInputEditEnum.EDIT].width()            
+               width += self.edits[QadDynamicInputEditEnum.EDIT].width()
                x, y = self.adjustEditPosition(x, y, width, height)
                self.edits[QadDynamicInputEditEnum.EDIT].move(x + offsetX_edit, y)
-         
-      # se devo mostrare i widget delle quote
+
+      # if I need to show the odds widgets
       elif self.isDimensionalWidgetVisib():
          if self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].isVisible():
             x, y = self.adjustEditPosition(x, y, width, height)
          point = self.resPt # posizione
 
-         if self.prevPoint is not None: # si tratta di inserimento di un nuovo punto a fine linea
+         if self.prevPoint is not None: # involves inserting a new point at the end of the line
             prevPt = self.prevPoint
-         elif self.prevPart is not None and self.prevPart.whatIs() == "LINE": # spostamento di un punto di un segmento in modalità grip
+         elif self.prevPart is not None and self.prevPart.whatIs() == "LINE": # moving a point of a segment in grip mode
             prevPt = self.prevPart.getStartPt()
          else:
             prevPt = None
-            
+
          if prevPt is not None:
             if self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].isVisible():
                offset = (height * 2) * self.canvas.mapSettings().mapUnitsPerPixel()
@@ -2879,10 +2873,10 @@ class QadDynamicEditInput(QadDynamicInput):
                                                                      offset, self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT])
                self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].move(editPt.x(), editPt.y())
                del editPt
-               # disegno la linea di marker
+               # I draw the marker line
                self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].setLinesMarker(lineMarkers)
                del lineMarkers
-               
+
             if self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].isVisible():
                start = QgsPointXY(prevPt.x() + qad_utils.getDistance(prevPt, point), prevPt.y())
                editPt, lineMarkers = self.getPosAndLineMarkerForArc(start, prevPt, point, 0, \
@@ -2890,15 +2884,15 @@ class QadDynamicEditInput(QadDynamicInput):
                if editPt is not None:
                   self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].move(editPt.x(), editPt.y())
                   del editPt
-               if lineMarkers is not None: # se non nullo disegno la linea di marker
+               if lineMarkers is not None: # if not zero I draw the marker line
                   self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].setLinesMarker(lineMarkers)
                   del lineMarkers
 
          if self.prevPart is not None:
             gType = self.prevPart.whatIs()
-            if gType == "LINE": # spostamento di un punto di un segmento in modalità grip
+            if gType == "LINE": # moving a point of a segment in grip mode
                prevCurrentPt = self.prevPart.getEndPt()
-               angle = qad_utils.getAngleBy2Pts(prevPt, point, 0) # senza tolleranza
+               angle = qad_utils.getAngleBy2Pts(prevPt, point, 0) # without tolerance
                pt = qad_utils.getPolarPointByPtAngle(prevPt, angle, self.prevPart.length())
                if self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].isVisible():
                   offset = (height * 1) * self.canvas.mapSettings().mapUnitsPerPixel()
@@ -2906,51 +2900,51 @@ class QadDynamicEditInput(QadDynamicInput):
                                                                         offset, self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT])
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].move(editPt.x(), editPt.y())
                   del editPt
-                  # disegno la linea di marker
+                  # I draw the marker line
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].setLinesMarker(lineMarkers)
                   del lineMarkers
-                  
+
                if self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].isVisible():
                   editPt, lineMarkers = self.getPosAndLineMarkerForArc(prevCurrentPt, prevPt, pt, 0, \
-                                                                       self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT], True) # LineMarker solo arco
+                                                                       self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT], True) # LineMarker arc only
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].move(editPt.x(), editPt.y())
                   del editPt
-                  # disegno la linea di marker
+                  # I draw the marker line
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].setLinesMarker(lineMarkers)
                   del lineMarkers
-            elif gType == "ARC": # spostamento di un punto di un arco in modalità grip
+            elif gType == "ARC": # moving a point of an arc in grip mode
                center = self.prevPart.center
-               
+
                if self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].isVisible():
-                  # usato per lunghezza raggio arco nel punto finale della parte precedente
-                  # oppure lunghezza raggio nel punto medio se parte precedente e successiva coincidono
+                  # used for arc radius length at the end point of the previous part
+                  # or radius length at the midpoint if the previous and subsequent parts coincide
                   if self.nextPart is not None and self.nextPart == self.prevPart:
                      p2 = self.prevPart.getMiddlePt()
                   else:
                      p2 = self.prevPart.getEndPt()
-                     
+
                   editPt, lineMarkers = self.getPosAndLineMarkerForLine(center, p2, \
                                                                         0, self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT])
                   self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].move(editPt.x(), editPt.y())
                   del editPt
-                  # disegno la linea di marker
+                  # I draw the marker line
                   self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].setLinesMarker(lineMarkers)
                   del lineMarkers
-               
+
                if self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].isVisible():
-                  # usato per lunghezza raggio arco nel punto iniziale della parte precedente
+                  # used for arc radius length at the starting point of the previous part
                   p2 = self.prevPart.getStartPt()
                   editPt, lineMarkers = self.getPosAndLineMarkerForLine(center, p2, \
                                                                         0, self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT])
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].move(editPt.x(), editPt.y())
                   del editPt
-                  # disegno la linea di marker
+                  # I draw the marker line
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].setLinesMarker(lineMarkers)
                   del lineMarkers
 
          if self.nextPart is not None:
             gType = self.nextPart.whatIs()
-            if gType == "LINE": # spostamento di un punto di un segmento in modalità grip
+            if gType == "LINE": # moving a point of a segment in grip mode
                nextPt = self.nextPart.getEndPt()
                if self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].isVisible():
                   offset = (height * 2) * self.canvas.mapSettings().mapUnitsPerPixel()
@@ -2958,10 +2952,10 @@ class QadDynamicEditInput(QadDynamicInput):
                                                                         offset, self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT])
                   self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].move(editPt.x(), editPt.y())
                   del editPt
-                  # disegno la linea di marker
+                  # I draw the marker line
                   self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].setLinesMarker(lineMarkers)
                   del lineMarkers
-                  
+
                if self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].isVisible():
                   start = QgsPointXY(nextPt.x() + qad_utils.getDistance(nextPt, point), nextPt.y())
                   editPt, lineMarkers = self.getPosAndLineMarkerForArc(start, nextPt, point, 0, \
@@ -2969,60 +2963,60 @@ class QadDynamicEditInput(QadDynamicInput):
                   if editPt is not None:
                      self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].move(editPt.x(), editPt.y())
                      del editPt
-                  if lineMarkers is not None: # se non nullo disegno la linea di marker
+                  if lineMarkers is not None: # if not zero I draw the marker line
                      self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].setLinesMarker(lineMarkers)
                      del lineMarkers
-                  
+
                prevCurrentPt = self.nextPart.getStartPt()
-               angle = qad_utils.getAngleBy2Pts(nextPt, point, 0) # senza tolleranza
-               pt = qad_utils.getPolarPointByPtAngle(nextPt, angle, self.nextPart.length())           
+               angle = qad_utils.getAngleBy2Pts(nextPt, point, 0) # without tolerance
+               pt = qad_utils.getPolarPointByPtAngle(nextPt, angle, self.nextPart.length())
                if self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].isVisible():
                   offset = (height * 1) * self.canvas.mapSettings().mapUnitsPerPixel()
                   editPt, lineMarkers = self.getPosAndLineMarkerForLine(pt, point, \
                                                                         offset, self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT])
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].move(editPt.x(), editPt.y())
                   del editPt
-                  # disegno la linea di marker
+                  # I draw the marker line
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].setLinesMarker(lineMarkers)
                   del lineMarkers
-                  
+
                if self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].isVisible():
                   editPt, lineMarkers = self.getPosAndLineMarkerForArc(prevCurrentPt, nextPt, pt, 0, \
-                                                                       self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT], True) # LineMarker solo arco
+                                                                       self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT], True) # LineMarker arc only
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].move(editPt.x(), editPt.y())
                   del editPt
-                  # disegno la linea di marker
+                  # I draw the marker line
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].setLinesMarker(lineMarkers)
                   del lineMarkers
-            elif gType == "ARC": # spostamento di un punto di un arco in modalità grip
+            elif gType == "ARC": # moving a point of an arc in grip mode
                center = self.nextPart.center
-               
+
                if self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].isVisible():
-                  # usato per lunghezza raggio arco nel punto iniziale della parte successiva
+                  # used for arc radius length at the starting point of the next part
                   p2 = self.nextPart.getStartPt()
                   editPt, lineMarkers = self.getPosAndLineMarkerForLine(center, p2, \
                                                                         0, self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT])
                   self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].move(editPt.x(), editPt.y())
                   del editPt
-                  # disegno la linea di marker
+                  # I draw the marker line
                   self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].setLinesMarker(lineMarkers)
                   del lineMarkers
-               
+
                if self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].isVisible():
-                  # usato per lunghezza raggio nel punto finale della parte successiva se arco
+                  # used for radius length at the end point of the next part if arc
                   p2 = self.nextPart.getEndPt()
                   editPt, lineMarkers = self.getPosAndLineMarkerForLine(center, p2, \
                                                                         0, self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT])
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].move(editPt.x(), editPt.y())
                   del editPt
-                  # disegno la linea di marker
+                  # I draw the marker line
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].setLinesMarker(lineMarkers)
                   del lineMarkers
-               
+
       else:
          if self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].isVisible():
             x, y = self.adjustEditPosition(x, y, width, height)
-         
+
       if self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].isVisible():
          self.edits[QadDynamicInputEditEnum.PROMPT_EDIT].move(x, y)
 
@@ -3031,85 +3025,85 @@ class QadDynamicEditInput(QadDynamicInput):
    # refreshResult
    # ============================================================================
    def refreshResult(self, mousePos = None):
-      # calcola il risultato e restituisce True se l'operazione ha successo
-      # a seconda del contesto può essere un punto -> self.resPt o un valore (numero, stringa, bool...) -> self.resValue
-      # il risultato è anche impostato in formato stringa in self.resStr
+      # calculates the result and returns True if the operation is successful
+      # depending on the context it can be a point -> self.resPt or a value (number, string, bool...) -> self.resValue
+      # the result is also set to string format in self.resStr
       self.resValue = None
       self.resStr = ""
-      
-      # se il risultato può essere un punto
+
+      # if the result can be a point
       if self.inputType & QadInputTypeEnum.POINT2D or self.inputType & QadInputTypeEnum.POINT3D:
          if mousePos is not None:
             point = self.canvas.getCoordinateTransform().toMapCoordinates(mousePos) # posizione
          else:
             point = self.canvas.getCoordinateTransform().toMapCoordinates(self.canvas.mouseLastXY()) # posizione
 
-         # se i widget delle coordinate sono visibili si sta cercando un punto
+         # if the coordinate widgets are visible you are looking for a point
          if self.edits[QadDynamicInputEditEnum.EDIT_X].isVisible():
-            # si sta cercando un punto attraverso le coordinate esplicite (relative al punto precedente o assolute)
-            
-            if self.prevPoint is None: # se non è settato nell'input dinamico lo cerco nel plugin
+            # you are looking for a point through explicit coordinates (relative to the previous point or absolute)
+
+            if self.prevPoint is None: # if it is not set in the dynamic input I look for it in the plugin
                if self.plugIn.lastPoint is None:
                   prevPt = QgsPointXY(0,0)
                else:
-                  prevPt = self.plugIn.lastPoint 
+                  prevPt = self.plugIn.lastPoint
             else:
                prevPt = self.prevPoint
-            
-            # se si tratta di coordinate relative
+
+            # if they are relative coordinates
             relative = True if self.dynPiCoords == 0 else False
-            # se si tratta di coordinate polari
+            # if they are polar coordinates
             polar = True if self.dynPiFormat == 0 else False
             if self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].isVisible():
                coordType = self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].toPlainText()
                if "@" in coordType: relative = True
                elif "#" in coordType: relative = False
                polar = True if "<" in coordType else False
-            else: # se non è esplicito che sia relativo ma lo è per via di dynPiCoords
-               prevPt = self.prevPoint # se non c'è il punto precedente impostato nell'input dinamico 
+            else: # if it is not explicit that it is relative but it is because of dynPiCoords
+               prevPt = self.prevPoint # if there is no previous point set in the dynamic input
                if prevPt is None:
                   relative = False
                   polar = False
-            
+
             if polar == False: # coordinate cartesiane
                # x
                if self.edits[QadDynamicInputEditEnum.EDIT_X].isLockedValue() == False:
                   self.resPt.setX(point.x())
                else:
-                  value = self.edits[QadDynamicInputEditEnum.EDIT_X].checkValid() # ritorna il valore se valido
+                  value = self.edits[QadDynamicInputEditEnum.EDIT_X].checkValid() # returns the value if valid
                   if value is None:
                      self.resPt.setX(point.x())
                   else:
                      if relative:
                         value = prevPt.x() + value
                      self.resPt.setX(value)
-                     
+
                # y
                if self.edits[QadDynamicInputEditEnum.EDIT_Y].isLockedValue() == False:
                   self.resPt.setY(point.y())
                else:
-                  value = self.edits[QadDynamicInputEditEnum.EDIT_Y].checkValid() # ritorna il valore se valido
+                  value = self.edits[QadDynamicInputEditEnum.EDIT_Y].checkValid() # returns the value if valid
                   if value is None:
                      self.resPt.setY(point.y())
                   else:
                      if relative:
                         value = prevPt.y() + value
                      self.resPt.setY(value)
-                  
+
                if self.edits[QadDynamicInputEditEnum.EDIT_Z].isVisible():
                   # z
                   if self.edits[QadDynamicInputEditEnum.EDIT_Z].isLockedValue() == False:
                      self.resPt.setZ(point.z())
                   else:
-                     value = self.edits[QadDynamicInputEditEnum.EDIT_Z].checkValid() # ritorna il valore se valido
+                     value = self.edits[QadDynamicInputEditEnum.EDIT_Z].checkValid() # returns the value if valid
                      if value is None:
                         self.resPt.setZ(point.z())
                      else:
                         self.resPt.setZ(prevPt.z() + value if relative else value)
             elif prevPt is not None: # coordinate polari
-               # nel caso di coordinate polari EDIT_X contiene la distanza dal punto precedente o da 0,0
+               # in the case of polar coordinates EDIT_X contains the distance from the previous point or from 0.0
                if self.edits[QadDynamicInputEditEnum.EDIT_X].isLockedValue():
-                  dist = self.edits[QadDynamicInputEditEnum.EDIT_X].checkValid() # ritorna il valore se valido
+                  dist = self.edits[QadDynamicInputEditEnum.EDIT_X].checkValid() # returns the value if valid
                   if dist is None:
                      if relative:
                         dist = qad_utils.getDistance(prevPt, point)
@@ -3120,206 +3114,206 @@ class QadDynamicEditInput(QadDynamicInput):
                      dist = qad_utils.getDistance(prevPt, point)
                   else:
                      dist = qad_utils.getDistance(QgsPointXY(0, 0), point)
-               
-               # nel caso di coordinate polari EDIT_Y contiene l'angolo
+
+               # in the case of polar coordinates EDIT_Y contains the angle
                if self.edits[QadDynamicInputEditEnum.EDIT_Y].isLockedValue():
-                  angle = self.edits[QadDynamicInputEditEnum.EDIT_Y].checkValid() # ritorna il valore se valido
+                  angle = self.edits[QadDynamicInputEditEnum.EDIT_Y].checkValid() # returns the value if valid
                   if angle is None:
-                     angle = qad_utils.getAngleBy2Pts(prevPt, point, 0) # senza tolleranza
+                     angle = qad_utils.getAngleBy2Pts(prevPt, point, 0) # without tolerance
                else:
-                  angle = qad_utils.getAngleBy2Pts(prevPt, point, 0) # senza tolleranza
-                  
+                  angle = qad_utils.getAngleBy2Pts(prevPt, point, 0) # without tolerance
+
                if relative:
                   pt = qad_utils.getPolarPointByPtAngle(prevPt, angle, dist)
                else:
                   pt = qad_utils.getPolarPointByPtAngle(QgsPointXY(0, 0), angle, dist)
-                  
+
                self.resPt.setX(pt.x())
                self.resPt.setY(pt.y())
-            
+
             self.resStr = self.resPt.toString()
             return True
 
          if self.isDimensionalWidgetVisib():
-            if self.prevPoint is not None: # si tratta di inserimento di un nuovo punto a fine linea
-               # si sta cercando un punto attraverso la distanza e l'angolo da punto precedente
+            if self.prevPoint is not None: # involves inserting a new point at the end of the line
+               # you are looking for a point through the distance and angle from the previous point
                if self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].isLockedValue() == False:
                   dist = qad_utils.getDistance(self.prevPoint, point)
                else:
-                  dist = self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].checkValid() # ritorna il valore se valido
+                  dist = self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].checkValid() # returns the value if valid
                   if dist is None: dist = qad_utils.getDistance(self.prevPoint, point)
-                              
+
                if self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].isLockedValue() == False:
-                  angle = qad_utils.getAngleBy2Pts(self.prevPoint, point, 0) # senza tolleranza
+                  angle = qad_utils.getAngleBy2Pts(self.prevPoint, point, 0) # without tolerance
                else:
-                  angle = self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].checkValid() # ritorna il valore in radianti se valido               
+                  angle = self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].checkValid() # returns the value in radians if valid
                   if angle is None:
-                     angle = qad_utils.getAngleBy2Pts(self.prevPoint, point, 0) # senza tolleranza
-                  else: 
-                     angleMouse = qad_utils.getAngleBy2Pts(self.prevPoint, point, 0) # senza tolleranza
-                     # se il mouse forma un angolo tra 180 e 360 allora l'angolo digitato va sottratto a 360 gradi 
+                     angle = qad_utils.getAngleBy2Pts(self.prevPoint, point, 0) # without tolerance
+                  else:
+                     angleMouse = qad_utils.getAngleBy2Pts(self.prevPoint, point, 0) # without tolerance
+                     # if the mouse forms an angle between 180 and 360 then the angle entered must be subtracted from 360 degrees
                      if angleMouse >= math.pi and angleMouse < 2 * math.pi:
                         angle = (2 * math.pi) - angle
-      
+
                pt = qad_utils.getPolarPointByPtAngle(self.prevPoint, angle, dist)
                self.resPt.setX(pt.x())
-               self.resPt.setY(pt.y())                                
+               self.resPt.setY(pt.y())
                self.resStr = self.resPt.toString()
                return True
-            else: # spostamento di un punto in modalità grip
-               # se il widget delle quote "distanza dal punto precedente" è visibile
+            else: # moving a point in grip mode
+               # if the "distance from previous point" dimensions widget is visible
                if self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].isVisible() and \
                   self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].isLockedValue() and \
                   self.prevPart is not None and self.prevPart.whatIs() == "LINE":
-                  dist = self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].checkValid() # ritorna il valore se valido
+                  dist = self.edits[QadDynamicInputEditEnum.EDIT_DIST_PREV_PT].checkValid() # returns the value if valid
                   if dist is not None:
                      pt1 = self.prevPart.getStartPt()
                      pt2 = self.prevPart.getEndPt()
-                     angle = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # senza tolleranza
+                     angle = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # without tolerance
                      pt = qad_utils.getPolarPointByPtAngle(pt1, angle, dist)
                      self.resPt.setX(pt.x())
                      self.resPt.setY(pt.y())
                      self.resStr = self.resPt.toString()
                      return True
 
-               # se il widget delle quote nel modo grip "distanza dal punto successivo" è visibile
+               # if the dimensions widget in grip mode "distance to next point" is visible
                elif self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].isVisible() and \
                     self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].isLockedValue() and \
                     self.nextPart is not None and self.nextPart.whatIs() == "LINE":
-                  dist = self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].checkValid() # ritorna il valore se valido
+                  dist = self.edits[QadDynamicInputEditEnum.EDIT_DIST_NEXT_PT].checkValid() # returns the value if valid
                   if dist is not None:
                      pt1 = self.nextPart.getEndPt()
                      pt2 = self.nextPart.getStartPt()
-                     angle = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # senza tolleranza
+                     angle = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # without tolerance
                      pt = qad_utils.getPolarPointByPtAngle(pt1, angle, dist)
                      self.resPt.setX(pt.x())
                      self.resPt.setY(pt.y())
                      self.resStr = self.resPt.toString()
                      return True
-                  
-               # se il widget delle quote "angolo dal punto precedente" è visibile
+
+               # if the "angle from previous point" dimensions widget is visible
                elif self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].isVisible() and \
                     self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].isLockedValue() and \
                     self.prevPart is not None and self.prevPart.whatIs() == "LINE":
-                  angle = self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].checkValid() # ritorna il valore in radianti se valido               
+                  angle = self.edits[QadDynamicInputEditEnum.EDIT_ANG_PREV_PT].checkValid() # returns the value in radians if valid
                   if angle is not None:
                      pt1 = self.prevPart.getStartPt()
-                     angleMouse = qad_utils.getAngleBy2Pts(pt1, point, 0) # senza tolleranza
-                     # se il mouse forma un angolo tra 180 e 360 allora l'angolo digitato va sottratto a 360 gradi 
+                     angleMouse = qad_utils.getAngleBy2Pts(pt1, point, 0) # without tolerance
+                     # if the mouse forms an angle between 180 and 360 then the angle entered must be subtracted from 360 degrees
                      if angleMouse >= math.pi and angleMouse < 2 * math.pi:
-                        angle = (2 * math.pi) - angle                     
+                        angle = (2 * math.pi) - angle
                      pt = qad_utils.getPolarPointByPtAngle(pt1, angle, self.prevPart.length())
                      self.resPt.setX(pt.x())
-                     self.resPt.setY(pt.y())                                
+                     self.resPt.setY(pt.y())
                      self.resStr = self.resPt.toString()
                      return True
-               
-               # se il widget delle quote "angolo dal punto successivo" è visibile
+
+               # if the "angle from next point" dimensions widget is visible
                elif self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].isVisible() and \
                     self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].isLockedValue() and \
                     self.nextPart is not None and self.nextPart.whatIs() == "LINE":
-                  angle = self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].checkValid() # ritorna il valore in radianti se valido               
+                  angle = self.edits[QadDynamicInputEditEnum.EDIT_ANG_NEXT_PT].checkValid() # returns the value in radians if valid
                   if angle is not None:
                      pt1 = self.nextPart.getEndPt()
-                     angleMouse = qad_utils.getAngleBy2Pts(pt1, point, 0) # senza tolleranza
-                     # se il mouse forma un angolo tra 180 e 360 allora l'angolo digitato va sottratto a 360 gradi 
+                     angleMouse = qad_utils.getAngleBy2Pts(pt1, point, 0) # without tolerance
+                     # if the mouse forms an angle between 180 and 360 then the angle entered must be subtracted from 360 degrees
                      if angleMouse >= math.pi and angleMouse < 2 * math.pi:
-                        angle = (2 * math.pi) - angle                     
+                        angle = (2 * math.pi) - angle
                      pt = qad_utils.getPolarPointByPtAngle(pt1, angle, self.nextPart.length())
                      self.resPt.setX(pt.x())
-                     self.resPt.setY(pt.y())                                
+                     self.resPt.setY(pt.y())
                      self.resStr = self.resPt.toString()
                      return True
 
-               # se il widget delle quote nel modo grip "distanza rispetto la posizione precedente dello stesso punto nel verso dal punto precedente" è visibile
+               # if the dimensions widget in grip mode "distance from the previous position of the same point in the direction from the previous point" is visible
                elif self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].isVisible() and \
                     self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].isLockedValue() and \
                     self.prevPart is not None and self.prevPart.whatIs() == "LINE":
-                  dist = self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].checkValid() # ritorna il valore se valido
+                  dist = self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_PREV_PT].checkValid() # returns the value if valid
                   if dist is not None:
                      pt1 = self.prevPart.getStartPt()
                      pt2 = self.prevPart.getEndPt()
-                     angle = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # senza tolleranza
+                     angle = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # without tolerance
                      pt = qad_utils.getPolarPointByPtAngle(pt2, angle, dist)
                      self.resPt.setX(pt.x())
                      self.resPt.setY(pt.y())
                      self.resStr = self.resPt.toString()
                      return True
 
-               # se il widget delle quote nel modo grip "distanza rispetto la posizione precedente dello stesso punto nel verso dal punto successivo" è visibile
+               # if the dimensions widget in grip mode "distance from the previous position of the same point in the direction from the next point" is visible
                elif self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].isVisible() and \
                     self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].isLockedValue() and \
                     self.nextPart is not None and self.nextPart.whatIs() == "LINE":
-                  dist = self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].checkValid() # ritorna il valore se valido
+                  dist = self.edits[QadDynamicInputEditEnum.EDIT_REL_DIST_NEXT_PT].checkValid() # returns the value if valid
                   if dist is not None:
                      pt1 = self.nextPart.getEndPt()
                      pt2 = self.nextPart.getStartPt()
-                     angle = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # senza tolleranza
+                     angle = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # without tolerance
                      pt = qad_utils.getPolarPointByPtAngle(pt2, angle, dist)
                      self.resPt.setX(pt.x())
                      self.resPt.setY(pt.y())
                      self.resStr = self.resPt.toString()
                      return True
 
-               # se il widget delle quote nel modo grip "angolo relativo all'angolo dal punto precedente" è visibile
+               # if the dimensions widget in grip mode "angle relative to angle from previous point" is visible
                elif self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].isVisible() and \
                     self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].isLockedValue() and \
                     self.prevPart is not None and self.prevPart.whatIs() == "LINE":
-                  angle = self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].checkValid() # ritorna il valore in radianti se valido               
+                  angle = self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_PREV_PT].checkValid() # returns the value in radians if valid
                   if angle is not None:
                      pt1 = self.prevPart.getStartPt()
                      pt2 = self.prevPart.getEndPt()
-                     anglePart = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # senza tolleranza
-                     angleMouse = qad_utils.getAngleBy2Pts(pt1, point, 0) # senza tolleranza
+                     anglePart = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # without tolerance
+                     angleMouse = qad_utils.getAngleBy2Pts(pt1, point, 0) # without tolerance
                      diffAngle = qad_utils.normalizeAngle(angleMouse - anglePart)
-                     # se il mouse forma un angolo tra 180 e 360 allora l'angolo digitato va sottratto a 360 gradi 
+                     # if the mouse forms an angle between 180 and 360 then the angle entered must be subtracted from 360 degrees
                      if diffAngle >= math.pi and diffAngle < (2 * math.pi):
                         pt = qad_utils.getPolarPointByPtAngle(pt1, anglePart-angle, self.prevPart.length())
                      else:
                         pt = qad_utils.getPolarPointByPtAngle(pt1, anglePart+angle, self.prevPart.length())
                      self.resPt.setX(pt.x())
-                     self.resPt.setY(pt.y())                                
+                     self.resPt.setY(pt.y())
                      self.resStr = self.resPt.toString()
                      return True
-               
-               # se il widget delle quote nel modo grip "distanza dal punto precedente" è visibile
+
+               # if the dimensions widget in grip mode "distance from previous point" is visible
                elif self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].isVisible() and \
                   self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].isLockedValue() and \
                     self.nextPart is not None and self.nextPart.whatIs() == "LINE":
-                  angle = self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].checkValid() # ritorna il valore in radianti se valido               
+                  angle = self.edits[QadDynamicInputEditEnum.EDIT_REL_ANG_NEXT_PT].checkValid() # returns the value in radians if valid
                   if angle is not None:
                      pt1 = self.nextPart.getEndPt()
                      pt2 = self.nextPart.getStartPt()
-                     anglePart = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # senza tolleranza
-                     angleMouse = qad_utils.getAngleBy2Pts(pt1, point, 0) # senza tolleranza
+                     anglePart = qad_utils.getAngleBy2Pts(pt1, pt2, 0) # without tolerance
+                     angleMouse = qad_utils.getAngleBy2Pts(pt1, point, 0) # without tolerance
                      diffAngle = qad_utils.normalizeAngle(angleMouse - anglePart)
-                     # se il mouse forma un angolo tra 180 e 360 allora l'angolo digitato va sottratto a 360 gradi 
+                     # if the mouse forms an angle between 180 and 360 then the angle entered must be subtracted from 360 degrees
                      if diffAngle >= math.pi and diffAngle < (2 * math.pi):
                         pt = qad_utils.getPolarPointByPtAngle(pt1, anglePart-angle, self.nextPart.length())
                      else:
                         pt = qad_utils.getPolarPointByPtAngle(pt1, anglePart+angle, self.nextPart.length())
                      self.resPt.setX(pt.x())
-                     self.resPt.setY(pt.y())                                
+                     self.resPt.setY(pt.y())
                      self.resStr = self.resPt.toString()
                      return True
 
-               else: # se nessun valore era non bloccato
+               else: # if no value was unblocked
                   self.resPt.setX(point.x())
                   self.resPt.setY(point.y())
                   self.resStr = self.resPt.toString()
                   return True
-               
-         # si sta cercando un angolo attraverso il punto precedente
+
+         # you are looking for an angle through the previous point
          if self.inputType & QadInputTypeEnum.ANGLE and self.prevPoint is not None:
             if self.edits[QadDynamicInputEditEnum.EDIT].isLockedValue() == False:
                self.resPt.setX(point.x())
                self.resPt.setY(point.y())
                self.resStr = self.resPt.toString()
-               self.resValue = qad_utils.getAngleBy2Pts(self.prevPoint, self.resPt, 0) # senza tolleranza
+               self.resValue = qad_utils.getAngleBy2Pts(self.prevPoint, self.resPt, 0) # without tolerance
                return True
             else:
                dist = qad_utils.getDistance(self.prevPoint, point)
-               angle = self.edits[QadDynamicInputEditEnum.EDIT].checkValid() # ritorna il valore in radianti se valido
+               angle = self.edits[QadDynamicInputEditEnum.EDIT].checkValid() # returns the value in radians if valid
                if angle is not None:
                   pt = qad_utils.getPolarPointByPtAngle(self.prevPoint, angle, dist)
                   self.resPt.setX(pt.x())
@@ -3327,7 +3321,7 @@ class QadDynamicEditInput(QadDynamicInput):
                   self.resStr = self.resPt.toString()
                   return True
 
-         # si sta cercando un valore float attraverso il punto precedente
+         # you are looking for a float value through the previous point
          if self.inputType & QadInputTypeEnum.FLOAT and self.prevPoint is not None:
             if self.edits[QadDynamicInputEditEnum.EDIT].isLockedValue() == False:
                self.resPt.setX(point.x())
@@ -3336,24 +3330,24 @@ class QadDynamicEditInput(QadDynamicInput):
                self.resValue = qad_utils.getDistance(self.prevPoint, self.resPt)
                return True
             else:
-               angle = qad_utils.getAngleBy2Pts(self.prevPoint, point, 0) # senza tolleranza
-               dist = self.edits[QadDynamicInputEditEnum.EDIT].checkValid() # ritorna il valore se valido
+               angle = qad_utils.getAngleBy2Pts(self.prevPoint, point, 0) # without tolerance
+               dist = self.edits[QadDynamicInputEditEnum.EDIT].checkValid() # returns the value if valid
                if dist is not None:
                   pt = qad_utils.getPolarPointByPtAngle(self.prevPoint, angle, dist)
                   self.resPt.setX(pt.x())
                   self.resPt.setY(pt.y())
                   self.resStr = self.resPt.toString()
                   return True
-               
+
             return True
-               
+
 
       if self.inputType & QadInputTypeEnum.STRING or self.inputType & QadInputTypeEnum.INT or \
          self.inputType & QadInputTypeEnum.LONG or self.inputType & QadInputTypeEnum.FLOAT or \
          self.inputType & QadInputTypeEnum.BOOL or self.inputType & QadInputTypeEnum.ANGLE:
          if self.edits[QadDynamicInputEditEnum.EDIT].isVisible():
             if self.edits[QadDynamicInputEditEnum.EDIT].isLockedValue() == True:
-               self.resValue = self.edits[QadDynamicInputEditEnum.EDIT].checkValid() # ritorna il valore se valido
+               self.resValue = self.edits[QadDynamicInputEditEnum.EDIT].checkValid() # returns the value if valid
                if self.resValue is None:
                   self.resStr = ""
                   return False
@@ -3364,7 +3358,7 @@ class QadDynamicEditInput(QadDynamicInput):
                      self.resStr = unicode(self.resValue)
                   return True
             elif self.inputType & QadInputTypeEnum.ANGLE and self.prevPoint is not None:
-               self.resValue = qad_utils.getAngleBy2Pts(self.prevPoint, self.resPt, 0) # senza tolleranza
+               self.resValue = qad_utils.getAngleBy2Pts(self.prevPoint, self.resPt, 0) # without tolerance
                self.resStr = unicode(qad_utils.toDegrees(self.resValue))
                return True
          else:
@@ -3372,7 +3366,7 @@ class QadDynamicEditInput(QadDynamicInput):
             self.resStr = ""
 
       return False
-   
+
 
    # ============================================================================
    # keyPressEvent
@@ -3381,25 +3375,25 @@ class QadDynamicEditInput(QadDynamicInput):
       if self.currentEdit is None:
          return
       if e.key() == Qt.Key_Comma: # ","
-         # se il risultato può essere un punto
-         if self.inputType & QadInputTypeEnum.POINT2D or self.inputType & QadInputTypeEnum.POINT2D: 
+         # if the result can be a point
+         if self.inputType & QadInputTypeEnum.POINT2D or self.inputType & QadInputTypeEnum.POINT2D:
             self.forcedCoordWidgetVisib = True # editaz forzata delle coordinate
             if self.currentEdit != QadDynamicInputEditEnum.EDIT_X and \
                self.currentEdit != QadDynamicInputEditEnum.EDIT_Y and \
                self.currentEdit != QadDynamicInputEditEnum.EDIT_Z:
                coord = self.edits[self.currentEdit].toPlainText()
                self.currentEdit = QadDynamicInputEditEnum.EDIT_X
-               self.edits[QadDynamicInputEditEnum.EDIT_X].setLockedValue(True) # se è possibile modifico lo stato di lock
+               self.edits[QadDynamicInputEditEnum.EDIT_X].setLockedValue(True) # if it is possible change the lock status
                self.edits[QadDynamicInputEditEnum.EDIT_X].showMsg(coord)
             self.show(True)
             self.setNextCurrentEdit()
          else:
             QTextEdit.keyPressEvent(self.edits[self.currentEdit], e)
             #self.edits[self.currentEdit].keyPressEvent(e)
-            
+
       elif e.text() == "@" or e.text() == "#" or e.text() == "<":
-         # se il risultato può essere un punto
-         if self.inputType & QadInputTypeEnum.POINT2D or self.inputType & QadInputTypeEnum.POINT2D: 
+         # if the result can be a point
+         if self.inputType & QadInputTypeEnum.POINT2D or self.inputType & QadInputTypeEnum.POINT2D:
             self.forcedCoordWidgetVisib = True # editaz forzata delle coordinate
             value = self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].toPlainText()
             alreadyPolar = True if value.find("<") >= 0 else False
@@ -3410,7 +3404,7 @@ class QadDynamicEditInput(QadDynamicInput):
                if value.find("@") >= 0: value = "@"
                elif value.find("#") >= 0: value = "#"
                if alreadyPolar == False: value = value + "<"
-               
+
             self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].showMsg(value)
             if self.currentEdit != QadDynamicInputEditEnum.EDIT_X and \
                self.currentEdit != QadDynamicInputEditEnum.EDIT_Y and \
@@ -3419,12 +3413,12 @@ class QadDynamicEditInput(QadDynamicInput):
                self.currentEdit = QadDynamicInputEditEnum.EDIT_X
                self.edits[QadDynamicInputEditEnum.EDIT_X].showMsg(coord)
             self.show(True)
-               
+
       elif e.key() == Qt.Key_Return or e.key == Qt.Key_Enter:
-         # se non c'è alcun widget con valore bloccato
+         # if there is no value locked widget
          if self.anyLockedValueEdit() == False:
             msg = ""
-            # se era stato premuto @ o #
+            # if @ or # was pressed
             if self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].isVisible():
                coordType = self.edits[QadDynamicInputEditEnum.EDIT_SYMBOL_COORD_TYPE].toPlainText()
                if "@" in coordType: msg = "@"
@@ -3433,32 +3427,32 @@ class QadDynamicEditInput(QadDynamicInput):
          else:
             if self.currentEdit is not None:
                currentWidget = self.edits[self.currentEdit]
-               # se il contenuto del widget è stato modificato dall'utente
+               # if the widget content has been modified by the user
                if currentWidget.isLockedValue() == True:
                   value = currentWidget.toPlainText()
-                  # verifico se si tratta di una opzione del comando attivo
+                  # check if it is an option of the active command
                   keyWord = self.evaluateKeyWords(value)
                   if keyWord is not None:
                      self.showEvaluateMsg(keyWord)
-                  # altrimenti se ci si attendeva un punto e si tratta di un'opzione di osnap
+                  # otherwise if a point was expected and it is an osnap option
                   elif (self.inputType & QadInputTypeEnum.POINT2D or self.inputType & QadInputTypeEnum.POINT3D) and \
                         str2snapTypeEnum(value) != -1:
                      currentWidget.showMsg("")
                      currentWidget.setLockedValue(False)
                      self.showEvaluateMsg(value)
-                  # altrimenti se ci si attendeva un punto e si tratta dell'opzione M2P "punto medio tra 2 punti"
+                  # otherwise if a point was expected and it is the M2P option "midpoint between 2 points"
                   elif (self.inputType & QadInputTypeEnum.POINT2D or self.inputType & QadInputTypeEnum.POINT3D) and \
                         (value.upper() == QadMsg.translate("Snap", "M2P") or value.upper() == "_M2P"):
                      currentWidget.showMsg("")
                      currentWidget.setLockedValue(False)
-                     self.showEvaluateMsg(value)                     
-                  # altrimenti verifico la validità del valore
+                     self.showEvaluateMsg(value)
+                  # otherwise check the validity of the value
                   else:
                      if currentWidget.checkValid() is not None:
-                        msg = self.resStr if self.refreshResult() == True else "" # ricalcolo il risultato e lo uso in formato stringa
+                        msg = self.resStr if self.refreshResult() == True else "" # I recalculate the result and use it in string format
                         self.showEvaluateMsg(msg)
             else:
-               msg = self.resStr if self.refreshResult() == True else "" # ricalcolo il risultato e lo uso in formato stringa
+               msg = self.resStr if self.refreshResult() == True else "" # I recalculate the result and use it in string format
                self.showEvaluateMsg(msg)
       else:
          self.edits[self.currentEdit].keyPressEvent(e)
@@ -3468,13 +3462,13 @@ class QadDynamicEditInput(QadDynamicInput):
    # evaluateKeyWords
    # ============================================================================
    def evaluateKeyWords(self, cmd):
-      # The required portion of the keyword is specified in uppercase characters, 
+      # The required portion of the keyword is specified in uppercase characters,
       # and the remainder of the keyword is specified in lowercase characters.
       # The uppercase abbreviation can be anywhere in the keyword
       if cmd[0] == "_": # versione inglese
          keyWord, Msg = qad_utils.evaluateCmdKeyWords(cmd[1:], self.englishKeyWords)
          if keyWord is None: return None
-         # cerco la corrispondente parola chiave in lingua locale
+         # I searc for the corresponding keyword in the local language
          i = 0
          for k in self.englishKeyWords:
             if k == keyWord:

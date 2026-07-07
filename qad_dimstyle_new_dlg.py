@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per gestire la dialog per DIMSTYLE
- 
+ class to manage the DIMSTYLE dialog
+
                               -------------------
         begin                : 2015-05-19
         copyright            : iiiii
@@ -36,36 +36,36 @@ from . import qad_utils
 
 
 #######################################################################################
-# Classe che gestisce l'interfaccia grafica della funzione di creazione nuovo stile
+# Class that manages the graphical interface of the new style creation function
 class QadDIMSTYLE_NEW_Dialog(QDialog, QObject, qad_dimstyle_new_ui.Ui_DimStyle_New_Dialog):
    def __init__(self, plugIn, parent, fromDimStyleName = None):
       self.plugIn = plugIn
       self.iface = self.plugIn.iface.mainWindow()
 
       QDialog.__init__(self, parent)
-      
+
       self.newDimStyle = QadDimStyle()
       self.newDimStyleNameChanged = False
-      
+
       self.setupUi(self)
       self.setWindowTitle(QadMsg.getQADTitle() + " - " + self.windowTitle())
-                 
+
       self.dimNameList = []
-      for dimStyle in QadDimStyles.dimStyleList: # lista degli stili di quotatura caricati
+      for dimStyle in QadDimStyles.dimStyleList: # list of loaded dimensioning styles
          self.DimStyleNameFrom.addItem(dimStyle.name, dimStyle)
          self.dimNameList.append(dimStyle.name)
-      
+
       # sort
       self.DimStyleNameFrom.model().sort(0)
 
-      # seleziono un elemento della lista
+      # I select an element from the list
       if fromDimStyleName is not None:
          index = self.DimStyleNameFrom.findText(fromDimStyleName)
          self.DimStyleNameFrom.setCurrentIndex(index)
          self.DimStyleNameFromChanged(index)
-      
+
    def DimStyleNameFromChanged(self, index):
-      # leggo l'elemento selezionato
+      # I read the selected item
       dimStyle = self.DimStyleNameFrom.itemData(index)
       if dimStyle is not None:
          self.newDimStyle.set(dimStyle)
@@ -76,7 +76,7 @@ class QadDIMSTYLE_NEW_Dialog(QDialog, QObject, qad_dimstyle_new_ui.Ui_DimStyle_N
 
    def newStyleNameChanged(self, text):
       self.newDimStyleNameChanged = True
-         
+
    def ButtonBOX_continue(self):
       if self.newDimStyleName.text() in self.dimNameList:
          QMessageBox.critical(self, QadMsg.getQADTitle(), \
@@ -87,13 +87,13 @@ class QadDIMSTYLE_NEW_Dialog(QDialog, QObject, qad_dimstyle_new_ui.Ui_DimStyle_N
       Form = QadDIMSTYLE_DETAILS_Dialog(self.plugIn, self, self.newDimStyle)
       title = QadMsg.translate("DimStyle_Dialog", "New dimension style: ") + self.newDimStyle.name
       Form.setWindowTitle(QadMsg.getQADTitle() + " - " + title)
-      
-      if Form.exec_() == QDialog.Accepted:
+
+      if Form.exec() == QDialog.DialogCode.Accepted:
          self.dimStyle = Form.dimStyle
          QDialog.accept(self)
       else:
          self.dimStyle = None
-         QDialog.reject(self)      
+         QDialog.reject(self)
 
    def ButtonHELP_Pressed(self):
       qadShowPluginPDFHelp(QadMsg.translate("Help", "Dimensioning"))

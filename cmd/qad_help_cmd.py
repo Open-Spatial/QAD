@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- comando HELP che apre la guida di QAD
- 
+ HELP command that opens the QAD help
+
                               -------------------
         begin                : 2015-08-31
         copyright            : iiiii
@@ -34,11 +34,11 @@ from .qad_generic_cmd import QadCommandClass
 from ..qad_msg import QadMsg, qadShowPluginPDFHelp, qadShowSupportersPage
 
 
-# Classe che gestisce il comando HELP
+# Class that manages the HELP command
 class QadHELPCommandClass(QadCommandClass):
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadHELPCommandClass(self.plugIn)
 
    def getName(self):
@@ -54,22 +54,22 @@ class QadHELPCommandClass(QadCommandClass):
       return QIcon(":/plugins/qad/icons/help.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_HELP", "The QAD manual will be showed.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
-        
+
    def run(self, msgMapTool = False, msg = None):
-      qadShowPluginPDFHelp()       
+      qadShowPluginPDFHelp()
       return True
 
 
-# Classe che gestisce il comando SUPPORTERS
+# Class that manages the SUPPORTERS command
 class QadSUPPORTERSCommandClass(QadCommandClass):
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadSUPPORTERSCommandClass(self.plugIn)
 
    def getName(self):
@@ -85,15 +85,15 @@ class QadSUPPORTERSCommandClass(QadCommandClass):
       return QIcon(":/plugins/qad/icons/supporters.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_SUPPORTERS", "The QAD supporting members page will be showed.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
-        
+
    def run(self, msgMapTool = False, msg = None):
       msg1 = QadMsg.translate("Command_SUPPORTERS", "Your mac address is")
       msg2 = QadMsg.translate("Command_SUPPORTERS", "QAD installation path is")
       self.showMsg("\n" + msg1 + " " + getMacAddress() + ". " + msg2 + " " + getQADPath())
-      qadShowSupportersPage()       
+      qadShowSupportersPage()
       return True

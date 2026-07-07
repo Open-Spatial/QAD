@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin OK
 
- comando POLYGON per disegnare un poligono regolare
- 
+ POLYGON command to draw a regular polygon
+
                               -------------------
         begin                : 2014-11-17
         copyright            : iiiii
@@ -39,13 +39,13 @@ from .. import qad_utils
 from .. import qad_layer
 
 
-# Classe che gestisce il comando POLYGON
+# Class that manages the POLYGON command
 class QadPOLYGONCommandClass(QadCommandClass):
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadPOLYGONCommandClass(self.plugIn)
-   
+
    def getName(self):
       return QadMsg.translate("Command_list", "POLYGON")
 
@@ -59,13 +59,13 @@ class QadPOLYGONCommandClass(QadCommandClass):
       return QIcon(":/plugins/qad/icons/polygon.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_POLYGON", "Draws a regular polygon.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
-      # se questo flag = True il comando serve all'interno di un altro comando per disegnare un rettangolo
-      # che non verrà salvato su un layer
+      # if this flag = True the command is used within another command to draw a rectangle
+      # which will not be saved on a layer
       self.virtualCmd = False
       self.centerPt = None
       self.firstEdgePt = None
@@ -83,14 +83,14 @@ class QadPOLYGONCommandClass(QadCommandClass):
             self.PointMapTool = Qad_polygon_maptool(self.plugIn)
          return self.PointMapTool
       else:
-         return None       
+         return None
 
-      
+
    def addPolygonToLayer(self, layer):
       geom = self.polyline.asGeom(layer.wkbType())
       if geom is not None:
          qad_layer.addGeomToLayer(self.plugIn, layer, self.mapToLayerCoordinates(layer, geom))
-      
+
 
    # ============================================================================
    # WaitForSideNumber
@@ -100,30 +100,30 @@ class QadPOLYGONCommandClass(QadCommandClass):
       prompt = QadMsg.translate("Command_POLYGON", "Enter number of sides <{0}>: ")
       self.waitForInt(prompt.format(str(self.sideNumber)), self.sideNumber, \
                       QadInputModeEnum.NOT_ZERO | QadInputModeEnum.NOT_NEGATIVE)
-         
+
    # ============================================================================
    # WaitForCenter
    # ============================================================================
    def WaitForCenter(self):
       self.step = 2
       self.getPointMapTool().setMode(Qad_polygon_maptool_ModeEnum.ASK_FOR_CENTER_PT)
-      
+
       keyWords = QadMsg.translate("Command_POLYGON", "Edge")
       prompt = QadMsg.translate("Command_POLYGON", "Specify center of polygon or [{0}]: ").format(keyWords)
-     
+
       englishKeyWords = "Edge"
       keyWords += "_" + englishKeyWords
-      # si appresta ad attendere un punto o enter
-      #                        msg, inputType,              default, keyWords, nessun controllo         
+      # is preparing to wait for a point or Enter
+      #                        msg, inputType,              default, keyWords, no check
       self.waitFor(prompt, \
                    QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS, \
                    None, keyWords, QadInputModeEnum.NONE)
-         
+
    # ============================================================================
    # WaitForInscribedCircumscribedOption
    # ============================================================================
    def WaitForInscribedCircumscribedOption(self):
-      self.step = 3      
+      self.step = 3
       keyWords = QadMsg.translate("Command_POLYGON", "Inscribed in circle") + "/" + \
                  QadMsg.translate("Command_POLYGON", "Circumscribed about circle") + "/" + \
                  QadMsg.translate("Command_POLYGON", "Area")
@@ -132,11 +132,11 @@ class QadPOLYGONCommandClass(QadCommandClass):
 
       englishKeyWords = "Inscribed in circle" + "/" + "Circumscribed about circle" + "/" + "Area"
       keyWords += "_" + englishKeyWords
-      # si appresta ad attendere una parola chiave         
-      # msg, inputType, default, keyWords, valori positivi
+      # is preparing to wait for a keyword
+      # msg, inputType, default, keyWords, positive values
       self.waitFor(prompt, QadInputTypeEnum.KEYWORDS, \
                    self.constructionModeByCenter, \
-                   keyWords, QadInputModeEnum.NONE)                  
+                   keyWords, QadInputModeEnum.NONE)
 
    # ============================================================================
    # WaitForRadius
@@ -146,9 +146,9 @@ class QadPOLYGONCommandClass(QadCommandClass):
       if layer is not None:
          self.getPointMapTool().geomType = layer.geometryType()
       self.getPointMapTool().setMode(Qad_polygon_maptool_ModeEnum.CENTER_PT_KNOWN_ASK_FOR_RADIUS)
-      
-      # si appresta ad attendere un punto o un numero reale         
-      # msg, inputType, default, keyWords, valori positivi
+
+      # is preparing to wait for a point or a real number
+      # msg, inputType, default, keyWords, positive values
       prompt = QadMsg.translate("Command_CIRCLE", "Specify the circle radius <{0}>: ")
       self.waitFor(prompt.format(str(self.plugIn.lastRadius)), \
                    QadInputTypeEnum.POINT2D | QadInputTypeEnum.FLOAT, \
@@ -160,9 +160,9 @@ class QadPOLYGONCommandClass(QadCommandClass):
    # ============================================================================
    def WaitForFirstEdgePt(self):
       self.step = 5
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().setMode(Qad_polygon_maptool_ModeEnum.ASK_FOR_FIRST_EDGE_PT)
-      # si appresta ad attendere un punto
+      # is preparing to wait for a point
       self.waitForPoint(QadMsg.translate("Command_POLYGON", "Specify the first point of the edge: "))
 
    # ============================================================================
@@ -175,9 +175,9 @@ class QadPOLYGONCommandClass(QadCommandClass):
       if layer is not None:
          self.getPointMapTool().geomType = layer.geometryType()
 
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().setMode(Qad_polygon_maptool_ModeEnum.FIRST_EDGE_PT_KNOWN_ASK_FOR_SECOND_EDGE_PT)
-      # si appresta ad attendere un punto
+      # is preparing to wait for a point
       self.waitForPoint(QadMsg.translate("Command_POLYGON", "Specify the second point of the edge: "))
 
    # ============================================================================
@@ -185,46 +185,46 @@ class QadPOLYGONCommandClass(QadCommandClass):
    # ============================================================================
    def WaitForArea(self):
       self.step = 7
-         
+
       msg = QadMsg.translate("Command_POLYGON", "Enter the polygon area in current units <{0}>: ")
-      # si appresta ad attendere un numero reale         
-      # msg, inputType, default, keyWords, valori positivi
+      # is preparing to wait for a real number
+      # msg, inputType, default, keyWords, positive values
       self.waitFor(msg.format(str(self.area)), QadInputTypeEnum.FLOAT, \
                    self.area, "", \
                    QadInputModeEnum.NOT_ZERO | QadInputModeEnum.NOT_NEGATIVE)
 
-         
+
    # ============================================================================
    # run
    # ============================================================================
    def run(self, msgMapTool = False, msg = None):
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
+         return True # end command
 
       currLayer = None
-      if self.virtualCmd == False: # se si vuole veramente salvare la polylinea in un layer   
-         # il layer corrente deve essere editabile e di tipo linea o poligono
+      if self.virtualCmd == False: # if you really want to save the polyline in a layer
+         # the current layer must be editable and of type line or polygon
          currLayer, errMsg = qad_layer.getCurrLayerEditable(self.plugIn.canvas, [QgsWkbTypes.LineGeometry, QgsWkbTypes.PolygonGeometry])
          if currLayer is None:
             self.showErr(errMsg)
-            return True # fine comando
-      
+            return True # end command
+
       # =========================================================================
-      # RICHIESTA NUMERO DI LATI DEL POLIGONO 
-      if self.step == 0: # inizio del comando
+      # NUMBER OF SIDES OF THE POLYGON REQUESTED
+      if self.step == 0: # start of command
          self.WaitForSideNumber()
          return False
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL NUMERO DI LATI DEL POLIGONO (da step = 0) 
-      elif self.step == 1: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
+      # RESPONSE TO THE REQUEST FOR THE NUMBER OF SIDES OF THE POLYGON (from step = 0)
+      elif self.step == 1: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            if self.getPointMapTool().rightButton == True: # if used with the right mouse button
                value = self.sideNumber
             else:
                return False
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == int:
@@ -236,29 +236,29 @@ class QadPOLYGONCommandClass(QadCommandClass):
                self.plugIn.setLastPolygonSideNumber(self.sideNumber)
                self.WaitForCenter()
          else:
-            self.WaitForSideNumber()    
+            self.WaitForSideNumber()
 
          return False # continua
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL CENTRO DEL POLIGONO (da step = 1)
-      elif self.step == 2: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
+      # RESPONSE TO THE POLYGON CENTER REQUEST (from step = 1)
+      elif self.step == 2: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
                   self.WaitForCenter()
                   return False
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == unicode:
@@ -267,29 +267,29 @@ class QadPOLYGONCommandClass(QadCommandClass):
          elif type(value) == QgsPointXY:
             self.centerPt = value
             self.getPointMapTool().centerPt = self.centerPt
-            self.WaitForInscribedCircumscribedOption() 
-                       
+            self.WaitForInscribedCircumscribedOption()
+
          return False # continua
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DI POLIGONO INSCRITTO O CIRCOSCRITTO (da step = 2)
+      # RESPONSE TO THE REQUEST FOR INSCRIBED OR RESTRICTED POLYGON (from step = 2)
       elif self.step == 3:
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
                   value = self.constructionModeByCenter
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
             else:
                value = self.getPointMapTool().point
-         else: # la parola chiave arriva come parametro della funzione
+         else: # the keyword comes as a function parameter
             value = msg
-         
+
          if type(value) == unicode:
             self.constructionModeByCenter = value
             self.plugIn.setLastPolygonConstructionModeByCenter(self.constructionModeByCenter)
@@ -298,70 +298,70 @@ class QadPOLYGONCommandClass(QadCommandClass):
                self.WaitForArea()
             else:
                self.WaitForRadius(currLayer)
-               
-         return False # fine comando
+
+         return False # end command
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL RAGGIO (da step = 3)
+      # RESPONSE TO BEAM REQUEST (from step = 3)
       elif self.step == 4:
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
-         if type(value) == QgsPointXY or type(value) == float: # se é stato inserito il raggio del cerchio            
-            if type(value) == QgsPointXY: # se é stato inserito il raggio del cerchio con un punto                        
+         if type(value) == QgsPointXY or type(value) == float: # if the radius of the circle has been entered
+            if type(value) == QgsPointXY: # if the radius of the circle with a point has been entered
                self.radius = qad_utils.getDistance(self.centerPt, value)
                ptStart = value
             else:
                self.radius = value
                ptStart = None
-               
-            self.plugIn.setLastRadius(self.radius)     
+
+            self.plugIn.setLastRadius(self.radius)
 
             if self.constructionModeByCenter == QadMsg.translate("Command_POLYGON", "Inscribed in circle") or \
                self.constructionModeByCenter == "Inscribed in circle":
                mode = True
             else:
                mode = False
-               
+
             self.polyline.getPolygonByNsidesCenterRadius(self.sideNumber, self.centerPt, self.radius, mode, ptStart)
 
-            if self.virtualCmd == False: # se si vuole veramente salvare i buffer in un layer
+            if self.virtualCmd == False: # if you really want to save buffers in a layer
                self.addPolygonToLayer(currLayer)
-            return True       
-         
-         return False # fine comando
- 
- 
+            return True
+
+         return False # end command
+
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL PRIMO PUNTO DELLO SPIGOLO (da step = 2)
-      elif self.step == 5: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE REQUEST FOR THE FIRST POINT OF THE EDGE (from step = 2)
+      elif self.step == 5: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == QgsPointXY:
@@ -369,60 +369,60 @@ class QadPOLYGONCommandClass(QadCommandClass):
             self.WaitForSecondEdgePt(currLayer)
 
          return False
-            
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL SECONDO PUNTO DELLO SPIGOLO (da step = 5)
-      elif self.step == 6: # dopo aver atteso un punto o un numero reale si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE REQUEST FOR THE SECOND POINT OF THE EDGE (from step = 5)
+      elif self.step == 6: # after waiting for a point or a real number the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == QgsPointXY:
             self.polyline.getPolygonByNsidesEdgePts(self.sideNumber, self.firstEdgePt, value)
 
-            if self.virtualCmd == False: # se si vuole veramente salvare i buffer in un layer
+            if self.virtualCmd == False: # if you really want to save buffers in a layer
                self.addPolygonToLayer(currLayer)
-            return True       
+            return True
 
          return False
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA AREA POLIGONO (da step = 3)
-      elif self.step == 7: # dopo aver atteso un numero reale si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
+      # RESPONSE TO THE RANGE AREA REQUEST (from step = 3)
+      elif self.step == 7: # after waiting for a real number the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
                   value = self.area
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
             else:
                return False
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
-         if type(value) == float: # é stata inserita l'area
+         if type(value) == float: # the area was entered
             self.polyline.getPolygonByNsidesArea(self.sideNumber, self.centerPt, value)
 
-            if self.virtualCmd == False: # se si vuole veramente salvare i buffer in un layer
+            if self.virtualCmd == False: # if you really want to save buffers in a layer
                self.addPolygonToLayer(currLayer)
-            return True       
-            
+            return True
+
          return False

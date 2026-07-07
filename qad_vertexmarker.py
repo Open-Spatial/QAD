@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per gestire i simboli marcatori
- 
+ class to manage marker symbols
+
                               -------------------
         begin                : 2013-05-22
         copyright            : iiiii
@@ -37,32 +37,30 @@ from .qad_variables import QadVariables
 # QadVertexmarkerIconTypeEnum class.
 # ===============================================================================
 class QadVertexmarkerIconTypeEnum():
-   NONE             = 0  # nessuno
-   CROSS            = 1  # croce
-   X                = 2  # una X 
-   BOX              = 3  # un quadrato
-   TRIANGLE         = 4  # triangolo equilatero con punta in su
-   CIRCLE           = 5  # cerchio
-   CIRCLE_X         = 6  # cerchio con al centro una x
-   RHOMBUS          = 7  # rombo
-   INFINITY_LINE    = 8  # linea infinita (------ . .)
-   DOUBLE_BOX       = 9  # due quadrati sfalsati
-   PERP             = 10 # simbolo di "perpendicolare"
-   TANGENT          = 11 # un cerchio con una retta tangente sopra
-   DOUBLE_TRIANGLE  = 12 # due triangoli uno sull'altro con vertice al centro (clessidra)
-   BOX_X            = 13 # quadrato con al centro una x
-   PARALLEL         = 14 # due righe parallele a 45 gradi
-   PROGRESS         = 15 # linea con X e i puntini (----X-- . .)
-   X_INFINITY_LINE  = 16 # X e i puntini (X-- . .)
-   PERP_DEFERRED    = 17 # come perpendicolare con i puntini 
-   TANGENT_DEFERRED = 18 # come tangente con i puntini 
+   NONE             = 0  # none
+   CROSS            = 1  # cross
+   X                = 2  # an X
+   BOX              = 3  # a square
+   TRIANGLE         = 4  # equilateral triangle pointing up
+   CIRCLE           = 5  # circle
+   CIRCLE_X         = 6  # circle with an x in the center
+   RHOMBUS          = 7  # rhombus
+   INFINITY_LINE    = 8  # infinite line (------ . .)
+   DOUBLE_BOX       = 9  # two offset squares
+   PERP             = 10 # "perpendicular" symbol
+   TANGENT          = 11 # a circle with a tangent line on it
+   DOUBLE_TRIANGLE  = 12 # two triangles one on top of the other with vertex in the center (hourglass)
+   BOX_X            = 13 # square with an x in the center
+   PARALLEL         = 14 # two parallel lines at 45 degrees
+   PROGRESS         = 15 # line with X and dots (----X-- . .)
+   X_INFINITY_LINE  = 16 # X and dots (X-- . .)
+   PERP_DEFERRED    = 17 # like perpendicular with dots
+   TANGENT_DEFERRED = 18 # like tangent with dots
 
 
 class QadVertexMarker(QgsMapCanvasItem):
-   """
-   Classe che gestisce i marcatori dei vertici
-   """
-      
+   """Class that manages vertex markers"""
+
 
    # ============================================================================
    # __init__
@@ -76,14 +74,14 @@ class QadVertexMarker(QgsMapCanvasItem):
       self.__color = QColor(255, 0, 0) # color of the marker
       self.__penWidth = 2 # pen width
 
-      
-   def __del__(self):     
+
+   def __del__(self):
       self.removeItem()
 
 
-   def removeItem(self):     
+   def removeItem(self):
       self.__canvas.scene().removeItem(self)
-      
+
 
    def setCenter(self, point):
       self.__center = point
@@ -106,11 +104,9 @@ class QadVertexMarker(QgsMapCanvasItem):
    def setPenWidth(self, width):
       self.__penWidth = width
 
-      
+
    def paint(self, painter, option, widget):
-      """
-      p é un QPainter
-      """
+      """p is a QPainter"""
 
       s = self.__iconSize
 
@@ -121,56 +117,56 @@ class QadVertexMarker(QgsMapCanvasItem):
       if self.__iconType == QadVertexmarkerIconTypeEnum.NONE:
          pass
       elif self.__iconType == QadVertexmarkerIconTypeEnum.CROSS:
-         # croce
+      # cross
          painter.drawLine(QLineF(-s,  0,  s,  0))
          painter.drawLine(QLineF( 0, -s,  0,  s))
       elif self.__iconType == QadVertexmarkerIconTypeEnum.X:
-         # una X 
+         # an X
          painter.drawLine(QLineF(-s, -s,  s,  s))
          painter.drawLine(QLineF(-s,  s,  s, -s))
       elif self.__iconType == QadVertexmarkerIconTypeEnum.BOX:
-         # un quadrato
+         # a square
          painter.drawLine(QLineF(-s, -s,  s, -s))
          painter.drawLine(QLineF( s, -s,  s,  s))
          painter.drawLine(QLineF( s,  s, -s,  s))
          painter.drawLine(QLineF(-s,  s, -s, -s))
       elif self.__iconType == QadVertexmarkerIconTypeEnum.TRIANGLE:
-         # triangolo equilatero con punta in su
+      # equilateral triangle pointing up
          painter.drawLine(QLineF(-s,  s,  s,  s))
          painter.drawLine(QLineF( s,  s,  0, -s))
          painter.drawLine(QLineF( 0, -s, -s,  s))
       elif self.__iconType == QadVertexmarkerIconTypeEnum.CIRCLE:
-         # cerchio
-         # la linea é più sottile
-         pen.setWidth(int(self.__penWidth / 2))      
+         # circle
+         # the line is thinner
+         pen.setWidth(int(self.__penWidth / 2))
          painter.setPen(pen)
          painter.drawEllipse(QPointF(0, 0), s, s)
          pen.setWidth(self.__penWidth)
          painter.setPen(pen)
       elif self.__iconType == QadVertexmarkerIconTypeEnum.CIRCLE_X:
-         # cerchio con al centro una x
-         # la linea é più sottile
-         pen.setWidth(int(self.__penWidth / 2))     
+         # circle with an x in the center
+         # the line is thinner
+         pen.setWidth(int(self.__penWidth / 2))
          painter.setPen(pen)
          painter.drawEllipse(QPointF(0, 0), s, s)
          painter.drawLine(QLineF(-s, -s,  s,  s))
-         painter.drawLine(QLineF(-s,  s,  s, -s))        
+         painter.drawLine(QLineF(-s,  s,  s, -s))
          pen.setWidth(self.__penWidth)
          painter.setPen(pen)
       elif self.__iconType == QadVertexmarkerIconTypeEnum.RHOMBUS:
-         # rombo
+      # rhombus
          painter.drawLine(QLineF( 0, -s, -s,  0))
          painter.drawLine(QLineF(-s,  0,  0,  s))
          painter.drawLine(QLineF( 0,  s,  s,  0))
          painter.drawLine(QLineF( s,  0,  0, -s))
       elif self.__iconType == QadVertexmarkerIconTypeEnum.INFINITY_LINE:
-         # linea infinita (------ . .)
+         # infinite line (------ . .)
          l = self.__penWidth
          painter.drawLine(QLineF(-s,  0,  0,  0))
          painter.drawLine(QLineF(2 * l,  0,  2 * l,  0))
          painter.drawLine(QLineF(4 * l,  0,  4 * l,  0))
       elif self.__iconType == QadVertexmarkerIconTypeEnum.DOUBLE_BOX:
-         # due quadrati sfalsati
+      # two offset squares
          l = (s / 4)
          painter.drawLine(QLineF(-s, -s, -s,  l))
          painter.drawLine(QLineF(-s,  l, -l,  l))
@@ -181,24 +177,24 @@ class QadVertexMarker(QgsMapCanvasItem):
          painter.drawLine(QLineF( l, -l,  l, -s))
          painter.drawLine(QLineF( l, -s, -s, -s))
       elif self.__iconType == QadVertexmarkerIconTypeEnum.PERP:
-         # simbolo di "perpendicolare"
+         # "perpendicular" symbol
          painter.drawLine(QLineF(-s, -s, -s,  s))
          painter.drawLine(QLineF(-s,  s,  s,  s))
          painter.drawLine(QLineF(-s,  0,  0,  0))
          painter.drawLine(QLineF( 0,  0,  0,  s))
       elif self.__iconType == QadVertexmarkerIconTypeEnum.TANGENT:
-         # un cerchio con una retta tangente sopra
-         # la linea é più sottile
+         # a circle with a tangent line on it
+         # the line is thinner
          l = s - self.__penWidth
-         pen.setWidth(int(self.__penWidth / 2))  
+         pen.setWidth(int(self.__penWidth / 2))
          painter.setPen(pen)
          painter.drawEllipse(QPointF(0, 0), l + 1, l + 1)
          pen.setWidth(self.__penWidth)
          painter.setPen(pen)
          painter.drawLine(QLineF(-s, -s,  s, -s))
       elif self.__iconType == QadVertexmarkerIconTypeEnum.DOUBLE_TRIANGLE:
-         # due triangoli uno sull'altro con vertice al centro (clessidra)
-         # le linee oblique sono più sottili
+         # two triangles one on top of the other with vertex in the center (hourglass)
+         # the oblique lines are thinner
          pen.setWidth(int(self.__penWidth / 2))
          painter.setPen(pen)
          painter.drawLine(QLineF(-s, -s,  s,  s))
@@ -208,12 +204,12 @@ class QadVertexMarker(QgsMapCanvasItem):
          painter.drawLine(QLineF(-s, -s,  s, -s))
          painter.drawLine(QLineF(-s,  s,  s,  s))
       elif self.__iconType == QadVertexmarkerIconTypeEnum.BOX_X:
-         # quadrato con al centro una x
+         # square with an x in the center
          painter.drawLine(QLineF(-s, -s,  s, -s))
          painter.drawLine(QLineF( s, -s,  s,  s))
          painter.drawLine(QLineF( s,  s, -s,  s))
          painter.drawLine(QLineF(-s,  s, -s, -s))
-         # le linee oblique della x sono più sottili
+         # the oblique lines of the x are thinner
          pen.setWidth(int(self.__penWidth / 2))
          painter.setPen(pen)
          painter.drawLine(QLineF(-s, -s,  s,  s))
@@ -221,16 +217,16 @@ class QadVertexMarker(QgsMapCanvasItem):
          pen.setWidth(self.__penWidth)
          painter.setPen(pen)
       elif self.__iconType == QadVertexmarkerIconTypeEnum.PARALLEL:
-         # due righe parallele a 45 gradi
+         # two parallel lines at 45 degrees
          painter.drawLine(QLineF(-s,  0,  0, -s))
          painter.drawLine(QLineF( 0,  s,  s,  0))
       elif self.__iconType == QadVertexmarkerIconTypeEnum.PROGRESS:
-         # linea con X e i puntini (----X-- . .)
+         # line with X and dots (----X-- . .)
          l = self.__penWidth
          painter.drawLine(QLineF(-s,  0,  0,  0))
          painter.drawLine(QLineF(2 * l,  0,  2 * l,  0))
          painter.drawLine(QLineF(4 * l,  0,  4 * l,  0))
-         # le linee oblique della x sono più sottili
+         # the oblique lines of the x are thinner
          pen.setWidth(int(self.__penWidth / 2))
          l = s / 2
          painter.setPen(pen)
@@ -239,11 +235,11 @@ class QadVertexMarker(QgsMapCanvasItem):
          pen.setWidth(self.__penWidth)
          painter.setPen(pen)
       elif self.__iconType == QadVertexmarkerIconTypeEnum.X_INFINITY_LINE:
-         # linea con X e i puntini (X-- . .)
+         # line with X and dots (X-- . .)
          l = self.__penWidth
          painter.drawLine(QLineF(2 * l,  0,  2 * l,  0))
          painter.drawLine(QLineF(4 * l,  0,  4 * l,  0))
-         # le linee oblique della x sono più sottili
+         # the oblique lines of the x are thinner
          pen.setWidth(int(self.__penWidth / 2))
          l = s / 2
          painter.setPen(pen)
@@ -256,28 +252,28 @@ class QadVertexMarker(QgsMapCanvasItem):
          painter.drawLine(QLineF(-s,  s,  s,  s))
          painter.drawLine(QLineF(-s,  0,  0,  0))
          painter.drawLine(QLineF( 0,  0,  0,  s))
-         # simbolo di "perpendicolare" con i puntini
+         # "perpendicular" symbol with dots
          l = s - self.__penWidth
          l = l + (self.__penWidth * 2)
          painter.drawLine(QLineF(l,  0,  l,  0))
          l = l + (self.__penWidth * 2)
-         painter.drawLine(QLineF(l,  0,  l,  0))         
+         painter.drawLine(QLineF(l,  0,  l,  0))
       elif self.__iconType == QadVertexmarkerIconTypeEnum.TANGENT_DEFERRED:
-         # un cerchio con una retta tangente sopra
-         # la linea é più sottile
+         # a circle with a tangent line on it
+         # the line is thinner
          l = s - self.__penWidth
-         pen.setWidth(int(self.__penWidth / 2))     
+         pen.setWidth(int(self.__penWidth / 2))
          painter.setPen(pen)
          painter.drawEllipse(QPointF(0, 0), l + 1, l + 1)
          pen.setWidth(self.__penWidth)
          painter.setPen(pen)
          painter.drawLine(QLineF(-s, -s,  s, -s))
-         # come tangente con i puntini
+      # like tangent with dots
          l = l + (self.__penWidth * 2)
          painter.drawLine(QLineF(l,  0,  l,  0))
          l = l + (self.__penWidth * 2)
-         painter.drawLine(QLineF(l,  0,  l,  0))         
-         
+         painter.drawLine(QLineF(l,  0,  l,  0))
+
 
    def boundingRect(self):
       a = self.__iconSize / 2.0 + 1

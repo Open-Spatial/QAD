@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- funzioni per comando SPEZZA per tagliare un oggetto
- 
+ functions for the BREAK command to cut an object
+
                               -------------------
         begin                : 2019-08-08
         copyright            : iiiii
@@ -31,34 +31,33 @@ from qgis.gui import *
 
 from .qad_multi_geom import getQadGeomAt, isLinearQadGeom
 from .qad_geom_relations import *
-           
+
 
 # ===============================================================================
 # breakQadGeometry
 # ===============================================================================
 def breakQadGeometry(qadGeom, firstPt, secondPt):
-   """
-   la funzione spezza la geometria in un punto (se <secondPt> = None) o in due punti 
-   come fa il trim.
-   <qadGeom> = geometria da tagliare
-   <firstPt> = primo punto di divisione
-   <secondPt> = secondo punto di divisione
+   """the function breaks the geometry at one point (if <secondPt> = None) or at two points
+      how does the trim.
+      <qadGeom> = geometry to cut
+      <firstPt> = first dividing point
+      <secondPt> = second dividing point
    """
    if qadGeom is None: return None
-   
+
    gType = qadGeom.whatIs()
    if gType == "POINT" or gType == "MULTI_POINT":
       return None
 
-   # la funzione ritorna una lista con 
-   # (<minima distanza>
-   # <punto più vicino>
-   # <indice della geometria più vicina>
-   # <indice della sotto-geometria più vicina>
-   # <indice della parte della sotto-geometria più vicina>
-   # <"a sinistra di" se il punto é alla sinista della parte con i seguenti valori:
-   # -   < 0 = sinistra (per linea, arco o arco di ellisse) o interno (per cerchi, ellissi)
-   # -   > 0 = destra (per linea, arco o arco di ellisse) o esterno (per cerchi, ellissi)
+   # the function returns a list with
+   # (<minimum distance>
+   # <nearest point>
+   # <nearest geometry index>
+   # <index of the nearest sub-geometry>
+   # <index of the closest sub-geometry part>
+   # <"to the left of" if the point is to the left of the part with the following values:
+   # - < 0 = left (for line, arc or ellipse arc) or inside (for circles, ellipses)
+   # - > 0 = right (for line, arc or ellipse arc) or outside (for circles, ellipses)
    # )
    result = getQadGeomClosestPart(qadGeom, firstPt)
    myFirstPt = result[1]
@@ -68,31 +67,31 @@ def breakQadGeometry(qadGeom, firstPt, secondPt):
 
    mySecondPt = None
    if secondPt is not None:
-      # la funzione ritorna una lista con 
-      # (<minima distanza>
-      # <punto più vicino>
-      # <indice della geometria più vicina>
-      # <indice della sotto-geometria più vicina>
-      # <indice della parte della sotto-geometria più vicina>
-      # <"a sinistra di" se il punto é alla sinista della parte con i seguenti valori:
-      # -   < 0 = sinistra (per linea, arco o arco di ellisse) o interno (per cerchi, ellissi)
-      # -   > 0 = destra (per linea, arco o arco di ellisse) o esterno (per cerchi, ellissi)
+      # the function returns a list with
+      # (<minimum distance>
+      # <nearest point>
+      # <nearest geometry index>
+      # <index of the nearest sub-geometry>
+      # <index of the closest sub-geometry part>
+      # <"to the left of" if the point is to the left of the part with the following values:
+      # - < 0 = left (for line, arc or ellipse arc) or inside (for circles, ellipses)
+      # - > 0 = right (for line, arc or ellipse arc) or outside (for circles, ellipses)
       # )
       result = getQadGeomClosestPart(qadGeom, secondPt)
       mySecondPt = result[1]
       atGeom = result[2]
       atSubGeom = result[3]
-      # se le sottogeometrie sono diverse
+      # if the subgeometries are different
       if result[2] != atGeom or result[3] != atSubGeom:  return None
-   
-   if mySecondPt is None or qad_utils.ptNear(myFirstPt, mySecondPt):      
-      # divido la polilinea in 2
+
+   if mySecondPt is None or qad_utils.ptNear(myFirstPt, mySecondPt):
+      # I divide the polyline into 2
       if isLinearQadGeom(subQadGeom) == False: return None
-      
+
       dummy = subQadGeom.breakOnPts(myFirstPt, None)
       if dummy is None: return None
       return [dummy[0], dummy[1], atGeom, atSubGeom]
-   else: # c'é anche il secondo punto di divisione
+   else: # there is also the second dividing point
       gType = subQadGeom.whatIs()
       if gType == "CIRCLE":
          endAngle = qad_utils.getAngleBy2Pts(subQadGeom.center, myFirstPt)
@@ -102,11 +101,11 @@ def breakQadGeometry(qadGeom, firstPt, secondPt):
 
       elif gType == "ELLIPSE":
          endAngle = qad_utils.getAngleBy3Pts(subQadGeom.majorAxisFinalPt, subQadGeom.center, myFirstPt, False)
-         startAngle = qad_utils.getAngleBy3Pts(subQadGeom.majorAxisFinalPt, subQadGeom.center, mySecondPt, False)         
+         startAngle = qad_utils.getAngleBy3Pts(subQadGeom.majorAxisFinalPt, subQadGeom.center, mySecondPt, False)
          ellipseArc = QadEllipseArc().set(subQadGeom.center, subQadGeom.majorAxisFinalPt, subQadGeom.axisRatio, startAngle, endAngle)
          return [ellipseArc, None, atGeom, atSubGeom]
 
       else:
          dummy = subQadGeom.breakOnPts(myFirstPt, mySecondPt)
          return [dummy[0], dummy[1], atGeom, atSubGeom]
-         
+

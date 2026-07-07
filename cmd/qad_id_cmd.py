@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- comando ID che restituisce la coordinata di un punto selezionato
- 
+ ID command that returns the coordinate of a selected point
+
                               -------------------
         begin                : 2013-05-22
         copyright            : iiiii
@@ -32,11 +32,11 @@ from .qad_generic_cmd import QadCommandClass
 from ..qad_msg import QadMsg
 
 
-# Classe che gestisce il comando ID
+# Class that manages the ID command
 class QadIDCommandClass(QadCommandClass):
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadIDCommandClass(self.plugIn)
 
    def getName(self):
@@ -52,35 +52,35 @@ class QadIDCommandClass(QadCommandClass):
       return QIcon(":/plugins/qad/icons/id.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_ID", "Displays the coordinate values of a specified location.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
-        
-   def run(self, msgMapTool = False, msg = None):           
-      if self.step == 0: # inizio del comando
-         self.waitForPoint() # si appresta ad attendere un punto
+
+   def run(self, msgMapTool = False, msg = None):
+      if self.step == 0: # start of command
+         self.waitForPoint() # is preparing to wait for a point
          self.step = self.step + 1
          return False
-      elif self.step == 1: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      elif self.step == 1: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             pt = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             pt = msg
 
          if type(pt) == QgsPointXY:
-            self.plugIn.setLastPoint(pt)            
+            self.plugIn.setLastPoint(pt)
             self.showMsg("\n" + pt.toString())
          return True

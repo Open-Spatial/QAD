@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin ok
 
- comando TEXT per inserire un'etichetta
- 
+ TEXT command to insert a label
+
                               -------------------
         begin                : 2013-12-31
         copyright            : iiiii
@@ -42,11 +42,11 @@ from ..qad_msg import QadMsg
 from ..qad_point import QadPoint
 
 
-# Classe che gestisce il comando TEXT
+# Class that manages the TEXT command
 class QadTEXTCommandClass(QadCommandClass):
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadTEXTCommandClass(self.plugIn)
 
    def getName(self):
@@ -57,14 +57,14 @@ class QadTEXTCommandClass(QadCommandClass):
 
    def connectQAction(self, action):
       action.triggered.connect(self.plugIn.runTEXTCommand)
-   
+
    def getIcon(self):
       return QIcon(":/plugins/qad/icons/text.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_TEXT", "Inserts a text.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
       self.insPt = None
@@ -73,7 +73,7 @@ class QadTEXTCommandClass(QadCommandClass):
       self.GetDistClass = None
       self.GetAngleClass = None
       self.labelFields = None
-      self.labelFieldNamesNdx = 0      
+      self.labelFieldNamesNdx = 0
       self.labelFieldValues = []
 
    def __del__(self):
@@ -85,10 +85,10 @@ class QadTEXTCommandClass(QadCommandClass):
 
 
    def getPointMapTool(self, drawMode = QadGetPointDrawModeEnum.NONE):
-      # quando si éin fase di richiesta distanza (altezza testo)
+      # when requesting distance (text height)
       if self.step == 2:
          return self.GetDistClass.getPointMapTool()
-      # quando si éin fase di richiesta rotazione
+      # when rotation request is in progress
       elif self.step == 3:
          return self.GetAngleClass.getPointMapTool()
       else:
@@ -96,10 +96,10 @@ class QadTEXTCommandClass(QadCommandClass):
 
 
    def getCurrentContextualMenu(self):
-      # quando si éin fase di richiesta distanza (altezza testo)
+      # when requesting distance (text height)
       if self.step == 2:
          return self.GetDistClass.getCurrentContextualMenu()
-      # quando si éin fase di richiesta rotazione
+      # when rotation request is in progress
       elif self.step == 3:
          return self.GetAngleClass.getCurrentContextualMenu()
       else:
@@ -110,115 +110,115 @@ class QadTEXTCommandClass(QadCommandClass):
       pt = QadPoint(self.insPt)
       g = self.mapToLayerCoordinates(layer, pt.asGeom(layer.wkbType()))
       f = QgsVectorLayerUtils.createFeature(layer, g, {}, layer.createExpressionContext())
-      
-      # se l'altezza testo dipende da un solo campo 
+
+      # if the text height depends on only one field
       sizeFldNames = qad_label.get_labelSizeFieldNames(layer)
       if len(sizeFldNames) == 1 and len(sizeFldNames[0]) > 0:
          f.setAttribute(sizeFldNames[0], self.hText)
-      
-      # se la rotazione dipende da un solo campo
+
+      # if the rotation depends on only one field
       rotFldNames = qad_label.get_labelRotationFieldNames(layer)
       if len(rotFldNames) == 1 and len(rotFldNames[0]) > 0:
          f.setAttribute(rotFldNames[0], qad_utils.toDegrees(self.rot))
-         
-      # setto i valori degli attributi che compongono l'etichetta
+
+      # set the values of the attributes that make up the label
       i = 0
       tot = len(self.labelFields)
       while i < tot:
          f.setAttribute(self.labelFields[i].name(), self.labelFieldValues[i])
          i = i + 1
-      
-      return qad_layer.addFeatureToLayer(self.plugIn, layer, f, None, True, False, False)       
+
+      return qad_layer.addFeatureToLayer(self.plugIn, layer, f, None, True, False, False)
 
    def initLabelFields(self, layer):
       labelFieldNames = qad_label.get_labelFieldNames(layer)
       if len(labelFieldNames) > 0:
-         self.labelFields = QgsFields()         
-         for field in layer.dataProvider().fields():   
+         self.labelFields = QgsFields()
+         for field in layer.dataProvider().fields():
             if field.name() in labelFieldNames:
                self.labelFields.append(QgsField(field.name(), field.type()))
-    
+
    # ============================================================================
    # waitForFieldValue
    # ============================================================================
-   def waitForFieldValue(self):      
-      self.step = 4      
-      
+   def waitForFieldValue(self):
+      self.step = 4
+
       if self.labelFields is None:
          return False
       if self.labelFieldNamesNdx >= len(self.labelFields):
          return False
       field = self.labelFields[self.labelFieldNamesNdx]
       prompt = QadMsg.translate("Command_TEXT", "Enter the value of attribute \"{0}\": ").format(field.name())
-      if field.type() == QVariant.Double: # si appresta ad attendere un double o valore nullo      
+      if field.type() == QVariant.Double: # is preparing to wait for a double or null value
          self.waitForFloat(prompt, None, QadInputModeEnum.NONE)
-      elif field.type() == QVariant.LongLong: # si appresta ad attendere un long a 64 bit o valore nullo       
+      elif field.type() == QVariant.LongLong: # prepares to wait for a 64-bit long or null value
          self.waitForLong(prompt, None, QadInputModeEnum.NONE)
-      elif field.type() == QVariant.Int: # si appresta ad attendere un integer o valore nullo     
+      elif field.type() == QVariant.Int: # is preparing to wait for an integer or null value
          self.waitForInt(prompt, None, QadInputModeEnum.NONE)
-      elif field.type() == QVariant.Bool: # si appresta ad attendere un boolean o valore nullo
+      elif field.type() == QVariant.Bool: # is preparing to wait for a boolean or null value
          self.waitForBool(prompt, None, QadInputModeEnum.NONE)
-      else: # si appresta ad attendere una stringa o valore nullo
+      else: # is preparing to wait for a null string or value
          self.waitForString(prompt, None, QadInputModeEnum.NONE)
-                  
+
       return True
-   
-      
+
+
    def run(self, msgMapTool = False, msg = None):
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
-      
+         return True # end command
+
       currLayer, errMsg = qad_layer.getCurrLayerEditable(self.plugIn.canvas, QgsWkbTypes.PointGeometry)
       if currLayer is None:
          self.showErr(errMsg)
-         return True # fine comando
+         return True # end command
 
       if qad_layer.isTextLayer(currLayer) == False:
          errMsg = QadMsg.translate("QAD", "\nCurrent layer is not a textual layer.")
          errMsg = errMsg + QadMsg.translate("QAD", "\nA textual layer is a vector punctual layer having a label and the symbol transparency no more than 10%.\n")
-         self.showErr(errMsg)         
-         return True # fine comando
+         self.showErr(errMsg)
+         return True # end command
 
       if  len(QadDimStyles.getDimListByLayer(currLayer)) > 0:
          errMsg = QadMsg.translate("QAD", "\nThe current layer belongs to a dimension style.\n")
          self.showErr(errMsg)
-         return True # fine comando
+         return True # end command
 
-               
+
       # =========================================================================
-      # RICHIESTA PUNTO DI INSERIMENTO
-      if self.step == 0: # inizio del comando
-         self.waitForPoint() # si appresta ad attendere un punto
+      # INSERT POINT REQUEST
+      if self.step == 0: # start of command
+         self.waitForPoint() # is preparing to wait for a point
          self.step = self.step + 1
          return False
-      
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA PUNTO DI INSERIMENTO
-      elif self.step == 1: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # éstato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool éstato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO INSERT POINT REQUEST
+      elif self.step == 1: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             pt = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             pt = msg
 
          self.insPt = QgsPointXY(pt)
          self.plugIn.setLastPoint(self.insPt)
-         
-         # se l'altezza testo dipende da un solo campo 
+
+         # if the text height depends on only one field
          sizeFldNames = qad_label.get_labelSizeFieldNames(currLayer)
          if len(sizeFldNames) == 1 and len(sizeFldNames[0]) > 0:
-            # si appresta ad attendere la scala                      
+            # prepares to wait for the ladder
             self.GetDistClass = QadGetDistClass(self.plugIn)
             prompt = QadMsg.translate("Command_TEXT", "Specify the text height <{0}>: ")
             self.GetDistClass.msg = prompt.format(str(self.hText))
@@ -228,20 +228,20 @@ class QadTEXTCommandClass(QadCommandClass):
             self.step = 2
             self.GetDistClass.run(msgMapTool, msg)
             return False
-         else: 
-            # se la rotazione dipende da un solo campo
+         else:
+            # if the rotation depends on only one field
             rotFldNames = qad_label.get_labelRotationFieldNames(currLayer)
             if len(rotFldNames) == 1 and len(rotFldNames[0]) > 0:
                if self.GetAngleClass is not None:
-                  del self.GetAngleClass                  
-               # si appresta ad attendere l'angolo di rotazione                      
+                  del self.GetAngleClass
+               # prepares to wait for the rotation angle
                self.GetAngleClass = QadGetAngleClass(self.plugIn)
                prompt = QadMsg.translate("Command_TEXT", "Specify the text rotation <{0}>: ")
                self.GetAngleClass.msg = prompt.format(str(qad_utils.toDegrees(self.rot)))
                self.GetAngleClass.angle = self.rot
-               self.GetAngleClass.startPt = self.insPt               
+               self.GetAngleClass.startPt = self.insPt
                self.step = 3
-               self.GetAngleClass.run(msgMapTool, msg)               
+               self.GetAngleClass.run(msgMapTool, msg)
                return False
             else:
                self.initLabelFields(currLayer)
@@ -250,9 +250,9 @@ class QadTEXTCommandClass(QadCommandClass):
                   return True
 
          return False
-      
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA ALTEZZA TESTO (da step = 1)
+      # RESPONSE TO THE TEXT HEIGHT REQUEST (from step = 1)
       elif self.step == 2:
          if self.GetDistClass.run(msgMapTool, msg) == True:
             if self.GetDistClass.dist is not None:
@@ -260,32 +260,32 @@ class QadTEXTCommandClass(QadCommandClass):
                self.plugIn.setLastHText(self.hText)
                del self.GetDistClass
                self.GetDistClass = None
-                
-               # se la rotazione dipende da un solo campo
+
+               # if the rotation depends on only one field
                rotFldNames = qad_label.get_labelRotationFieldNames(currLayer)
                if len(rotFldNames) == 1 and len(rotFldNames[0]) > 0:
                   if self.GetAngleClass is not None:
-                     del self.GetAngleClass                  
-                  # si appresta ad attendere l'angolo di rotazione                      
+                     del self.GetAngleClass
+                  # prepares to wait for the rotation angle
                   self.GetAngleClass = QadGetAngleClass(self.plugIn)
                   prompt = QadMsg.translate("Command_TEXT", "Specify the text rotation <{0}>: ")
                   self.GetAngleClass.msg = prompt.format(str(qad_utils.toDegrees(self.rot)))
                   self.GetAngleClass.angle = self.rot
-                  self.GetAngleClass.startPt = self.insPt               
+                  self.GetAngleClass.startPt = self.insPt
                   self.step = 3
-                  self.GetAngleClass.run(msgMapTool, msg)         
+                  self.GetAngleClass.run(msgMapTool, msg)
                   return False
                else:
                   self.initLabelFields(currLayer)
                   if self.waitForFieldValue() == False:
-                     self.addFeature(currLayer)               
+                     self.addFeature(currLayer)
                      return True
             else:
-               return True   
+               return True
          return False
-      
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA ROTAZIONE (da step = 1 o 2)
+      # RESPONSE TO THE ROTATION REQUEST (from step = 1 or 2)
       elif self.step == 3:
          if self.GetAngleClass.run(msgMapTool, msg) == True:
             if self.GetAngleClass.angle is not None:
@@ -294,24 +294,24 @@ class QadTEXTCommandClass(QadCommandClass):
                self.initLabelFields(currLayer)
                if self.waitForFieldValue() == False:
                   self.addFeature(currLayer)
-                  return True # fine comando               
+                  return True # end command
             else:
                return True
          return False
 
-      
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL VALORE DI UN CAMPO
-      elif self.step == 4: # dopo aver atteso un valore si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
+      # ANSWER TO THE REQUEST FOR THE VALUE OF A FIELD
+      elif self.step == 4: # after waiting for a value the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
             self.waitForFieldValue()
             return False
-         # il valore arriva come parametro della funzione
+         # the value comes as a function parameter
          self.labelFieldValues.append(msg)
-         self.labelFieldNamesNdx = self.labelFieldNamesNdx + 1 
+         self.labelFieldNamesNdx = self.labelFieldNamesNdx + 1
          if self.waitForFieldValue() == False:
             self.addFeature(currLayer)
-            return True # fine comando
-         
+            return True # end command
+
          return False
-         
+

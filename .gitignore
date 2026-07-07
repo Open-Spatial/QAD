@@ -1,0 +1,43 @@
+# Local agent/editor instructions
+/Agents.md
+/AGENTS.md
+
+# Python generated files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Build and package output
+build/
+dist/
+*.egg-info/
+.eggs/
+*.zip
+
+# IDE/editor metadata
+.settings/
+.project
+.pydevproject
+*.psproj
+.vscode/
+.idea/
+DevTools/
+Create_QAD_QT6_Zip.bat
+QAD_QT6.code-workspace
+
+# Local runtime/configuration
+auth.ini
+qad_debug.*
+
+# OS/editor noise
+Thumbs.db
+.DS_Store
+desktop.ini
+*.log
+*.tmp
+*.bak

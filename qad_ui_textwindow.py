@@ -21,7 +21,7 @@
 """
 
 
-from PyQt5 import QtCore, QtGui
+from qgis.PyQt import QtCore, QtGui
 from qgis.PyQt.QtWidgets import QWidget, QVBoxLayout, QMessageBox
 from .qad_msg import QadMsg
 
@@ -34,7 +34,7 @@ class Ui_QadTextWindow(object):
         QadTextWindow.resize(642, 193)
         QadTextWindow.setMinimumSize(100, 20)
         QadTextWindow.setMaximumSize(QtCore.QSize(524287, 524287))
-                
+
         self.retranslateUi(QadTextWindow)
         QtCore.QMetaObject.connectSlotsByName(QadTextWindow)
 
@@ -51,7 +51,7 @@ class Ui_QadCmdSuggestWindow(object):
         self.vboxlayout = QVBoxLayout(self.dockWidgetContents)
         self.vboxlayout.setObjectName("QadCmdsListWindowVBoxLayout")
         self.vboxlayout.setMargin(0)
-        QadCmdSuggestWindow.setLayout(self.vboxlayout)        
+        QadCmdSuggestWindow.setLayout(self.vboxlayout)
         QtCore.QMetaObject.connectSlotsByName(QadCmdSuggestWindow)
 
 

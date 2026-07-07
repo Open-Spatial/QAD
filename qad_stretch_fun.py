@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- funzioni per stirare oggetti grafici
- 
+ functions for stretching graphical objects
+
                               -------------------
         begin                : 2013-11-11
         copyright            : iiiii
@@ -42,38 +42,36 @@ from .qad_ellipse_arc import QadEllipseArc
 # isPtContainedForStretch
 # ===============================================================================
 def isPtContainedForStretch(point, containerGeom, tolerance=None):
+   """Helper function for stretch functions (stretchPoint and stretchQgsLineStringGeometry).
+      If containerGeom is a QgsGeometry object then it returns True if the point is spatially contained
+      from containerGeom geometry.
+      If containerGeom is a list of points then it returns True if the point is among those in the list.
    """
-   Funzione di ausilio per le funzioni di stretch (stretchPoint e stretchQgsLineStringGeometry).
-   Se containerGeom è un oggetto QgsGeometry allora ritorna True se il punto è contenuto a livello spaziale
-   dalla geometria containerGeom.
-   Se containerGeom è una lista di punti allora ritorna True se il punto è fra quelli della lista.
-   """      
-   if type(containerGeom) == QgsGeometry: # geometria   
+   if type(containerGeom) == QgsGeometry: # geometry
       return containerGeom.contains(point)
-   elif type(containerGeom) == list: # lista di punti
+   elif type(containerGeom) == list: # list of points
       if tolerance is None:
          myTolerance = QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2COINCIDENT"))
       else:
          myTolerance = tolerance
-      
+
       for containerPt in containerGeom:
-         if qad_utils.ptNear(containerPt, point, myTolerance): # se i punti sono sufficientemente vicini
+         if qad_utils.ptNear(containerPt, point, myTolerance): # if the points are sufficiently close
             return True
-   return False 
+   return False
 
 
 # ===============================================================================
 # stretchQadGeometry
 # ===============================================================================
 def stretchQadGeometry(geom, ptListToStretch, offsetX, offsetY):
+   """Stretch a qad entity in planar coordinates using grip points
+      geom = qad entity to stretch
+      ptListToStretch = list of geom points to stretch
+      offsetX = offsetX
+      offsetY = Y offset
    """
-   Stira una entità qad in coordinate piane mediante grip point
-   geom = entità qad da stirare
-   ptListToStretch = lista dei punti di geom da stirare
-   offsetX = spostamento X
-   offsetY = spostamento Y
-   """
-   if type(geom) == list: # entità composta da più geometrie
+   if type(geom) == list: # entity composed of multiple geometries
       res = []
       iSub = 0
       for subGeom in geom:
@@ -112,16 +110,15 @@ def stretchQadGeometry(geom, ptListToStretch, offsetX, offsetY):
 # stretchPoint
 # ===============================================================================
 def stretchPoint(point, containerGeom, offsetX, offsetY):
-   """
-   Restituisce un nuovo punto stirato se è contenuto in containerGeom
-   point = punto da stirare
-   containerGeom = può essere una QgsGeometry rappresentante un poligono contenente i punti di geom da stirare
-                   oppure una lista dei punti da stirare
-   offsetX = spostamento X
-   offsetY = spostamento Y
+   """Returns a new stretched point if it is contained in containerGeom
+      point = point to stretch
+      containerGeom = can be a QgsGeometry representing a polygon containing the geom points to stretch
+                      or a list of points to iron
+      offsetX = offsetX
+      offsetY = Y offset
    """
    stretchedGeom = QadPoint(point)
-   if isPtContainedForStretch(point, containerGeom): # se il punto è contenuto in containerGeom
+   if isPtContainedForStretch(point, containerGeom): # if the point is contained in containerGeom
       stretchedGeom.move(offsetX, offsetY)
 
    return stretchedGeom
@@ -131,13 +128,12 @@ def stretchPoint(point, containerGeom, offsetX, offsetY):
 # stretchMultiPoint
 # ===============================================================================
 def stretchMultiPoint(multiPoint, containerGeom, offsetX, offsetY):
-   """
-   Restituisce un nuovo multi punto stirato se è contenuto in containerGeom
-   point = punto da stirare
-   containerGeom = può essere una QgsGeometry rappresentante un poligono contenente i punti di geom da stirare
-                   oppure una lista dei punti da stirare
-   offsetX = spostamento X
-   offsetY = spostamento Y
+   """Returns a new stretched multi point if it is contained in containerGeom
+      point = point to stretch
+      containerGeom = can be a QgsGeometry representing a polygon containing the geom points to stretch
+                      or a list of points to iron
+      offsetX = offsetX
+      offsetY = Y offset
    """
    multiPointToStretch = multiPoint.copy()
    i = 0
@@ -154,34 +150,33 @@ def stretchMultiPoint(multiPoint, containerGeom, offsetX, offsetY):
 # stretchCircle
 # ===============================================================================
 def stretchCircle(circle, containerGeom, offsetX, offsetY):
-   """
-   Stira un cerchio usando i punti che sono contenuti in containerGeom
-   circle = cerchio da stirare
-   containerGeom = può essere una QgsGeometry rappresentante un poligono contenente i punti di geom da stirare
-                   oppure una lista dei punti da stirare
-   offsetX = spostamento X
-   offsetY = spostamento Y
+   """Stretch a circle using the points that are contained in containerGeom
+      circle = circle to stretch
+      containerGeom = can be a QgsGeometry representing a polygon containing the geom points to stretch
+                      or a list of points to iron
+      offsetX = offsetX
+      offsetY = Y offset
    """
 
    newCircle = circle.copy()
    newCenter = QgsPointXY(circle.center)
    newRadius = circle.radius
 
-   if isPtContainedForStretch(circle.center, containerGeom): # se il centro è contenuto in containerGeom
-      newCenter.set(circle.center.x() + offsetX, circle.center.y() + offsetY) # sposto il cerchio
+   if isPtContainedForStretch(circle.center, containerGeom): # if the center is contained in containerGeom
+      newCenter.set(circle.center.x() + offsetX, circle.center.y() + offsetY) # I move the circle
    else:
-      if type(containerGeom) == list: # lista di punti
+      if type(containerGeom) == list: # list of points
          for containerPt in containerGeom:
-            # whereIsPt ritorna -1 se il punto è interno, 0 se è sulla circonferenza, 1 se è esterno
+            # whereIsPt returns -1 if the point is internal, 0 if it is on the circumference, 1 if it is external
             if circle.whereIsPt(containerPt) == 0:
                newPt = QgsPointXY(containerPt.x() + offsetX, containerPt.y() + offsetY)
                newRadius = qad_utils.getDistance(circle.center, newPt)
-               break     
-      else: # geometria     
-         # ritorna i punti quadranti
+               break
+      else: # geometry
+         # returns the quadrant points
          quadrants = circle.getQuadrantPoints()
-         for quadrant in quadrants:         
-            if isPtContainedForStretch(quadrant, containerGeom): # se il quandrante è contenuto in containerGeom
+         for quadrant in quadrants:
+            if isPtContainedForStretch(quadrant, containerGeom): # if the quadrant is contained in containerGeom
                newPt = QgsPointXY(quadrant.x() + offsetX, quadrant.y() + offsetY)
                newRadius = qad_utils.getDistance(circle.center, newPt)
                break
@@ -193,17 +188,16 @@ def stretchCircle(circle, containerGeom, offsetX, offsetY):
 # stretchArc
 # ===============================================================================
 def stretchArc(arc, containerGeom, offsetX, offsetY):
-   """
-   Stira i punti di grip di un arco che sono contenuti in containerGeom
-   arc = arco da stirare
-   containerGeom = può essere una QgsGeometry rappresentante un poligono contenente i punti di geom da stirare
-                   oppure una lista dei punti da stirare
-   offsetX = spostamento X
-   offsetY = spostamento Y
+   """Stretch the grip points of an arc that are contained in containerGeom
+      arc = arc to stretch
+      containerGeom = can be a QgsGeometry representing a polygon containing the geom points to stretch
+                      or a list of points to iron
+      offsetX = offsetX
+      offsetY = Y offset
    """
    newArc = arc.copy()
-   
-   if isPtContainedForStretch(arc.center, containerGeom): # se il centro è contenuto in containerGeom
+
+   if isPtContainedForStretch(arc.center, containerGeom): # if the center is contained in containerGeom
       newArc.center.set(arc.center.x() + offsetX, arc.center.y() + offsetY)
    else:
       startPt = arc.getStartPt()
@@ -212,16 +206,16 @@ def stretchArc(arc, containerGeom, offsetX, offsetY):
       newStartPt = QgsPointXY(startPt)
       newEndPt = QgsPointXY(endPt)
       newMiddlePt = QgsPointXY(middlePt)
-      
-      if isPtContainedForStretch(startPt, containerGeom): # se il punto iniziale è contenuto in containerGeom
+
+      if isPtContainedForStretch(startPt, containerGeom): # if the starting point is contained in containerGeom
          newStartPt.set(startPt.x() + offsetX, startPt.y() + offsetY)
-   
-      if isPtContainedForStretch(endPt, containerGeom): # se il punto finale è contenuto in containerGeom
+
+      if isPtContainedForStretch(endPt, containerGeom): # if the end point is contained in containerGeom
          newEndPt.set(endPt.x() + offsetX, endPt.y() + offsetY)
-   
-      if isPtContainedForStretch(middlePt, containerGeom): # se il punto medio è contenuto in containerGeom
+
+      if isPtContainedForStretch(middlePt, containerGeom): # if the midpoint is contained in containerGeom
          newMiddlePt.set(middlePt.x() + offsetX, middlePt.y() + offsetY)
-      
+
       if newArc.reversed:
          if newArc.fromStartSecondEndPts(newEndPt, newMiddlePt, newStartPt) == False:
             return None
@@ -236,49 +230,48 @@ def stretchArc(arc, containerGeom, offsetX, offsetY):
 # stretchEllipse
 # ===============================================================================
 def stretchEllipse(ellipse, containerGeom, offsetX, offsetY):
-   """
-   Stira i punti di grip di una ellisse che sono contenuti in containerGeom
-   ellipse = ellisse da stirare
-   containerGeom = può essere una QgsGeometry rappresentante un poligono contenente i punti di geom da stirare
-                   oppure una lista dei punti da stirare
-   offsetX = spostamento X
-   offsetY = spostamento Y
+   """Stretch the grip points of an ellipse that are contained in containerGeom
+      ellipse = ellipse to stretch
+      containerGeom = can be a QgsGeometry representing a polygon containing the geom points to stretch
+                      or a list of points to iron
+      offsetX = offsetX
+      offsetY = Y offset
    """
    newCenter = QgsPointXY(ellipse.center)
    newMajorAxisFinalPt = QgsPointXY(ellipse.majorAxisFinalPt)
-   a = qad_utils.getDistance(ellipse.center, ellipse.majorAxisFinalPt) # semiasse maggiore
-   b = a * ellipse.axisRatio # semiasse minore
+   a = qad_utils.getDistance(ellipse.center, ellipse.majorAxisFinalPt) # semi-major axis
+   b = a * ellipse.axisRatio # semi-minor axis
    angle = ellipse.getRotation()
    newAxisRatio = ellipse.axisRatio
-      
-   if isPtContainedForStretch(ellipse.center, containerGeom): # se il centro è contenuto in containerGeom
+
+   if isPtContainedForStretch(ellipse.center, containerGeom): # if the center is contained in containerGeom
       newCenter.set(ellipse.center.x() + offsetX, ellipse.center.y() + offsetY)
       newMajorAxisFinalPt.set(ellipse.majorAxisFinalPt.x() + offsetX, ellipse.majorAxisFinalPt.y() + offsetY)
    else:
-      # ritorna i punti quadranti: partendo da majorAxisFinalPt in ordine antiorario
+      # returns the quadrant points: starting from majorAxisFinalPt in counterclockwise order
       quadrants = ellipse.getQuadrantPoints()
       majorAxisFinalPt1 = quadrants[0]
       majorAxisFinalPt2 = quadrants[2]
       minorAxisFinalPt1 = quadrants[1]
       minorAxisFinalPt2 = quadrants[3]
-      
-      if isPtContainedForStretch(majorAxisFinalPt1, containerGeom): # se il quandrante è contenuto in containerGeom
+
+      if isPtContainedForStretch(majorAxisFinalPt1, containerGeom): # if the quadrant is contained in containerGeom
          pt = QgsPointXY(majorAxisFinalPt1.x() + offsetX, majorAxisFinalPt1.y() + offsetY)
-         newA = qad_utils.getDistance(ellipse.center, pt) # nuovo semiasse maggiore
+         newA = qad_utils.getDistance(ellipse.center, pt) # nuovo semi-major axis
          newMajorAxisFinalPt = qad_utils.getPolarPointByPtAngle(ellipse.center, angle, newA)
          newAxisRatio = b / newA
-      elif isPtContainedForStretch(majorAxisFinalPt2, containerGeom): # se il quandrante è contenuto in containerGeom
+      elif isPtContainedForStretch(majorAxisFinalPt2, containerGeom): # if the quadrant is contained in containerGeom
          pt = QgsPointXY(majorAxisFinalPt2.x() + offsetX, majorAxisFinalPt2.y() + offsetY)
-         newA = qad_utils.getDistance(ellipse.center, pt) # nuovo semiasse maggiore
+         newA = qad_utils.getDistance(ellipse.center, pt) # nuovo semi-major axis
          newMajorAxisFinalPt = qad_utils.getPolarPointByPtAngle(ellipse.center, angle, newA)
          newAxisRatio = b / newA
-      elif isPtContainedForStretch(minorAxisFinalPt1, containerGeom): # se il quandrante è contenuto in containerGeom
+      elif isPtContainedForStretch(minorAxisFinalPt1, containerGeom): # if the quadrant is contained in containerGeom
          pt = QgsPointXY(minorAxisFinalPt1.x() + offsetX, minorAxisFinalPt1.y() + offsetY)
-         newB = qad_utils.getDistance(ellipse.center, pt) # nuovo semiasse minore
+         newB = qad_utils.getDistance(ellipse.center, pt) # nuovo semi-minor axis
          newAxisRatio = newB / a
-      elif isPtContainedForStretch(minorAxisFinalPt2, containerGeom): # se il quandrante è contenuto in containerGeom
+      elif isPtContainedForStretch(minorAxisFinalPt2, containerGeom): # if the quadrant is contained in containerGeom
          pt = QgsPointXY(minorAxisFinalPt2.x() + offsetX, minorAxisFinalPt2.y() + offsetY)
-         newB = qad_utils.getDistance(ellipse.center, pt) # nuovo semiasse minore
+         newB = qad_utils.getDistance(ellipse.center, pt) # nuovo semi-minor axis
          newAxisRatio = newB / a
 
    newEllipse = QadEllipse()
@@ -289,59 +282,58 @@ def stretchEllipse(ellipse, containerGeom, offsetX, offsetY):
 # stretchEllipseArc
 # ===============================================================================
 def stretchEllipseArc(ellipseArc, containerGeom, offsetX, offsetY):
-   """
-   Stira i punti di grip di un arco di ellisse che sono contenuti in containerGeom
-   ellipseArc = arco di ellisse da stirare
-   containerGeom = può essere una QgsGeometry rappresentante un poligono contenente i punti di geom da stirare
-                   oppure una lista dei punti da stirare
-   offsetX = spostamento X
-   offsetY = spostamento Y
+   """Stretch the grip points of an ellipse arc that are contained in containerGeom
+      ellipseArc = ellipse arc to stretch
+      containerGeom = can be a QgsGeometry representing a polygon containing the geom points to stretch
+                      or a list of points to iron
+      offsetX = offsetX
+      offsetY = Y offset
    """
    newCenter = QgsPointXY(ellipseArc.center)
    newMajorAxisFinalPt = QgsPointXY(ellipseArc.majorAxisFinalPt)
-   a = qad_utils.getDistance(ellipseArc.center, ellipseArc.majorAxisFinalPt) # semiasse maggiore
-   b = a * ellipseArc.axisRatio # semiasse minore
+   a = qad_utils.getDistance(ellipseArc.center, ellipseArc.majorAxisFinalPt) # semi-major axis
+   b = a * ellipseArc.axisRatio # semi-minor axis
    angle = ellipseArc.getRotation()
    startPt = ellipseArc.getStartPt()
    endPt = ellipseArc.getEndPt()
    newAxisRatio = ellipseArc.axisRatio
    newStartAngle = ellipseArc.startAngle
    newEndAngle = ellipseArc.endAngle
-      
-   if isPtContainedForStretch(ellipseArc.center, containerGeom): # se il centro è contenuto in containerGeom
+
+   if isPtContainedForStretch(ellipseArc.center, containerGeom): # if the center is contained in containerGeom
       newCenter.set(ellipseArc.center.x() + offsetX, ellipseArc.center.y() + offsetY)
       newMajorAxisFinalPt.set(ellipseArc.majorAxisFinalPt.x() + offsetX, ellipseArc.majorAxisFinalPt.y() + offsetY)
    else:
-      # ritorna i punti quadranti: partendo da majorAxisFinalPt in ordine antiorario
+      # returns the quadrant points: starting from majorAxisFinalPt in counterclockwise order
       quadrants = ellipseArc.getQuadrantPoints()
       majorAxisFinalPt1 = quadrants[0]
       majorAxisFinalPt2 = quadrants[2]
       minorAxisFinalPt1 = quadrants[1]
       minorAxisFinalPt2 = quadrants[3]
-      
-      if majorAxisFinalPt1 is not None and isPtContainedForStretch(majorAxisFinalPt1, containerGeom): # se il quandrante è contenuto in containerGeom
+
+      if majorAxisFinalPt1 is not None and isPtContainedForStretch(majorAxisFinalPt1, containerGeom): # if the quadrant is contained in containerGeom
          pt = QgsPointXY(majorAxisFinalPt1.x() + offsetX, majorAxisFinalPt1.y() + offsetY)
-         newA = qad_utils.getDistance(ellipseArc.center, pt) # nuovo semiasse maggiore
+         newA = qad_utils.getDistance(ellipseArc.center, pt) # nuovo semi-major axis
          newMajorAxisFinalPt = qad_utils.getPolarPointByPtAngle(ellipseArc.center, angle, newA)
          newAxisRatio = b / newA
-      elif majorAxisFinalPt2 is not None and isPtContainedForStretch(majorAxisFinalPt2, containerGeom): # se il quandrante è contenuto in containerGeom
+      elif majorAxisFinalPt2 is not None and isPtContainedForStretch(majorAxisFinalPt2, containerGeom): # if the quadrant is contained in containerGeom
          pt = QgsPointXY(majorAxisFinalPt2.x() + offsetX, majorAxisFinalPt2.y() + offsetY)
-         newA = qad_utils.getDistance(ellipseArc.center, pt) # nuovo semiasse maggiore
+         newA = qad_utils.getDistance(ellipseArc.center, pt) # nuovo semi-major axis
          newMajorAxisFinalPt = qad_utils.getPolarPointByPtAngle(ellipseArc.center, angle, newA)
          newAxisRatio = b / newA
-      elif minorAxisFinalPt1 is not None and isPtContainedForStretch(minorAxisFinalPt1, containerGeom): # se il quandrante è contenuto in containerGeom
+      elif minorAxisFinalPt1 is not None and isPtContainedForStretch(minorAxisFinalPt1, containerGeom): # if the quadrant is contained in containerGeom
          pt = QgsPointXY(minorAxisFinalPt1.x() + offsetX, minorAxisFinalPt1.y() + offsetY)
-         newB = qad_utils.getDistance(ellipseArc.center, pt) # nuovo semiasse minore
+         newB = qad_utils.getDistance(ellipseArc.center, pt) # nuovo semi-minor axis
          newAxisRatio = newB / a
-      elif minorAxisFinalPt2 is not None and isPtContainedForStretch(minorAxisFinalPt2, containerGeom): # se il quandrante è contenuto in containerGeom
+      elif minorAxisFinalPt2 is not None and isPtContainedForStretch(minorAxisFinalPt2, containerGeom): # if the quadrant is contained in containerGeom
          pt = QgsPointXY(minorAxisFinalPt2.x() + offsetX, minorAxisFinalPt2.y() + offsetY)
-         newB = qad_utils.getDistance(ellipseArc.center, pt) # nuovo semiasse minore
+         newB = qad_utils.getDistance(ellipseArc.center, pt) # nuovo semi-minor axis
          newAxisRatio = newB / a
-      elif isPtContainedForStretch(startPt, containerGeom): # se il punto iniziale è contenuto in containerGeom
+      elif isPtContainedForStretch(startPt, containerGeom): # if the starting point is contained in containerGeom
          newStartPt = QgsPointXY()
          newStartPt.set(startPt.x() + offsetX, startPt.y() + offsetY)
          newStartAngle = qad_utils.getAngleBy2Pts(ellipseArc.center, newStartPt) - angle
-      elif isPtContainedForStretch(endPt, containerGeom): # se il punto finale è contenuto in containerGeom
+      elif isPtContainedForStretch(endPt, containerGeom): # if the end point is contained in containerGeom
          newEndPt = QgsPointXY()
          newEndPt.set(endPt.x() + offsetX, endPt.y() + offsetY)
          newEndAngle = qad_utils.getAngleBy2Pts(ellipseArc.center, newEndPt) - angle
@@ -354,26 +346,25 @@ def stretchEllipseArc(ellipseArc, containerGeom, offsetX, offsetY):
 # stretchLine
 # ===============================================================================
 def stretchLine(line, containerGeom, offsetX, offsetY):
-   """
-   Stira i punti di grip di una qadLine che sono contenuti in containerGeom
-   line = geometria da stirare
-   containerGeom = può essere una QgsGeometry rappresentante un poligono contenente i punti di geom da stirare
-                   oppure una lista dei punti da stirare
-   offsetX = spostamento X
-   offsetY = spostamento Y
+   """Stretch the grip points of a qadLine that are contained in containerGeom
+      line = geometry to stretch
+      containerGeom = can be a QgsGeometry representing a polygon containing the geom points to stretch
+                      or a list of points to iron
+      offsetX = offsetX
+      offsetY = Y offset
    """
    lineToStretch = line.copy()
-      
+
    pt = lineToStretch.getStartPt()
-   if isPtContainedForStretch(pt, containerGeom): # se il punto è contenuto in containerGeom
-      # cambio punto iniziale        
+   if isPtContainedForStretch(pt, containerGeom): # if the point is contained in containerGeom
+      # starting point change
       pt.setX(pt.x() + offsetX)
       pt.setY(pt.y() + offsetY)
       lineToStretch.setStartPt(pt)
-      
+
    pt = lineToStretch.getEndPt()
-   if isPtContainedForStretch(pt, containerGeom): # se il punto è contenuto in containerGeom
-      # cambio punto finale
+   if isPtContainedForStretch(pt, containerGeom): # if the point is contained in containerGeom
+      # end point change
       pt.setX(pt.x() + offsetX)
       pt.setY(pt.y() + offsetY)
       lineToStretch.setEndPt(pt)
@@ -385,18 +376,17 @@ def stretchLine(line, containerGeom, offsetX, offsetY):
 # stretchPolyline
 # ===============================================================================
 def stretchPolyline(polyline, containerGeom, offsetX, offsetY):
-   """
-   Crea una nuova polyline stirando i punti di grip che sono contenuti in containerGeom
-   polyline = polilinea da stirare
-   containerGeom = può essere una QgsGeometry rappresentante un poligono contenente i punti di geom da stirare
-                   oppure una lista dei punti da stirare
-   offsetX = spostamento X
-   offsetY = spostamento Y
+   """Create a new polyline by stretching the grip points that are contained in containerGeom
+      polyline = polyline to stretch
+      containerGeom = can be a QgsGeometry representing a polygon containing the geom points to stretch
+                      or a list of points to iron
+      offsetX = offsetX
+      offsetY = Y offset
    """
    polylineToStretch = polyline.copy()
 
-   pt = polylineToStretch.getCentroid() # verifico se polilinea ha un centroide
-   if pt is not None and isPtContainedForStretch(pt, containerGeom): # se il punto è contenuto in containerGeom
+   pt = polylineToStretch.getCentroid() # check if polyline has a centroid
+   if pt is not None and isPtContainedForStretch(pt, containerGeom): # if the point is contained in containerGeom
       polylineToStretch.move(offsetX, offsetY)
    else:
       i = 0
@@ -406,10 +396,10 @@ def stretchPolyline(polyline, containerGeom, offsetX, offsetY):
          if (newLinearObject is not None):
             polylineToStretch.insert(i, newLinearObject)
             polylineToStretch.remove(i + 1)
-   
+
          i = i + 1
 
-      # verifico e correggo i versi delle parti della polilinea 
+      # verifico e correggo i versi delle parti della polilinea
       polylineToStretch.reverseCorrection()
 
    return polylineToStretch
@@ -419,23 +409,22 @@ def stretchPolyline(polyline, containerGeom, offsetX, offsetY):
 # stretchMultiLinearObj
 # ===============================================================================
 def stretchMultiLinearObj(multiLinear, containerGeom, offsetX, offsetY):
-   """
-   Crea un nuovo multi lineare stirando i punti di grip che sono contenuti in containerGeom
-   polygon = multi lineare da stirare
-   containerGeom = può essere una QgsGeometry rappresentante un poligono contenente i punti di geom da stirare
-                   oppure una lista dei punti da stirare
-   offsetX = spostamento X
-   offsetY = spostamento Y
+   """Create a new linear multi by stretching the grip points that are contained in containerGeom
+      polygon = multi linear to stretch
+      containerGeom = can be a QgsGeometry representing a polygon containing the geom points to stretch
+                      or a list of points to iron
+      offsetX = offsetX
+      offsetY = Y offset
    """
    multiLinearToStretch = multiLinear.copy()
-   
+
    i = 0
    while i < multiLinearToStretch.qty():
       linearObject = multiLinearToStretch.getLinearObjectAt(i)
       newLinearObject = stretchQadGeometry(linearObject, containerGeom, offsetX, offsetY)
       multiLinearToStretch.insert(i, newLinearObject)
       multiLinearToStretch.remove(i + 1)
-      
+
       i = i + 1
 
    return multiLinearToStretch
@@ -445,18 +434,17 @@ def stretchMultiLinearObj(multiLinear, containerGeom, offsetX, offsetY):
 # stretchPolygon
 # ===============================================================================
 def stretchPolygon(polygon, containerGeom, offsetX, offsetY):
-   """
-   Crea un nuovo poligono stirando i punti di grip che sono contenuti in containerGeom
-   polygon = poligono da stirare
-   containerGeom = può essere una QgsGeometry rappresentante un poligono contenente i punti di geom da stirare
-                   oppure una lista dei punti da stirare
-   offsetX = spostamento X
-   offsetY = spostamento Y
+   """Create a new polygon by stretching the grip points that are contained in containerGeom
+      polygon = polygon to stretch
+      containerGeom = can be a QgsGeometry representing a polygon containing the geom points to stretch
+                      or a list of points to iron
+      offsetX = offsetX
+      offsetY = Y offset
    """
    polygonToStretch = polygon.copy()
 
-   pt = polygonToStretch.getCentroid() # verifico se polilinea ha un centroide
-   if pt is not None and isPtContainedForStretch(pt, containerGeom): # se il punto è contenuto in containerGeom
+   pt = polygonToStretch.getCentroid() # check if polyline has a centroid
+   if pt is not None and isPtContainedForStretch(pt, containerGeom): # if the point is contained in containerGeom
          polygonToStretch.move(offsetX, offsetY)
    else:
       i = 0
@@ -465,7 +453,7 @@ def stretchPolygon(polygon, containerGeom, offsetX, offsetY):
          newClosedObject = stretchQadGeometry(closedObject, containerGeom, offsetX, offsetY)
          polygonToStretch.insert(i, newClosedObject)
          polygonToStretch.remove(i + 1)
-         
+
          i = i + 1
 
    return polygonToStretch
@@ -475,18 +463,17 @@ def stretchPolygon(polygon, containerGeom, offsetX, offsetY):
 # stretchMultiPolygon
 # ===============================================================================
 def stretchMultiPolygon(multiPolygon, containerGeom, offsetX, offsetY):
-   """
-   Crea un nuovo multi poligono stirando i punti di grip che sono contenuti in containerGeom
-   multiPolygon = multi poligono da stirare
-   containerGeom = può essere una QgsGeometry rappresentante un poligono contenente i punti di geom da stirare
-                   oppure una lista dei punti da stirare
-   offsetX = spostamento X
-   offsetY = spostamento Y
+   """Create a new multi-polygon by stretching the grip points that are contained in containerGeom
+      multiPolygon = multi polygon to stretch
+      containerGeom = can be a QgsGeometry representing a polygon containing the geom points to stretch
+                      or a list of points to iron
+      offsetX = offsetX
+      offsetY = Y offset
    """
    multiPolygonToStretch = multiPolygon.copy()
 
-   pt = multiPolygonToStretch.getCentroid() # verifico se polilinea ha un centroide
-   if pt is not None and isPtContainedForStretch(pt, containerGeom): # se il punto è contenuto in containerGeom
+   pt = multiPolygonToStretch.getCentroid() # check if polyline has a centroid
+   if pt is not None and isPtContainedForStretch(pt, containerGeom): # if the point is contained in containerGeom
          multiPolygonToStretch.move(offsetX, offsetY)
    else:
       i = 0
@@ -495,7 +482,7 @@ def stretchMultiPolygon(multiPolygon, containerGeom, offsetX, offsetY):
          newPolygon = stretchQadGeometry(polygon, containerGeom, offsetX, offsetY)
          multiPolygonToStretch.insert(i, newPolygon)
          multiPolygonToStretch.remove(i + 1)
-            
+
          i = i + 1
 
    return multiPolygonToStretch

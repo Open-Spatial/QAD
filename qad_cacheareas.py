@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per gestire in modalità cache le aree di un layer
- 
+ class to manage layer areas in cache mode
+
                               -------------------
         begin                : 2013-03-08
         copyright            : iiiii
@@ -36,11 +36,9 @@ from .qad_layer import createMemoryLayer
 # QadLayerCacheGeoms class.
 # ===============================================================================
 class QadLayerCacheGeoms():
-   """
-   Classe che gestisce la cache delle geometrie di un layer
-   """
-      
-   
+   """Class that manages the geometry cache of a layer"""
+
+
    # ============================================================================
    # __init__
    # ============================================================================
@@ -48,7 +46,7 @@ class QadLayerCacheGeoms():
       self.layer = layer
       self.cacheLayer = None
       self.IsEmpty = True
-      # creo un layer temporaneo in memoria
+      # create a temporary layer in memory
       self.__create_internal_layer()
 
       self.layer.featureAdded.connect(self.onFeatureAdded)
@@ -59,17 +57,17 @@ class QadLayerCacheGeoms():
    def __create_internal_layer(self):
       if self.cacheLayer is not None:
          del self.cacheLayer
-      # creo un layer temporaneo in memoria
+      # create a temporary layer in memory
       self.cacheLayer = createMemoryLayer("QadLayerCacheArea", getStrLayerGeomType(self.layer), self.layer.crs())
-      
+
       provider = self.cacheLayer.dataProvider()
       provider.addAttributes([QgsField("index", QMetaType.Int, "Int")])
       self.cacheLayer.updateFields()
-      
+
       if provider.capabilities() & QgsVectorDataProvider.CreateSpatialIndex:
          provider.createSpatialIndex()
 
-   
+
    # ============================================================================
    # __del__
    # ============================================================================
@@ -84,10 +82,10 @@ class QadLayerCacheGeoms():
    # insertFeature
    # ============================================================================
    def insertFeature(self, feature):
-      # inserisce questa feature nella cache
+      # insert this feature into the cache
       if self.cacheLayer.startEditing() == False:
          return False
-      
+
       geom = feature.geometry()
       if geom is None:
          return
@@ -112,14 +110,14 @@ class QadLayerCacheGeoms():
    def insertFeatures(self, features):
       if len(features) == 0:
          return
-      
-      # inserisce questa feature nella cache
+
+      # insert this feature into the cache
       if self.cacheLayer.startEditing() == False:
          return False
 
       newFeature = QgsFeature()
       newFeature.initAttributes(1)
-      
+
       for feature in features:
          geom = feature.geometry()
          if geom is None:
@@ -130,12 +128,12 @@ class QadLayerCacheGeoms():
             self.cacheLayer.rollBack()
             return False
 
-      
+
       if self.cacheLayer.commitChanges():
          self.IsEmpty = False
          return True
       else:
-         # prova a vedere i messaggi di errore con il debug self.cacheLayer.commitErrors()
+         # try to see error messages with self.cacheLayer.commitErrors() debugging
          self.cacheLayer.rollBack()
          return False
 
@@ -144,7 +142,7 @@ class QadLayerCacheGeoms():
    # __deleteFeature
    # ============================================================================
    def __deleteFeature(self, fid):
-      # inserisce questa feature nella cache
+      # insert this feature into the cache
       if self.cacheLayer.startEditing() == False:
          return False
 
@@ -161,17 +159,17 @@ class QadLayerCacheGeoms():
    def __updateFeature(self, fid, geom):
       feature = QgsFeature()
       if self.cacheLayer.getFeatures(QgsFeatureRequest().setFilterFid(fid)).nextFeature(feature):
-         # aggiorna la geometria di questa feature nella cache
+         # updates the geometry of this feature in the cache
          feature.setGeometry(geom)
 
          if self.cacheLayer.startEditing() == False:
             return False
-         
+
          if self.cacheLayer.updateFeature(feature):
             return self.cacheLayer.commitChanges()
          else:
             self.cacheLayer.rollBack()
-      
+
       return False
 
 
@@ -186,7 +184,7 @@ class QadLayerCacheGeoms():
       featureIterator = self.cacheLayer.getFeatures(getFeatureRequest(rect, True))
       for feature in featureIterator:
          featureList.append(QgsFeature(feature))
-      
+
       return featureList
 
 
@@ -205,8 +203,8 @@ class QadLayerCacheGeoms():
       if self.layer.getFeatures(QgsFeatureRequest().setFilterFid(fid)).nextFeature(feature):
          return self.insertFeature(feature)
       return False
-   
-   
+
+
    # ============================================================================
    # onFeatureDeleted
    # ============================================================================
@@ -224,7 +222,7 @@ class QadLayerCacheGeoms():
       feature = QgsFeature()
       if self.cacheLayer.getFeatures(QgsFeatureRequest().setFilterFid(fid)).nextFeature(feature):
          return self.__updateFeature(feature.id(), geom)
-      
+
       return False
 
 
@@ -232,9 +230,7 @@ class QadLayerCacheGeoms():
 # QadLayerCacheGeomsDict class.
 # ===============================================================================
 class QadLayerCacheGeomsDict():
-   """
-   Classe che gestisce un dizionario delle chache delle geometrie dei layer
-   """
+   """Class that manages a dictionary of layer geometry caches"""
 
 
    # ============================================================================
@@ -242,20 +238,20 @@ class QadLayerCacheGeomsDict():
    # ============================================================================
    def __init__(self, canvas = None):
       self.canvas = canvas
-      
+
       self.layersToCheck = None
       self.checkPointLayer = True
       self.checkLineLayer = True
       self.checkPolygonLayer = True
       self.onlyEditableLayers = False
-      
-      self.layerCacheAreaDict = dict() # dizionario delle chache delle aree dei layer
+
+      self.layerCacheAreaDict = dict() # layer area cache dictionary
       if self.canvas is not None:
          self.canvas.extentsChanged.connect(self.onExtentsChanged)
          self.canvas.layersChanged.connect(self.onLayersChanged)
          #self.canvas.layerStyleOverridesChanged.connect(self.onLayerStyleOverridesChanged) da qgis 2.12
 
-   
+
    # ============================================================================
    # __del__
    # ============================================================================
@@ -271,9 +267,9 @@ class QadLayerCacheGeomsDict():
    # insertFeature
    # ============================================================================
    def insertFeature(self, layer, feature):
-      # inserisce questa feature nella cache
+      # insert this feature into the cache
       layerId = layer.id()
-      # verifica se layer esiste già nel dizionario
+      # checks if layer already exists in the dictionary
       if layerId not in self.layerCacheAreaDict:
          cacheArea = QadLayerCacheGeoms(layer)
          self.layerCacheAreaDict[layerId] = cacheArea
@@ -288,9 +284,9 @@ class QadLayerCacheGeomsDict():
    def insertFeatures(self, layer, features):
       if len(features) == 0:
          return True
-      # inserisce questa feature nella cache
+      # insert this feature into the cache
       layerId = layer.id()
-      # verifica se layer esiste già nel dizionario
+      # checks if layer already exists in the dictionary
       if layerId not in self.layerCacheAreaDict:
          cacheArea = QadLayerCacheGeoms(layer)
          self.layerCacheAreaDict[layerId] = cacheArea
@@ -305,53 +301,52 @@ class QadLayerCacheGeomsDict():
    def refreshOnMapCanvasExtent(self, layersToCheck = None, \
                                 checkPointLayer = True, checkLineLayer = True, checkPolygonLayer = True, \
                                 onlyEditableLayers = False):
-      """
-      la funzione aggiorna la cache usando l'estensione dello schermo corrente.
-      layersToCheck = opzionale, lista dei layer in cui cercare
-      checkPointLayer = opzionale, considera i layer di tipo punto
-      checkLineLayer = opzionale, considera i layer di tipo linea
-      checkPolygonLayer = opzionale, considera i layer di tipo poligono
-      onlyEditableLayers = per cercare solo nei layer modificabili
+      """the function updates the cache using the current screen extent.
+            layersToCheck = optional, list of layers to searc
+            checkPointLayer = optional, consider point layers
+            checkLineLayer = optional, consider line layers
+            checkPolygonLayer = optional, consider polygon-type layers
+            onlyEditableLayers = to searc only editable layers
       """
       if self.canvas is None:
          return False
-      
+
       self.layersToCheck = layersToCheck
       self.checkPointLayer = checkPointLayer
       self.checkLineLayer = checkLineLayer
       self.checkPolygonLayer = checkPolygonLayer
       self.onlyEditableLayers = onlyEditableLayers
-      
+
       if checkPointLayer == False and checkLineLayer == False and checkPolygonLayer == False:
          return True
 
       boundBox = self.canvas.extent() # in map coordinate
 
       if layersToCheck is None:
-         # Tutti i layer visibili
+         # All layers visible
          _layers = self.canvas.layers()
       else:
-         # solo la lista passata come parametro
+         # only the list passed as a parameter
          _layers = layersToCheck
-      
-      for layer in _layers: # ciclo sui layer
-         # considero solo i layer vettoriali che sono filtrati per tipo
+
+      for layer in _layers: # cycle on layers
+         # I only consider vector layers that are filtered by type
          if (layer.type() == QgsMapLayer.VectorLayer) and \
              ((layer.geometryType() == QgsWkbTypes.PointGeometry and checkPointLayer == True) or \
               (layer.geometryType() == QgsWkbTypes.LineGeometry and checkLineLayer == True) or \
               (layer.geometryType() == QgsWkbTypes.PolygonGeometry and checkPolygonLayer == True)) and \
-              (onlyEditableLayers == False or layer.isEditable()):                      
+              (onlyEditableLayers == False or layer.isEditable()):
 
-            # se il layer non è visibile a questa scala
+            # if the layer is not visible at this scale
             if layer.hasScaleBasedVisibility() and \
                (self.canvas.mapSettings().scale() > layer.minimumScale() or self.canvas.mapSettings().scale() < layer.maximumScale()):
                continue
 
-            rect = self.canvas.mapSettings().mapToLayerCoordinates(layer, boundBox) # map to layer coordinate
-               
+            rect = self.canvas.mapSettings().mapToLayerCoordinates(layer, boundBox) # map to layer coordinates
+
             if self.refreshOnRectOnLayer(layer, rect) == False:
                return False
-            
+
       return True
 
 
@@ -364,11 +359,11 @@ class QadLayerCacheGeomsDict():
       feature = QgsFeature()
       for feature in featureIterator:
          featureList.append(QgsFeature(feature))
-   
-      # non ho trovato oggetti quindi lo segno in cache
+
+      # I didn't find any objects so I marked it in cache
       return self.insertFeatures(layer, featureList)
 
-   
+
    # ============================================================================
    # onExtentsChanged
    # ============================================================================
@@ -394,14 +389,14 @@ class QadLayerCacheGeomsDict():
       self.refreshOnMapCanvasExtent(self.layersToCheck, \
                                     self.checkPointLayer, self.checkLineLayer, self.checkPolygonLayer, \
                                     self.onlyEditableLayers)
-      
-      
+
+
    # ============================================================================
    # getFeatures
    # ============================================================================
    def getFeatures(self, layer, rect):
       layerId = layer.id()
-      # verifica se layer esiste già nel dizionario
+      # checks if layer already exists in the dictionary
       if layerId in self.layerCacheAreaDict:
          return self.layerCacheAreaDict[layerId].getFeatures(rect)
       else:
@@ -410,7 +405,7 @@ class QadLayerCacheGeomsDict():
 
 
 ################################
-# funzioni generiche
+# generic functions
 
 
 # ============================================================================
@@ -428,10 +423,10 @@ def getFeatureRequest(rect, SubsetOfAttribute):
 # getStrLayerGeomType
 # ===============================================================================
 def getStrLayerGeomType(layer):
-   wkbTypeLayer = layer.wkbType()   
+   wkbTypeLayer = layer.wkbType()
    if wkbTypeLayer == QgsWkbTypes.NoGeometry:
       return "NoGeometry"
-   
+
    gType = layer.geometryType()
    if QgsWkbTypes.isMultiType(wkbTypeLayer) == False:
       if gType == QgsWkbTypes.PointGeometry:
@@ -448,4 +443,4 @@ def getStrLayerGeomType(layer):
       elif gType == QgsWkbTypes.PolygonGeometry:
          return "MultiPolygon"
 
-   return "NoGeometry"     
+   return "NoGeometry"

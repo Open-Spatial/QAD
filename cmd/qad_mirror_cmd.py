@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin ok
 
- comando MIRROR per spostare oggetti
- 
+ MIRROR command to mirror objects
+
                               -------------------
         begin                : 2013-12-11
         copyright            : iiiii
@@ -41,13 +41,13 @@ from ..qad_entity import QadEntityTypeEnum, QadCacheEntitySet, QadCacheEntitySet
 from ..qad_multi_geom import fromQadGeomToQgsGeom
 from ..qad_dim import QadDimStyles, appendDimEntityIfNotExisting, QadDimEntity
 
-# Classe che gestisce il comando MIRROR
+# Class that manages the MIRROR command
 class QadMIRRORCommandClass(QadCommandClass):
-   
+
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadMIRRORCommandClass(self.plugIn)
-   
+
    def getName(self):
       return QadMsg.translate("Command_list", "MIRROR")
 
@@ -61,9 +61,9 @@ class QadMIRRORCommandClass(QadCommandClass):
       return QIcon(":/plugins/qad/icons/mirror.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando      
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_MIRROR", "Creates a mirrored copy of selected objects.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
       self.SSGetClass = QadSSGetClass(plugIn)
@@ -79,7 +79,7 @@ class QadMIRRORCommandClass(QadCommandClass):
 
 
    def getPointMapTool(self, drawMode = QadGetPointDrawModeEnum.NONE):
-      if self.step == 0: # quando si é in fase di selezione entità
+      if self.step == 0: # when you are in the entity selection phase
          return self.SSGetClass.getPointMapTool()
       else:
          if (self.plugIn is not None):
@@ -91,7 +91,7 @@ class QadMIRRORCommandClass(QadCommandClass):
 
 
    def getCurrentContextualMenu(self):
-      if self.step == 0: # quando si é in fase di selezione entità
+      if self.step == 0: # when you are in the entity selection phase
          return None # return self.SSGetClass.getCurrentContextualMenu()
       else:
          return self.contextualMenu
@@ -101,40 +101,40 @@ class QadMIRRORCommandClass(QadCommandClass):
    # scale
    # ============================================================================
    def mirror(self, entity, mirrorPt, angle, openForm):
-      
-      # verifico se l'entità appartiene ad uno stile di quotatura
+
+      # check if the entity belongs to a dimensioning style
       if entity.whatIs() == "ENTITY":
-         # specchio la geometria dell'entità
-         qadGeom = entity.getQadGeom().copy() # la copio
+         # mirror the geometry of the entity
+         qadGeom = entity.getQadGeom().copy() # I copy it
          qadGeom.mirror(mirrorPt, angle)
          f = entity.getFeature()
          f.setGeometry(fromQadGeomToQgsGeom(qadGeom, entity.layer))
 
          if len(entity.rotFldName) > 0:
             rotValue = f.attribute(entity.rotFldName)
-            rotValue = 0 if rotValue is None or rotValue == NULL else qad_utils.toRadians(rotValue) # la rotazione é in gradi nel campo della feature
+            rotValue = 0 if rotValue is None or rotValue == NULL else qad_utils.toRadians(rotValue) # the rotation is in degrees in the feature field
             ptDummy = qad_utils.getPolarPointByPtAngle(mirrorPt, rotValue, 1)
             ptDummy = qad_utils.mirrorPoint(ptDummy, mirrorPt, angle)
             rotValue = qad_utils.getAngleBy2Pts(mirrorPt, ptDummy)
-            f.setAttribute(entity.rotFldName, qad_utils.toDegrees(qad_utils.normalizeAngle(rotValue)))               
-      
+            f.setAttribute(entity.rotFldName, qad_utils.toDegrees(qad_utils.normalizeAngle(rotValue)))
+
          if self.copyFeatures == False:
-            # plugIn, layer, feature, refresh, check_validity
+            # plugin, layer, feature, refresh, check_validity
             if qad_layer.updateFeatureToLayer(self.plugIn, entity.layer, f, False, False) == False:
                return False
-         else:             
-            # plugIn, layer, features, coordTransform, refresh, check_validity
+         else:
+            # plugin, layer, features, coordTransform, refresh, check_validity
             if qad_layer.addFeatureToLayer(self.plugIn, entity.layer, f, None, False, False, openForm) == False:
                return False
       else:
-         # specchio la quota
+         # mirror the share
          if self.copyFeatures == False:
             if entity.deleteToLayers(self.plugIn) == False:
                return False
-         newDimEntity = QadDimEntity(entity) # la copio
+         newDimEntity = QadDimEntity(entity) # I copy it
          newDimEntity.mirror(mirrorPt, angle)
          if newDimEntity.addToLayers(self.plugIn) == False:
-            return False             
+            return False
 
       return True
 
@@ -142,20 +142,20 @@ class QadMIRRORCommandClass(QadCommandClass):
    # ============================================================================
    # mirrorGeoms
    # ============================================================================
-   def mirrorGeoms(self):      
+   def mirrorGeoms(self):
       self.plugIn.beginEditCommand("Feature mirrored", self.cacheEntitySet.getLayerList())
 
       angle = qad_utils.getAngleBy2Pts(self.firstMirrorPt, self.secondMirrorPt)
 
-      dimElaboratedList = [] # lista delle quotature già elaborate
+      dimElaboratedList = [] # list of dimensions already processed
       openForm = True if self.cacheEntitySet.count() == 1 else False
       entityIterator = QadCacheEntitySetIterator(self.cacheEntitySet)
       for entity in entityIterator:
-         qadGeom = entity.getQadGeom() # così inizializzo le info qad
-         # verifico se l'entità appartiene ad uno stile di quotatura
-         dimEntity = QadDimStyles.getDimEntity(entity)         
+         qadGeom = entity.getQadGeom() # this is how I initialize the qad info
+         # check if the entity belongs to a dimensioning style
+         dimEntity = QadDimStyles.getDimEntity(entity)
          if dimEntity is not None:
-            if appendDimEntityIfNotExisting(dimElaboratedList, dimEntity) == False: # quota già elaborata
+            if appendDimEntityIfNotExisting(dimElaboratedList, dimEntity) == False: # dimension already processed
                continue
             entity = dimEntity
 
@@ -164,135 +164,135 @@ class QadMIRRORCommandClass(QadCommandClass):
             return
 
       self.plugIn.endEditCommand()
-   
+
 
    def run(self, msgMapTool = False, msg = None):
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
-            
+         return True # end command
+
       # =========================================================================
-      # RICHIESTA SELEZIONE OGGETTI
-      if self.step == 0: # inizio del comando
+      # OBJECT SELECTION REQUEST
+      if self.step == 0: # start of command
          if self.SSGetClass.run(msgMapTool, msg) == True:
-            # selezione terminata
+            # selection completed
             self.step = 1
-            self.getPointMapTool().refreshSnapType() # aggiorno lo snapType che può essere variato dal maptool di selezione entità                    
+            self.getPointMapTool().refreshSnapType() # update the snapType which can be varied from the entity selection map tool
             return self.run(msgMapTool, msg)
-      
+
       # =========================================================================
       # SPECCHIA OGGETTI
       elif self.step == 1:
          if self.SSGetClass.entitySet.count() == 0:
-            return True # fine comando
+            return True # end command
          self.cacheEntitySet.appendEntitySet(self.SSGetClass.entitySet)
 
-         # imposto il map tool
+         # set the map tool
          self.getPointMapTool().cacheEntitySet = self.cacheEntitySet
-         self.getPointMapTool().setMode(Qad_mirror_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_FIRST_PT)                                
-   
-         # si appresta ad attendere un punto
+         self.getPointMapTool().setMode(Qad_mirror_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_FIRST_PT)
+
+         # is preparing to wait for a point
          self.waitForPoint(QadMsg.translate("Command_MIRROR", "Specify first point of mirror line: "), None, QadInputModeEnum.NOT_NULL)
-         self.step = 2      
+         self.step = 2
          return False
-         
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA PUNTO BASE (da step = 1)
-      elif self.step == 2: # dopo aver atteso un punto o un numero reale si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  # si appresta ad attendere un punto
+      # RESPONSE TO THE BASE POINT REQUEST (from step = 1)
+      elif self.step == 2: # after waiting for a point or a real number the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  # is preparing to wait for a point
                   self.waitForPoint(QadMsg.translate("Command_MIRROR", "Specify first point of mirror line: "), None, QadInputModeEnum.NOT_NULL)
                   return False
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          self.firstMirrorPt.set(value.x(), value.y())
 
-         # imposto il map tool
+         # set the map tool
          self.getPointMapTool().firstMirrorPt = self.firstMirrorPt
-         self.getPointMapTool().setMode(Qad_mirror_maptool_ModeEnum.FIRST_PT_KNOWN_ASK_FOR_SECOND_PT)                                
-         
-         # si appresta ad attendere un punto
+         self.getPointMapTool().setMode(Qad_mirror_maptool_ModeEnum.FIRST_PT_KNOWN_ASK_FOR_SECOND_PT)
+
+         # is preparing to wait for a point
          self.waitForPoint(QadMsg.translate("Command_MIRROR", "Specify second point of mirror line: "), None, QadInputModeEnum.NOT_NULL)
          self.step = 3
-         
-         return False 
-         
+
+         return False
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA SECONDO PUNTO PER SPECCHIO (da step = 2)
-      elif self.step == 3: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  # si appresta ad attendere un punto
+      # RESPONSE TO THE SECOND POINT REQUEST FOR MIRROR (from step = 2)
+      elif self.step == 3: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  # is preparing to wait for a point
                   self.waitForPoint(QadMsg.translate("Command_MIRROR", "Specify second point of mirror line: "), None, QadInputModeEnum.NOT_NULL)
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if qad_utils.ptNear(self.firstMirrorPt, value):
             self.showMsg(QadMsg.translate("Command_MIRROR", "\nThe points must be different."))
-            # si appresta ad attendere un punto
+            # is preparing to wait for a point
             self.waitForPoint(QadMsg.translate("Command_MIRROR", "Specify second point of mirror line: "), None, QadInputModeEnum.NOT_NULL)
             return False
-         
+
          self.secondMirrorPt.set(value.x(), value.y())
-         
+
          keyWords = QadMsg.translate("QAD", "Yes") + "/" + \
-                    QadMsg.translate("QAD", "No")                                       
+                    QadMsg.translate("QAD", "No")
          if self.copyFeatures == False:
             default = QadMsg.translate("QAD", "Yes")
-         else: 
+         else:
             default = QadMsg.translate("QAD", "No")
          prompt = QadMsg.translate("Command_MIRROR", "Erase source objects ? [{0}] <{1}>: ").format(keyWords, default)
-             
+
          englishKeyWords = "Yes" + "/" + "No"
          keyWords += "_" + englishKeyWords
-         # si appresta ad attendere enter o una parola chiave         
-         # msg, inputType, default, keyWords, nessun controllo
+         # is preparing to wait for enter or a keyword
+         # msg, inputType, default, keyWords, no check
          self.waitFor(prompt, \
                       QadInputTypeEnum.KEYWORDS, \
                       default, \
                       keyWords, QadInputModeEnum.NONE)
-         self.getPointMapTool().setMode(Qad_mirror_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_FIRST_PT)                                         
+         self.getPointMapTool().setMode(Qad_mirror_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_FIRST_PT)
          self.step = 4
 
          return False
-            
+
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DI CANCELLAZIONE OGGETTO SORGENTE (da step = 3)
-      elif self.step == 4: # dopo aver atteso un punto o un numero reale si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-               value = QadMsg.translate("QAD", "No")   
+      # RESPONSE TO THE SOURCE OBJECT DELETE REQUEST (from step = 3)
+      elif self.step == 4: # after waiting for a point or a real number the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+               value = QadMsg.translate("QAD", "No")
             else:
-               self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+               self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                return False
-         else: # il valore arriva come parametro della funzione
+         else: # the value comes as a function parameter
             value = msg
 
          if type(value) == unicode:
@@ -300,22 +300,22 @@ class QadMIRRORCommandClass(QadCommandClass):
                self.copyFeatures = False
             elif value == QadMsg.translate("QAD", "No") or value == "No":
                self.copyFeatures = True
-                     
+
             self.mirrorGeoms()
-            return True # fine comando
+            return True # end command
 
          return False
 
 
 
 
-# Classe che gestisce il comando MIRROR per i grip
+# Class that manages the MIRROR command for grips
 class QadGRIPMIRRORCommandClass(QadCommandClass):
-   
+
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadMIRRORCommandClass(self.plugIn)
-   
+
 
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
@@ -343,7 +343,7 @@ class QadGRIPMIRRORCommandClass(QadCommandClass):
    # setSelectedEntityGripPoints
    # ============================================================================
    def setSelectedEntityGripPoints(self, entitySetGripPoints):
-      # lista delle entityGripPoint con dei grip point selezionati
+      # list of entityGripPoints with selected grip points
       self.cacheEntitySet.clear()
 
       for entityGripPoints in entitySetGripPoints.entityGripPoints:
@@ -356,42 +356,42 @@ class QadGRIPMIRRORCommandClass(QadCommandClass):
    # mirror
    # ============================================================================
    def mirror(self, entity, mirrorPt, angle):
-      # entity = entità da specchiare
-      # pt1 e pt2 = linea di simmetria
-      # rotFldName = campo della tabella che memorizza la rotazione
-      # verifico se l'entità appartiene ad uno stile di quotatura
+      # entity = entity to mirror
+      # pt1 and pt2 = line of symmetry
+      # rotFldName = table field that stores the rotation
+      # check if the entity belongs to a dimensioning style
       if entity.whatIs() == "ENTITY":
-         # specchio la geometria dell'entità
-         qadGeom = entity.getQadGeom().copy() # la copio
+         # mirror the geometry of the entity
+         qadGeom = entity.getQadGeom().copy() # I copy it
          qadGeom.mirror(mirrorPt, angle)
          f = entity.getFeature()
          f.setGeometry(fromQadGeomToQgsGeom(qadGeom, entity.layer))
 
-         if len(entity.rotFldName) > 0 is not None:
+         if len(entity.rotFldName) > 0:
             rotValue = f.attribute(entity.rotFldName)
-            rotValue = 0 if rotValue is None or rotValue == NULL else qad_utils.toRadians(rotValue) # la rotazione é in gradi nel campo della feature
+            rotValue = 0 if rotValue is None or rotValue == NULL else qad_utils.toRadians(rotValue) # the rotation is in degrees in the feature field
             ptDummy = qad_utils.getPolarPointByPtAngle(mirrorPt, rotValue, 1)
             ptDummy = qad_utils.mirrorPoint(ptDummy, mirrorPt, angle)
             rotValue = qad_utils.getAngleBy2Pts(mirrorPt, ptDummy)
-            f.setAttribute(entity.rotFldName, qad_utils.toDegrees(qad_utils.normalizeAngle(rotValue)))               
-         
+            f.setAttribute(entity.rotFldName, qad_utils.toDegrees(qad_utils.normalizeAngle(rotValue)))
+
          if self.copyEntities == False:
-            # plugIn, layer, feature, refresh, check_validity
+            # plugin, layer, feature, refresh, check_validity
             if qad_layer.updateFeatureToLayer(self.plugIn, entity.layer, f, False, False) == False:
                return False
-         else:             
-            # plugIn, layer, features, coordTransform, refresh, check_validity
+         else:
+            # plugin, layer, features, coordTransform, refresh, check_validity
             if qad_layer.addFeatureToLayer(self.plugIn, entity.layer, f, None, False, False) == False:
                return False
       elif entity.whatIs() == "DIMENTITY":
-         # specchio la quota
+         # mirror the share
          if self.copyEntities == False:
             if entity.deleteToLayers(self.plugIn) == False:
                return False
-         newDimEntity = QadDimEntity(entity) # la copio
+         newDimEntity = QadDimEntity(entity) # I copy it
          newDimEntity.mirror(mirrorPt, angle)
          if newDimEntity.addToLayers(self.plugIn) == False:
-            return False             
+            return False
 
       return True
 
@@ -404,15 +404,15 @@ class QadGRIPMIRRORCommandClass(QadCommandClass):
 
       angle = qad_utils.getAngleBy2Pts(self.firstMirrorPt, self.secondMirrorPt)
 
-      dimElaboratedList = [] # lista delle quotature già elaborate
+      dimElaboratedList = [] # list of dimensions already processed
       entityIterator = QadCacheEntitySetIterator(self.cacheEntitySet)
       openForm = True if self.cacheEntitySet.count() == 1 else False
       for entity in entityIterator:
-         qadGeom = entity.getQadGeom() # così inizializzo le info qad
-         # verifico se l'entità appartiene ad uno stile di quotatura
-         dimEntity = QadDimStyles.getDimEntity(entity)         
+         qadGeom = entity.getQadGeom() # this is how I initialize the qad info
+         # check if the entity belongs to a dimensioning style
+         dimEntity = QadDimStyles.getDimEntity(entity)
          if dimEntity is not None:
-            if appendDimEntityIfNotExisting(dimElaboratedList, dimEntity) == False: # quota già elaborata
+            if appendDimEntityIfNotExisting(dimElaboratedList, dimEntity) == False: # dimension already processed
                continue
             entity = dimEntity
 
@@ -423,18 +423,18 @@ class QadGRIPMIRRORCommandClass(QadCommandClass):
 
       self.plugIn.endEditCommand()
       self.nOperationsToUndo = self.nOperationsToUndo + 1
-   
-   
+
+
    # ============================================================================
    # waitForMirrorPoint
    # ============================================================================
    def waitForMirrorPoint(self):
       self.step = 1
       self.plugIn.setLastPoint(self.basePt)
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().firstMirrorPt = self.basePt
-      self.getPointMapTool().setMode(Qad_mirror_maptool_ModeEnum.FIRST_PT_KNOWN_ASK_FOR_SECOND_PT)                                
-         
+      self.getPointMapTool().setMode(Qad_mirror_maptool_ModeEnum.FIRST_PT_KNOWN_ASK_FOR_SECOND_PT)
+
       keyWords = QadMsg.translate("Command_GRIPMIRROR", "Base point") + "/" + \
                  QadMsg.translate("Command_GRIPMIRROR", "Copy") + "/" + \
                  QadMsg.translate("Command_GRIPMIRROR", "Undo") + "/" + \
@@ -444,85 +444,85 @@ class QadGRIPMIRRORCommandClass(QadCommandClass):
 
       englishKeyWords = "Base point" + "/" + "Copy" + "/" + "Undo" + "/" + "eXit"
       keyWords += "_" + englishKeyWords
-      # si appresta ad attendere un punto, un numero reale o enter o una parola chiave
-      # msg, inputType, default, keyWords, nessun controllo
+      # is preparing to wait for a point, a real number or enter or a keyword
+      # msg, inputType, default, keyWords, no check
       self.waitFor(prompt, QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS, \
                    None, \
-                   keyWords, QadInputModeEnum.NONE)      
-   
+                   keyWords, QadInputModeEnum.NONE)
+
 
    # ============================================================================
    # waitForBasePt
    # ============================================================================
    def waitForBasePt(self):
-      self.step = 2   
-      # imposto il map tool
+      self.step = 2
+      # set the map tool
       self.getPointMapTool().setMode(Qad_mirror_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_FIRST_PT)
-      # si appresta ad attendere un punto
+      # is preparing to wait for a point
       self.waitForPoint(QadMsg.translate("Command_GRIPROTATE", "Specify base point: "))
-   
+
 
    def run(self, msgMapTool = False, msg = None):
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
-            
+         return True # end command
+
       # =========================================================================
-      # RICHIESTA SELEZIONE OGGETTI
-      if self.step == 0: # inizio del comando
-         if self.cacheEntitySet.isEmpty(): # non ci sono oggetti da ruotare
+      # OBJECT SELECTION REQUEST
+      if self.step == 0: # start of command
+         if self.cacheEntitySet.isEmpty(): # there are no objects to rotate
             return True
          self.showMsg(QadMsg.translate("Command_GRIPMIRROR", "\n** MIRROR **\n"))
-         # si appresta ad attendere il secondo punto di specchio
+         # is preparing to wait for the second mirror point
          self.waitForMirrorPoint()
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA SECONDO PUNTO PER SPECCHIO
-      elif self.step == 1: # dopo aver atteso un punto si riavvia il comando
+      # RESPONSE TO THE SECOND POINT REQUEST FOR MIRROR
+      elif self.step == 1: # after waiting for a point the command restarts
          ctrlKey = False
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
                   value = None
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             ctrlKey = self.getPointMapTool().ctrlKey
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == unicode:
             if value == QadMsg.translate("Command_GRIPMIRROR", "Base point") or value == "Base point":
-               # si appresta ad attendere il punto base
+               # is preparing to wait for the base point
                self.waitForBasePt()
             elif value == QadMsg.translate("Command_GRIPMIRROR", "Copy") or value == "Copy":
-               # Copia entità lasciando inalterate le originali
-               self.copyEntities = True                     
-               # si appresta ad attendere il secondo punto di specchio
+               # Copy entities leaving the originals unchanged
+               self.copyEntities = True
+               # is preparing to wait for the second mirror point
                self.waitForMirrorPoint()
             elif value == QadMsg.translate("Command_GRIPMIRROR", "Undo") or value == "Undo":
-               if self.nOperationsToUndo > 0: 
+               if self.nOperationsToUndo > 0:
                   self.nOperationsToUndo = self.nOperationsToUndo - 1
                   self.plugIn.undoEditCommand()
                else:
-                  self.showMsg(QadMsg.translate("QAD", "\nThe command has been canceled."))                  
-               # si appresta ad attendere il secondo punto di specchio
+                  self.showMsg(QadMsg.translate("QAD", "\nThe command has been canceled."))
+               # is preparing to wait for the second mirror point
                self.waitForMirrorPoint()
             elif value == QadMsg.translate("Command_GRIPMIRROR", "eXit") or value == "eXit":
-               return True # fine comando
-         elif type(value) == QgsPointXY: # se é stato inserito il secondo punto
+               return True # end command
+         elif type(value) == QgsPointXY: # if the second point has been inserted
             if qad_utils.ptNear(self.basePt, value):
                self.showMsg(QadMsg.translate("Command_GRIPMIRROR", "\nThe points must be different."))
-               # si appresta ad attendere il secondo punto di specchio
+               # is preparing to wait for the second mirror point
                self.waitForMirrorPoint()
                return False
-            
+
             self.secondMirrorPt.set(value.x(), value.y())
 
             if ctrlKey:
@@ -533,40 +533,40 @@ class QadGRIPMIRRORCommandClass(QadCommandClass):
             if self.copyEntities == False:
                return True
 
-            # si appresta ad attendere il secondo punto di specchio
+            # is preparing to wait for the second mirror point
             self.waitForMirrorPoint()
 
          else:
             if self.copyEntities == False:
                self.skipToNextGripCommand = True
-            return True # fine comando
+            return True # end command
 
          return False
 
-              
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA PUNTO BASE (da step = 1)
-      elif self.step == 2: # dopo aver atteso un punto
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
+      # RESPONSE TO THE BASE POINT REQUEST (from step = 1)
+      elif self.step == 2: # after waiting for a point
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
                   pass # opzione di default "spostamento"
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
-         if type(value) == QgsPointXY: # se é stato inserito il punto base
+         if type(value) == QgsPointXY: # if the base point has been entered
             self.basePt.set(value.x(), value.y())
-            
-         # si appresta ad attendere il secondo punto di specchio
+
+         # is preparing to wait for the second mirror point
          self.waitForMirrorPoint()
 
          return False

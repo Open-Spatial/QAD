@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- comando da inserire in altri comandi per la richiesta di un angolo
- 
+ command to insert into other commands to request an angle
+
                               -------------------
         begin                : 2013-12-04
         copyright            : iiiii
@@ -41,34 +41,34 @@ from .. import qad_utils
 class QadGetAngleClass(QadCommandClass):
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadGetAngleClass(self.plugIn)
-      
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
       self.entity = QadEntity()
-      self.startPt = None            
+      self.startPt = None
       self.msg = QadMsg.translate("QAD", "Specify angle: ")
       self.angle = None # in radianti
-      # memorizzo last point perchè il/i punto/i indicato/i da questa questa funzione non devono
-      # alterare lastpoint 
+      # I store last point because the point(s) indicated by this function must not
+      # alterare lastpoint
       self.__prevLastPoint = self.plugIn.lastPoint
-            
+
    def run(self, msgMapTool = False, msg = None):
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
+         return True # end command
 
       # =========================================================================
-      # RICHIESTA PUNTO o ENTITA'
-      if self.step == 0: # inizio del comando
+      # POINT or ENTITY REQUEST
+      if self.step == 0: # start of command
          if self.startPt is not None:
-            # imposto il map tool
+            # set the map tool
             self.getPointMapTool().setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
             self.getPointMapTool().setStartPoint(self.startPt)
 
-         # si appresta ad attendere un punto o un numero reale         
-         # msg, inputType, default, keyWords, valori non nulli
+         # is preparing to wait for a point or a real number
+         # msg, inputType, default, keyWords, non-null values
          self.waitFor(self.msg, \
                       QadInputTypeEnum.POINT2D | QadInputTypeEnum.ANGLE, \
                       self.angle, "", \
@@ -78,76 +78,76 @@ class QadGetAngleClass(QadCommandClass):
          return False
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA PUNTO O NUMERO REALE
-      elif self.step == 1: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE POINT OR REAL NUMBER REQUEST
+      elif self.step == 1: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
-               
+
             value = self.getPointMapTool().point
-         else: # il punto o il numero reale arriva come parametro della funzione
+         else: # the point or real number comes as a function parameter
             value = msg
 
          if value is None:
-            return True # fine comando
-         
+            return True # end command
+
          if type(value) == float:
             self.angle = qad_utils.toRadians(value)
-            return True # fine comando
+            return True # end command
          elif type(value) == QgsPointXY:
-            # il/i punto/i indicato/i da questa questa funzione non devono alterare lastpoint 
+            # the point(s) indicated by this function must not alter lastpoint
             self.plugIn.setLastPoint(self.__prevLastPoint)
-            
+
             if self.startPt is not None:
                self.angle = qad_utils.getAngleBy2Pts(self.startPt, value)
-               return True # fine comando
-            else:            
-               self.startPt = value            
-               # imposto il map tool
+               return True # end command
+            else:
+               self.startPt = value
+               # set the map tool
                self.getPointMapTool().setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
                self.getPointMapTool().setStartPoint(self.startPt)
                prompt = QadMsg.translate("QAD", "Specify second point: ")
-               # si appresta ad attendere un punto
+               # is preparing to wait for a point
                self.waitForPoint(prompt)
                self.step = 2
 
          return False
-         
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA SECONDO PUNTO DELLA ANGOLO (da step = 1)
-      elif self.step == 2: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE REQUEST SECOND POINT OF THE CORNER (from step = 1)
+      elif self.step == 2: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
-         # il/i punto/i indicato/i da questa questa funzione non devono alterare lastpoint 
+         # the point(s) indicated by this function must not alter lastpoint
          self.plugIn.setLastPoint(self.__prevLastPoint)
-         
+
          if qad_utils.ptNear(self.startPt, value):
             self.showMsg(QadMsg.translate("QAD", "\nThe points must be different."))
-            # si appresta ad attendere un punto
+            # is preparing to wait for a point
             self.waitForPoint(QadMsg.translate("QAD", "Specify second point: "))
             return False
          else:
             self.angle = qad_utils.getAngleBy2Pts(self.startPt, value)
-            return True # fine comando
+            return True # end command

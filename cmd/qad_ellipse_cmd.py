@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin ok
 
- comando ELLIPSE per disegnare una ellisse
- 
+ ELLIPSE command to draw an ellipse
+
                               -------------------
         begin                : 2018-05-22
         copyright            : iiiii
@@ -44,28 +44,28 @@ from .. import qad_layer
 # QadMELLIPSECommandClassStepEnum class.
 # ===============================================================================
 class QadELLIPSECommandClassStepEnum():
-   ASK_FOR_FIRST_FINAL_AXIS_PT      = 1 # richiede il primo punto finale dell'asse (0 è l'inizio del comando)
-   ASK_FOR_SECOND_FINAL_AXIS_PT     = 2 # richiede il secondo punto finale dell'asse
-   ASK_DIST_TO_OTHER_AXIS           = 3 # richiede di specificare la distanza dal secondo asse
-   ASK_ROTATION_ROUND_MAJOR_AXIS    = 4 # richiede la rotazione attorno all'asse maggiore
-   ASK_START_ANGLE                  = 5 # richiede l'angolo iniziale
-   ASK_END_ANGLE                    = 6 # richiede l'angolo finale
-   ASK_INCLUDED_ANGLE               = 7 # richiede l'angolo incluso
-   ASK_START_PARAMETER              = 8 # richiede l'angolo parametrico iniziale
-   ASK_END_PARAMETER                = 9 # richiede l'angolo parametrico finale
-   ASK_FOR_CENTER                   = 10 # richiede il centro
-   ASK_FOR_FIRST_FOCUS              = 11 # richiede il primo punto di fuoco
-   ASK_FOR_SECOND_FOCUS             = 12 # richiede il secondo punto di fuoco
-   ASK_FOR_PT_ON_ELLIPSE            = 13 # richiede un punto sull'ellisse
-   ASK_AREA                         = 14 # richede l'area dell'ellisse
+   ASK_FOR_FIRST_FINAL_AXIS_PT      = 1 # requires the first end point of the axis (0 is the start of the command)
+   ASK_FOR_SECOND_FINAL_AXIS_PT     = 2 # requires the second endpoint of the axis
+   ASK_DIST_TO_OTHER_AXIS           = 3 # requires specifying the distance from the second axis
+   ASK_ROTATION_ROUND_MAJOR_AXIS    = 4 # requires rotation around the major axis
+   ASK_START_ANGLE                  = 5 # requires the starting angle
+   ASK_END_ANGLE                    = 6 # requires the final angle
+   ASK_INCLUDED_ANGLE               = 7 # requires the included angle
+   ASK_START_PARAMETER              = 8 # requires the initial parametric angle
+   ASK_END_PARAMETER                = 9 # requires the final parametric angle
+   ASK_FOR_CENTER                   = 10 # requires the center
+   ASK_FOR_FIRST_FOCUS              = 11 # requires the first firing point
+   ASK_FOR_SECOND_FOCUS             = 12 # requires the second focus point
+   ASK_FOR_PT_ON_ELLIPSE            = 13 # requires a point on the ellipse
+   ASK_AREA                         = 14 # requires the area of the ellipse
 
-# Classe che gestisce il comando ELLIPSE
+# Class that manages the ELLIPSE command
 class QadELLIPSECommandClass(QadCommandClass):
-   
+
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadELLIPSECommandClass(self.plugIn)
-   
+
    def getName(self):
       return QadMsg.translate("Command_list", "ELLIPSE")
 
@@ -79,30 +79,30 @@ class QadELLIPSECommandClass(QadCommandClass):
       return QIcon(":/plugins/qad/icons/ellipse.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_ELLIPSE", "Draws an ellipse by many methods.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
-      # se questo flag = True il comando serve all'interno di un altro comando per disegnare un cerchio
-      # che non verrà salvato su un layer
+      # if this flag = True the command is used within another command to draw a circle
+      # which will not be saved on a layer
       self.virtualCmd = False
       self.rubberBandBorderColor = None
       self.rubberBandFillColor = None
-      
-      self.arc = False # flag che stabilisce se si vuole disegnare un arco di ellisse o un ellisse intera
-      self.axis1Pt1 = None # primo punto finale dell'asse
-      self.axis1Pt2 = None # secondo punto finale dell'asse
-      self.distToOtherAxis = 0.0 # distanza dall'altro asse
-      self.centerPt = None # punto centrale dell'ellisse
+
+      self.arc = False # flag that establishes whether you want to draw an arc of an ellipse or an entire ellipse
+      self.axis1Pt1 = None # first endpoint of the axis
+      self.axis1Pt2 = None # second endpoint of the axis
+      self.distToOtherAxis = 0.0 # distance from the other axis
+      self.centerPt = None # central point of the ellipse
       self.ellipse = QadEllipse()
       self.ellipseArc = QadEllipseArc()
-      self.rot = 0 # rotazione intorno all'asse
-      self.startAngle = 0.0 # l'ellisse può essere incompleta (come l'arco per il cerchio)
+      self.rot = 0 # rotation around the axis
+      self.startAngle = 0.0 # the ellipse can be incomplete (like the arc for the circle)
       self.endAngle = math.pi * 2 # A startAngle of 0 and endAngle of 2pi will produce a closed Ellipse.
       self.includedAngle = 0.0
-      self.focus1 = None # primo punto di fuoco
-      self.focus2 = None # secondo punto di fuoco
+      self.focus1 = None # first firing point
+      self.focus2 = None # second firing point
 
 
    def getPointMapTool(self, drawMode = QadGetPointDrawModeEnum.NONE):
@@ -121,69 +121,69 @@ class QadELLIPSECommandClass(QadCommandClass):
       if self.PointMapTool is not None:
          self.PointMapTool.setRubberBandColor(self.rubberBandBorderColor, self.rubberBandFillColor)
 
-         
+
    # ============================================================================
    # waitForFirstFinalAxisPt
    # ============================================================================
    def waitForFirstFinalAxisPt(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_FOR_FIRST_FINAL_AXIS_PT
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().setSelectionMode(Qad_ellipse_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_FIRST_FINAL_AXIS_PT)
-      if self.arc == False: # si vuole disegnare un ellisse intera
+      if self.arc == False: # you want to draw an entire ellipse
          keyWords = QadMsg.translate("Command_ELLIPSE", "Arc") + "/" + \
                     QadMsg.translate("Command_ELLIPSE", "Center") + "/" + \
                     QadMsg.translate("Command_ELLIPSE", "Foci")
          prompt = QadMsg.translate("Command_ELLIPSE", "Specify axis endpoint of ellipse or [{0}]: ").format(keyWords)
          englishKeyWords = "Arc" + "/" + "Center" + "/" + "Foci"
          keyWords += "_" + englishKeyWords
-      else: # si vuole disegnare un arco di ellisse
+      else: # we want to draw an arc of an ellipse
          keyWords = QadMsg.translate("Command_ELLIPSE", "Center") + "/" + \
                     QadMsg.translate("Command_ELLIPSE", "Foci")
          prompt = QadMsg.translate("Command_ELLIPSE", "Specify axis endpoint of elliptical arc or [{0}]: ").format(keyWords)
          englishKeyWords = "Center" + "/" + "Foci"
          keyWords += "_" + englishKeyWords
-      
-      # si appresta ad attendere un punto o enter o una parola chiave
-      # msg, inputType, default, keyWords, nessun controllo
+
+      # is preparing to wait for a point or Enter or a keyword
+      # msg, inputType, default, keyWords, no check
       self.waitFor(prompt, \
                    QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS, \
                    None, \
                    keyWords, QadInputModeEnum.NONE)
-         
-         
+
+
    # ============================================================================
    # waitForSecondFinalAxisPt
    # ============================================================================
    def waitForSecondFinalAxisPt(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_FOR_SECOND_FINAL_AXIS_PT
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().axis1Pt1 = self.axis1Pt1
       self.getPointMapTool().centerPt = self.centerPt
-      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.FIRST_FINAL_AXIS_PT_KNOWN_ASK_FOR_SECOND_FINAL_AXIS_PT)                                
-      # si appresta ad attendere un punto
+      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.FIRST_FINAL_AXIS_PT_KNOWN_ASK_FOR_SECOND_FINAL_AXIS_PT)
+      # is preparing to wait for a point
       self.waitForPoint(QadMsg.translate("Command_ELLIPSE", "Specify other endpoint of axis: "))
 
-         
+
    # ============================================================================
    # waitForDistanceToOtherAxis
    # ============================================================================
    def waitForDistanceToOtherAxis(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_DIST_TO_OTHER_AXIS
-      # imposto il map tool
-      if self.getPointMapTool().axis1Pt1 is None: # si è partiti dal centro dell'ellisse'
+      # set the map tool
+      if self.getPointMapTool().axis1Pt1 is None: # we started from the center of the ellipse'
          self.getPointMapTool().axis1Pt1 = self.axis1Pt1
       else:
          self.getPointMapTool().centerPt = self.centerPt
       self.getPointMapTool().axis1Pt2 = self.axis1Pt2
-      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_FOR_DIST_TO_OTHER_AXIS)                                
+      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_FOR_DIST_TO_OTHER_AXIS)
       keyWords = QadMsg.translate("Command_ELLIPSE", "Rotation") + "/" + \
                  QadMsg.translate("Command_ELLIPSE", "Area")
       prompt = QadMsg.translate("Command_ELLIPSE", "Specify distance to other axis or [{0}]: ").format(keyWords)
 
       englishKeyWords = "Rotation" + "/" + "Area"
       keyWords += "_" + englishKeyWords
-      # si appresta ad attendere un punto, un numero reale o una parola chiave
-      # msg, inputType, default, keyWords, valore non nullo
+      # is preparing to wait for a point, a real number or a keyword
+      # msg, inputType, default, keyWords, non-null value
       self.waitFor(prompt, \
                    QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS | QadInputTypeEnum.FLOAT, \
                    None, \
@@ -195,13 +195,13 @@ class QadELLIPSECommandClass(QadCommandClass):
    # ============================================================================
    def waitForRotationAroundMajorAxis(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_ROTATION_ROUND_MAJOR_AXIS
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().axis1Pt2 = self.axis1Pt2
       self.getPointMapTool().centerPt = self.centerPt
-      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_ROTATION_ROUND_MAJOR_AXIS)                                
+      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_ROTATION_ROUND_MAJOR_AXIS)
 
-      # si appresta ad attendere un punto o un angolo
-      # msg, inputType, default, keyWords, valore non nullo
+      # prepares to wait for a point or a corner
+      # msg, inputType, default, keyWords, non-null value
       self.waitFor(QadMsg.translate("Command_ELLIPSE", "Specify rotation around major axis: "), \
                    QadInputTypeEnum.POINT2D | QadInputTypeEnum.ANGLE, \
                    None, \
@@ -213,13 +213,13 @@ class QadELLIPSECommandClass(QadCommandClass):
    # ============================================================================
    def waitArea(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_AREA
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().axis1Pt2 = self.axis1Pt2
       self.getPointMapTool().centerPt = self.centerPt
-      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_AREA)                                
+      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_AREA)
 
-      # si appresta ad attendere un valore  o un angolo
-      # msg, inputType, default, keyWords, valore non nullo
+      # is preparing to wait for a value or an angle
+      # msg, inputType, default, keyWords, non-null value
       self.waitForFloat(QadMsg.translate("Command_ELLIPSE", "Specify ellipse area: "), \
                         None, \
                         QadInputModeEnum.NOT_ZERO | QadInputModeEnum.NOT_NEGATIVE)
@@ -230,9 +230,9 @@ class QadELLIPSECommandClass(QadCommandClass):
    # ============================================================================
    def waitForStartAngle(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_START_ANGLE
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().ellipse = self.ellipse
-      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_START_ANGLE)                                
+      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_START_ANGLE)
 
       keyWords = QadMsg.translate("Command_ELLIPSE", "Parameter")
       prompt = QadMsg.translate("Command_ELLIPSE", "Specify start angle or [{0}]: ").format(keyWords)
@@ -240,8 +240,8 @@ class QadELLIPSECommandClass(QadCommandClass):
       englishKeyWords = "Parameter"
       keyWords += "_" + englishKeyWords
 
-      # si appresta ad attendere un punto o un angolo o una parola chiave
-      # msg, inputType, default, keyWords, valore non nullo
+      # is preparing to wait for a point or an angle or a keyword
+      # msg, inputType, default, keyWords, non-null value
       self.waitFor(prompt, \
                    QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS | QadInputTypeEnum.ANGLE, \
                    None, \
@@ -253,9 +253,9 @@ class QadELLIPSECommandClass(QadCommandClass):
    # ============================================================================
    def waitForEndAngle(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_END_ANGLE
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().startAngle = self.startAngle
-      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_END_ANGLE)                                
+      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_END_ANGLE)
 
       keyWords = QadMsg.translate("Command_ELLIPSE", "Parameter") + "/" + \
                  QadMsg.translate("Command_ELLIPSE", "Included angle")
@@ -263,8 +263,8 @@ class QadELLIPSECommandClass(QadCommandClass):
       englishKeyWords = "Parameter" + "/" + "Included angle"
       keyWords += "_" + englishKeyWords
 
-      # si appresta ad attendere un punto o un angolo o una parola chiave
-      # msg, inputType, default, keyWords, valore non nullo
+      # is preparing to wait for a point or an angle or a keyword
+      # msg, inputType, default, keyWords, non-null value
       self.waitFor(prompt, \
                    QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS | QadInputTypeEnum.ANGLE, \
                    None, \
@@ -276,12 +276,12 @@ class QadELLIPSECommandClass(QadCommandClass):
    # ============================================================================
    def waitForIncludedAngle(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_INCLUDED_ANGLE
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().startAngle = self.startAngle
-      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_INCLUDED_ANGLE)                                
+      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_INCLUDED_ANGLE)
 
-      # si appresta ad attendere un punto o un angolo
-      # msg, inputType, default, keyWords, valore non nullo
+      # prepares to wait for a point or a corner
+      # msg, inputType, default, keyWords, non-null value
       self.waitFor(QadMsg.translate("Command_ELLIPSE", "Specify included angle for arc: "), \
                    QadInputTypeEnum.POINT2D | QadInputTypeEnum.ANGLE, \
                    None, \
@@ -293,16 +293,16 @@ class QadELLIPSECommandClass(QadCommandClass):
    # ============================================================================
    def waitForStartParameter(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_START_PARAMETER
-      # imposto il map tool
-      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_START_PARAMETER)                                
+      # set the map tool
+      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_START_PARAMETER)
 
       keyWords = QadMsg.translate("Command_ELLIPSE", "Angle")
       prompt = QadMsg.translate("Command_ELLIPSE", "Specify start parameter [{0}]: ").format(keyWords)
       englishKeyWords = "Angle"
       keyWords += "_" + englishKeyWords
 
-      # si appresta ad attendere un punto o un angolo o una parola chiave
-      # msg, inputType, default, keyWords, valore non nullo
+      # is preparing to wait for a point or an angle or a keyword
+      # msg, inputType, default, keyWords, non-null value
       self.waitFor(prompt, \
                    QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS | QadInputTypeEnum.ANGLE, \
                    None, \
@@ -314,9 +314,9 @@ class QadELLIPSECommandClass(QadCommandClass):
    # ============================================================================
    def waitForEndParameter(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_END_PARAMETER
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().startAngle = self.startAngle
-      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_END_PARAMETER)                                
+      self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_END_PARAMETER)
 
       keyWords = QadMsg.translate("Command_ELLIPSE", "Angle") + "/" + \
                  QadMsg.translate("Command_ELLIPSE", "Included angle")
@@ -324,8 +324,8 @@ class QadELLIPSECommandClass(QadCommandClass):
       englishKeyWords = "Angle" + "/" + "Included angle"
       keyWords += "_" + englishKeyWords
 
-      # si appresta ad attendere un punto o un angolo o una parola chiave
-      # msg, inputType, default, keyWords, valore non nullo
+      # is preparing to wait for a point or an angle or a keyword
+      # msg, inputType, default, keyWords, non-null value
       self.waitFor(prompt, \
                    QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS | QadInputTypeEnum.ANGLE, \
                    None, \
@@ -337,9 +337,9 @@ class QadELLIPSECommandClass(QadCommandClass):
    # ============================================================================
    def waitForCenter(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_FOR_CENTER
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_FOR_CENTER)
-      # si appresta ad attendere un punto
+      # is preparing to wait for a point
       self.waitForPoint(QadMsg.translate("Command_ELLIPSE", "Specify center of ellipse: "))
 
 
@@ -348,9 +348,9 @@ class QadELLIPSECommandClass(QadCommandClass):
    # ============================================================================
    def waitForFirstFocus(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_FOR_FIRST_FOCUS
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_FOR_FIRST_FOCUS)
-      # si appresta ad attendere un punto
+      # is preparing to wait for a point
       self.waitForPoint(QadMsg.translate("Command_ELLIPSE", "Specify first focus point of ellipse: "))
 
 
@@ -359,10 +359,10 @@ class QadELLIPSECommandClass(QadCommandClass):
    # ============================================================================
    def waitForSecondFocus(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_FOR_SECOND_FOCUS
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().focus1 = self.focus1
       self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_FOR_SECOND_FOCUS)
-      # si appresta ad attendere un punto
+      # is preparing to wait for a point
       self.waitForPoint(QadMsg.translate("Command_ELLIPSE", "Specify second focus point of ellipse: "))
 
 
@@ -371,65 +371,65 @@ class QadELLIPSECommandClass(QadCommandClass):
    # ============================================================================
    def waitForPtOnEllipse(self):
       self.step = QadELLIPSECommandClassStepEnum.ASK_FOR_PT_ON_ELLIPSE
-      # imposto il map tool
+      # set the map tool
       self.getPointMapTool().focus2 = self.focus2
       self.getPointMapTool().setMode(Qad_ellipse_maptool_ModeEnum.ASK_FOR_PT_ON_ELLIPSE)
-      # si appresta ad attendere un punto
+      # is preparing to wait for a point
       self.waitForPoint(QadMsg.translate("Command_ELLIPSE", "Specify a point on ellipse: "))
 
 
    def run(self, msgMapTool = False, msg = None):
-      self.isValidPreviousInput = True # per gestire il comando anche in macro
+      self.isValidPreviousInput = True # to manage the command also in macros
 
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
+         return True # end command
 
       currLayer = None
-      if self.virtualCmd == False: # se si vuole veramente salvare l'ellisse in un layer
+      if self.virtualCmd == False: # if you really want to save the ellipse in a layer
          if self.arc == True:
-            # il layer corrente deve essere editabile e di tipo linea
+            # the current layer must be editable and of line type
             currLayer, errMsg = qad_layer.getCurrLayerEditable(self.plugIn.canvas, [QgsWkbTypes.LineGeometry])
             if currLayer is None:
                self.showErr(errMsg)
-               return True # fine comando
+               return True # end command
          else:
-            # il layer corrente deve essere editabile e di tipo linea o poligono
+            # the current layer must be editable and of type line or polygon
             currLayer, errMsg = qad_layer.getCurrLayerEditable(self.plugIn.canvas, [QgsWkbTypes.LineGeometry, QgsWkbTypes.PolygonGeometry])
             if currLayer is None:
                self.showErr(errMsg)
-               return True # fine comando
+               return True # end command
          self.getPointMapTool().geomType = QgsWkbTypes.LineGeometry if currLayer.geometryType() == QgsWkbTypes.LineGeometry else QgsWkbTypes.PolygonGeometry
-         
-      if self.step == 0:     
+
+      if self.step == 0:
          self.waitForFirstFinalAxisPt()
          return False # continua
 
-         
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL PRIMO PUNTO FINALE DELL'ASSE (da step = 0)
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_FOR_FIRST_FINAL_AXIS_PT: # dopo aver atteso un punto o enter o una parola chiave si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi é stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE REQUEST FOR THE FIRST END POINT OF THE AXIS (from step = 0)
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_FOR_FIRST_FINAL_AXIS_PT: # after waiting for a point or Enter or a keyword the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here was reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if value is None:
             if self.plugIn.lastPoint is not None:
                value = self.plugIn.lastPoint
             else:
-               return True # fine comando
+               return True # end command
 
          if type(value) == unicode:
             if value == QadMsg.translate("Command_ELLIPSE", "Arc") or value == "Arc":
@@ -439,220 +439,220 @@ class QadELLIPSECommandClass(QadCommandClass):
                self.waitForCenter()
             elif value == QadMsg.translate("Command_ELLIPSE", "Foci") or value == "Foci":
                self.waitForFirstFocus()
-         elif type(value) == QgsPointXY: # se é stato inserito il primo punto finale dell'asse
+         elif type(value) == QgsPointXY: # if the first end point of the axis has been entered
             self.axis1Pt1 = value
-            self.plugIn.setLastPoint(value)                       
+            self.plugIn.setLastPoint(value)
             self.waitForSecondFinalAxisPt()
-         
+
          return False
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL SECONDO PUNTO FINALE DELL'ASSE (da step = ASK_FOR_FIRST_FINAL_AXIS_PT)
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_FOR_SECOND_FINAL_AXIS_PT: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi é stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE REQUEST FOR THE SECOND END POINT OF THE AXIS (from step = ASK_FOR_FIRST_FINAL_AXIS_PT)
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_FOR_SECOND_FINAL_AXIS_PT: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here was reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
-         if type(value) == QgsPointXY: # se é stato inserito il secondo punto finale dell'asse
+         if type(value) == QgsPointXY: # if the second end point of the axis has been entered
             self.axis1Pt2 = value
-            if self.centerPt is None: # non è noto il centro
+            if self.centerPt is None: # the center is not known
                self.centerPt = qad_utils.getMiddlePoint(self.axis1Pt1, self.axis1Pt2)
-            else: # non è noto il primo punto dell'asse -> self.axis1Pt1
+            else: # the first point of the axis is not known -> self.axis1Pt1
                axis1Len = qad_utils.getDistance(self.centerPt, self.axis1Pt2)
                angle = qad_utils.getAngleBy2Pts(self.axis1Pt2, self.centerPt)
                self.axis1Pt1 = qad_utils.getPolarPointByPtAngle(self.centerPt, angle, axis1Len)
-               
+
             self.plugIn.setLastPoint(value)
             self.waitForDistanceToOtherAxis()
-         
+
          return False
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DELLA DISTANZA DALL'ALTRO ASSE (da step = ASK_FOR_SECOND_FINAL_AXIS_PT)
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_DIST_TO_OTHER_AXIS: # dopo aver atteso un punto o enter o una parola chiave si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi é stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE REQUEST FOR THE DISTANCE FROM THE OTHER AXIS (from step = ASK_FOR_SECOND_FINAL_AXIS_PT)
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_DIST_TO_OTHER_AXIS: # after waiting for a point or Enter or a keyword the command is restarted
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here was reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == unicode:
             if value == QadMsg.translate("Command_ELLIPSE", "Rotation") or value == "Rotation":
                self.waitForRotationAroundMajorAxis()
             elif value == QadMsg.translate("Command_ELLIPSE", "Area") or value == "Area":
-               self.waitArea()            
+               self.waitArea()
          elif type(value) == QgsPointXY or type(value) == float:
-            if type(value) == QgsPointXY: # se é stato inserito il primo punto finale dell'asse
+            if type(value) == QgsPointXY: # if the first end point of the axis has been entered
                self.distToOtherAxis = qad_utils.getDistance(self.centerPt, value)
-            else: # se é stato inserito un numero reale
+            else: # if a real number has been entered
                self.distToOtherAxis = value
 
             if self.ellipse.fromAxis1FinalPtsAxis2Len(self.axis1Pt2, self.axis1Pt1, self.distToOtherAxis) is not None:
-               if self.arc == False: # se si vuole disegnare un'ellisse intera
+               if self.arc == False: # if you want to draw a whole ellipse
                   geom = self.ellipse.asGeom(currLayer.wkbType())
                   if geom is not None:
-                     if self.virtualCmd == False: # se si vuole veramente salvare il cerchio in un layer
+                     if self.virtualCmd == False: # if you really want to save the circle in a layer
                         qad_layer.addGeomToLayer(self.plugIn, currLayer, self.mapToLayerCoordinates(currLayer, geom))
-                     return True # fine comando
-               else: # se si vuole disegnare un arco di ellisse
+                     return True # end command
+               else: # if you want to draw an arc of an ellipse
                   self.waitForStartAngle()
-         
+
          return False
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DELLA ROTAZIONE INTORNO ALL'ASSE MAGGIORE (da step = ASK_FOR_SECOND_FINAL_AXIS_PT)
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_ROTATION_ROUND_MAJOR_AXIS: # dopo aver atteso un punto o un angolo si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi é stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE REQUEST FOR ROTATION AROUND THE MAJOR AXIS (from step = ASK_FOR_SECOND_FINAL_AXIS_PT)
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_ROTATION_ROUND_MAJOR_AXIS: # after waiting for a point or an angle the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here was reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == QgsPointXY or type(value) == float:
-            if type(value) == QgsPointXY: # se é stato inserito un punto
+            if type(value) == QgsPointXY: # if a point has been inserted
                angle = qad_utils.getAngleBy2Pts(self.centerPt, value)
-            else: # se é stato inserito un numero reale
+            else: # if a real number has been entered
                angle = value
             self.distToOtherAxis = math.fabs(qad_utils.getDistance(self.axis1Pt1, self.axis1Pt2) / 2 * math.cos(angle))
 
             if self.ellipse.fromAxis1FinalPtsAxis2Len(self.axis1Pt2, self.axis1Pt1, self.distToOtherAxis) is not None:
-               if self.arc == False: # se si vuole disegnare un'ellisse intera
+               if self.arc == False: # if you want to draw a whole ellipse
                   geom = self.ellipse.asGeom(currLayer.wkbType())
                   if geom is not None:
-                     if self.virtualCmd == False: # se si vuole veramente salvare il cerchio in un layer
+                     if self.virtualCmd == False: # if you really want to save the circle in a layer
                         qad_layer.addGeomToLayer(self.plugIn, currLayer, self.mapToLayerCoordinates(currLayer, geom))
-                     return True # fine comando
-               else: # se si vuole disegnare un arco di ellisse
+                     return True # end command
+               else: # if you want to draw an arc of an ellipse
                   self.waitForStartAngle()
-         
+
          return False
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DELL'AREA DELL'ELLISSE (da step = ASK_FOR_SECOND_FINAL_AXIS_PT)
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_AREA: # dopo aver atteso un numeroi riavvia il comando
-         if msgMapTool == True: # il valore arriva da una selezione grafica
-            self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+      # RESPONSE TO THE ELLIPSE AREA REQUEST (from step = ASK_FOR_SECOND_FINAL_AXIS_PT)
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_AREA: # after waiting a numberi restart the command
+         if msgMapTool == True: # the value comes from a graphical selection
+            self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
             return False
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if self.ellipse.fromAxis1FinalPtsArea(self.axis1Pt2, self.axis1Pt1, value) is not None:
-            if self.arc == False: # se si vuole disegnare un'ellisse intera
+            if self.arc == False: # if you want to draw a whole ellipse
                geom = self.ellipse.asGeom(currLayer.wkbType())
                if geom is not None:
-                  if self.virtualCmd == False: # se si vuole veramente salvare il cerchio in un layer
+                  if self.virtualCmd == False: # if you really want to save the circle in a layer
                      qad_layer.addGeomToLayer(self.plugIn, currLayer, self.mapToLayerCoordinates(currLayer, geom))
-                  return True # fine comando
-            else: # se si vuole disegnare un arco di ellisse
+                  return True # end command
+            else: # if you want to draw an arc of an ellipse
                self.waitForStartAngle()
-         
+
          return False
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DELL'ANGOLO INIZIALE DELL'ARCO DI ELLISSE
+      # ANSWER TO THE REQUEST FOR THE INITIAL ANGLE OF THE ARC OF THE ELLIPSE
       # (da step = ASK_DIST_TO_OTHER_AXIS oppure )
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_START_ANGLE: # dopo aver atteso un punto o un angolo si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi é stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_START_ANGLE: # after waiting for a point or an angle the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here was reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == QgsPointXY or type(value) == float:
-            if type(value) == QgsPointXY: # se é stato inserito il primo punto finale dell'asse
+            if type(value) == QgsPointXY: # if the first end point of the axis has been entered
                ellipseAngle = qad_utils.getAngleBy2Pts(self.ellipse.center, self.ellipse.majorAxisFinalPt)
                self.startAngle = qad_utils.getAngleBy2Pts(self.ellipse.center, value) - ellipseAngle
-            else: # se é stato inserito un numero reale
+            else: # if a real number has been entered
                self.startAngle = value
-           
+
             self.waitForEndAngle()
          elif type(value) == unicode:
             if value == QadMsg.translate("Command_ELLIPSE", "Parameter") or value == "Parameter":
                self.waitForStartParameter()
-         
+
          return False
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DELL'ANGOLO FINALE DELL'ARCO DI ELLISSE (da step = ASK_START_ANGLE)
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_END_ANGLE: # dopo aver atteso un punto o un angolo si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi é stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE REQUEST FOR THE FINAL ANGLE OF THE ARC OF THE ELLIPSE (from step = ASK_START_ANGLE)
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_END_ANGLE: # after waiting for a point or an angle the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here was reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == QgsPointXY or type(value) == float:
-            if type(value) == QgsPointXY: # se é stato inserito il primo punto finale dell'asse
+            if type(value) == QgsPointXY: # if the first end point of the axis has been entered
                ellipseAngle = qad_utils.getAngleBy2Pts(self.ellipse.center, self.ellipse.majorAxisFinalPt)
                self.endAngle = qad_utils.getAngleBy2Pts(self.ellipse.center, value) - ellipseAngle
-            else: # se é stato inserito un numero reale
+            else: # if a real number has been entered
                self.endAngle = value
 
             self.ellipseArc.set(self.ellipse.center, self.ellipse.majorAxisFinalPt, self.ellipse.axisRatio, self.startAngle, self.endAngle)
             geom = self.ellipseArc.asGeom(currLayer.wkbType())
             if geom is not None:
-               if self.virtualCmd == False: # se si vuole veramente salvare il cerchio in un layer
+               if self.virtualCmd == False: # if you really want to save the circle in a layer
                   qad_layer.addGeomToLayer(self.plugIn, currLayer, self.mapToLayerCoordinates(currLayer, geom))
-               return True # fine comando
-           
+               return True # end command
+
          elif type(value) == unicode:
             if value == QadMsg.translate("Command_ELLIPSE", "Parameter") or value == "Parameter":
                self.waitForEndParameter()
@@ -663,107 +663,107 @@ class QadELLIPSECommandClass(QadCommandClass):
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DELL'ANGOLO INCLUSO (da step = ASK_END_ANGLE)
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_INCLUDED_ANGLE: # dopo aver atteso un punto o un angolo si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi é stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE INCLUDED ANGLE REQUEST (from step = ASK_END_ANGLE)
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_INCLUDED_ANGLE: # after waiting for a point or an angle the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here was reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == QgsPointXY or type(value) == float:
-            if type(value) == QgsPointXY: # se é stato inserito un punto
+            if type(value) == QgsPointXY: # if a point has been inserted
                self.endAngle = self.startAngle + qad_utils.getAngleBy2Pts(self.ellipse.center, value)
-            else: # se é stato inserito un numero reale
+            else: # if a real number has been entered
                self.endAngle = self.startAngle + value
-            
+
             self.ellipseArc.set(self.ellipse.center, self.ellipse.majorAxisFinalPt, self.ellipse.axisRatio, self.startAngle, self.endAngle)
             geom = self.ellipseArc.asGeom(currLayer.wkbType())
             if geom is not None:
-               if self.virtualCmd == False: # se si vuole veramente salvare il cerchio in un layer
+               if self.virtualCmd == False: # if you really want to save the circle in a layer
                   qad_layer.addGeomToLayer(self.plugIn, currLayer, self.mapToLayerCoordinates(currLayer, geom))
-               return True # fine comando
-         
+               return True # end command
+
          return False
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DELL'ANGOLO PARAMETRICO INIZIALE DELL'ARCO DI ELLISSE
+      # ANSWER TO THE REQUEST FOR THE INITIAL PARAMETRIC ANGLE OF THE ELLIPSE ARC
       # (da step = ASK_START_ANGLE oppure )
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_START_PARAMETER: # dopo aver atteso un punto o un angolo si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi é stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_START_PARAMETER: # after waiting for a point or an angle the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here was reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == QgsPointXY or type(value) == float:
-            if type(value) == QgsPointXY: # se é stato inserito il primo punto finale dell'asse
+            if type(value) == QgsPointXY: # if the first end point of the axis has been entered
                ellipseAngle = qad_utils.getAngleBy2Pts(self.ellipse.center, self.ellipse.majorAxisFinalPt)
                self.startAngle = self.ellipse.getAngleFromParam(qad_utils.getAngleBy2Pts(self.ellipse.center, value) - ellipseAngle)
-            else: # se é stato inserito un numero reale
+            else: # if a real number has been entered
                self.startAngle = self.ellipse.getAngleFromParam(value)
-           
+
             self.waitForEndParameter()
          elif type(value) == unicode:
             if value == QadMsg.translate("Command_ELLIPSE", "Angle") or value == "Angle":
                self.waitForStartAngle()
-         
+
          return False
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DELL'ANGOLO PARAMETRICO FINALE DELL'ARCO DI ELLISSE (da step = ASK_START_PARAMETER)
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_END_PARAMETER: # dopo aver atteso un punto o un angolo si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi é stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE REQUEST FOR THE FINAL PARAMETRIC ANGLE OF THE ELLIPSE ARC (from step = ASK_START_PARAMETER)
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_END_PARAMETER: # after waiting for a point or an angle the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here was reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if type(value) == QgsPointXY or type(value) == float:
-            if type(value) == QgsPointXY: # se é stato inserito il primo punto finale dell'asse
+            if type(value) == QgsPointXY: # if the first end point of the axis has been entered
                ellipseAngle = qad_utils.getAngleBy2Pts(self.ellipse.center, self.ellipse.majorAxisFinalPt)
                self.endAngle = self.ellipse.getAngleFromParam(qad_utils.getAngleBy2Pts(self.ellipse.center, value) - ellipseAngle)
-            else: # se é stato inserito un numero reale
+            else: # if a real number has been entered
                self.endAngle = self.ellipse.getAngleFromParam(value)
 
             self.ellipseArc.set(self.ellipse.center, self.ellipse.majorAxisFinalPt, self.ellipse.axisRatio, self.startAngle, self.endAngle)
             geom = self.ellipseArc.asGeom(currLayer.wkbType())
             if geom is not None:
-               if self.virtualCmd == False: # se si vuole veramente salvare il cerchio in un layer
+               if self.virtualCmd == False: # if you really want to save the circle in a layer
                   qad_layer.addGeomToLayer(self.plugIn, currLayer, self.mapToLayerCoordinates(currLayer, geom))
-               return True # fine comando
-           
+               return True # end command
+
          elif type(value) == unicode:
             if value == QadMsg.translate("Command_ELLIPSE", "Angle") or value == "Angle":
                self.waitForEndAngle()
@@ -774,122 +774,122 @@ class QadELLIPSECommandClass(QadCommandClass):
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL CENTRO DELL'ELLISSE (da step = ASK_FOR_FIRST_FINAL_AXIS_PT)
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_FOR_CENTER: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi é stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE CENTER OF THE ELLIPSE REQUEST (from step = ASK_FOR_FIRST_FINAL_AXIS_PT)
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_FOR_CENTER: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here was reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
-         if type(value) == QgsPointXY: # se é stato inserito il centro
+         if type(value) == QgsPointXY: # if the center has been entered
             self.centerPt = value
             self.axis1Pt1 = None
             self.plugIn.setLastPoint(value)
             self.waitForSecondFinalAxisPt()
-         
+
          return False
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL PRIMO PUNTO DI FUOCO DELL'ELLISSE (da step = ASK_FOR_FIRST_FINAL_AXIS_PT)
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_FOR_FIRST_FOCUS: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi é stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE REQUEST FOR THE FIRST FOCUS POINT OF THE ELLIPSE (from step = ASK_FOR_FIRST_FINAL_AXIS_PT)
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_FOR_FIRST_FOCUS: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here was reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
-         if type(value) == QgsPointXY: # se é stato inserito il punto di fuoco
+         if type(value) == QgsPointXY: # if the focus point has been entered
             self.focus1 = value
             self.plugIn.setLastPoint(value)
             self.waitForSecondFocus()
-         
+
          return False
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DEL SECONDO PUNTO DI FUOCO DELL'ELLISSE (da step = ASK_FOR_FIRST_FOCUS)
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_FOR_SECOND_FOCUS: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi é stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE REQUEST FOR THE SECOND FOCUS POINT OF THE ELLIPSE (from step = ASK_FOR_FIRST_FOCUS)
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_FOR_SECOND_FOCUS: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here was reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
-         if type(value) == QgsPointXY: # se é stato inserito il punto di fuoco
+         if type(value) == QgsPointXY: # if the focus point has been entered
             self.focus2 = value
             self.plugIn.setLastPoint(value)
             self.waitForPtOnEllipse()
-         
+
          return False
 
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA DI UN PUNTO SULL'ELLISSE (da step = ASK_FOR_SECOND_FOCUS)
-      elif self.step == QadELLIPSECommandClassStepEnum.ASK_FOR_PT_ON_ELLIPSE: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi é stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO THE REQUEST FOR A POINT ON THE ELLIPSE (from step = ASK_FOR_SECOND_FOCUS)
+      elif self.step == QadELLIPSECommandClassStepEnum.ASK_FOR_PT_ON_ELLIPSE: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here was reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             value = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             value = msg
 
-         if type(value) == QgsPointXY: # se é stato inserito il punto di fuoco
+         if type(value) == QgsPointXY: # if the focus point has been entered
             self.plugIn.setLastPoint(value)
-            
+
             if self.ellipse.fromFoci(self.focus1, self.focus2, value) is not None:
-               if self.arc == False: # se si vuole disegnare un'ellisse intera
+               if self.arc == False: # if you want to draw a whole ellipse
                   geom = self.ellipse.asGeom(currLayer.wkbType())
                   if geom is not None:
-                     if self.virtualCmd == False: # se si vuole veramente salvare il cerchio in un layer
+                     if self.virtualCmd == False: # if you really want to save the circle in a layer
                         qad_layer.addGeomToLayer(self.plugIn, currLayer, self.mapToLayerCoordinates(currLayer, geom))
-                     return True # fine comando                  
-               else: # se si vuole disegnare un arco di ellisse
+                     return True # end command
+               else: # if you want to draw an arc of an ellipse
                   self.waitForStartAngle()
-         
+
          return False
 
 
-      return True                                   
+      return True
 
 

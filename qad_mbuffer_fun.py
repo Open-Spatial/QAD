@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- funzioni per stirare oggetti grafici
- 
+ functions for stretching graphical objects
+
                               -------------------
         begin                : 2013-11-11
         copyright            : iiiii
@@ -47,4 +47,3 @@ def buffer(qadGeom, distance):
    bufferedGeom = g.buffer(distance, nSegments)
    if bufferedGeom.isEmpty(): return None
    return fromQgsGeomToQadGeom(bufferedGeom)
-   

@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- funzioni varie di utilità
- 
+ various utility functions
+
                               -------------------
         begin                : 2013-05-22
         copyright            : iiiii
@@ -22,13 +22,13 @@
  ***************************************************************************/
 """
 
-from qgis.PyQt.QtCore import QVariant, QDir, QMetaType
-from qgis.PyQt.QtGui  import QCursor, QPixmap, QColor, QFont, QPalette
+from qgis.PyQt.QtCore import QVariant, QDir, QMetaType, QRect
+from qgis.PyQt.QtGui  import QCursor, QPixmap, QColor, QFont, QPalette, QGuiApplication
 from qgis.PyQt.QtWidgets import QToolTip, QMessageBox, QApplication
 from qgis.core import *
 import qgis.utils
- 
-              
+
+
 import os
 import math
 import sys
@@ -41,7 +41,30 @@ from .qad_variables import QadVariables
 from .qad_msg import QadMsg
 
 
-# Modulo che gestisce varie funzionalità di QAD
+# Module that manages various QAD features
+
+
+def getScreenGeometry(widget=None, globalPos=None, available=True):
+   screen = None
+
+   if globalPos is not None:
+      app = QApplication.instance()
+      if app is not None and hasattr(app, "screenAt"):
+         screen = app.screenAt(globalPos)
+
+   if screen is None and widget is not None:
+      try:
+         screen = widget.screen()
+      except AttributeError:
+         screen = None
+
+   if screen is None:
+      screen = QGuiApplication.primaryScreen()
+
+   if screen is None:
+      return QRect()
+
+   return screen.availableGeometry() if available else screen.geometry()
 
 
 def getMacAddress():
@@ -61,12 +84,12 @@ def decriptPlainText(strValue):
 
 
 # ===============================================================================
-# FUNZIONI GENERICHE PER LE OPZIONI DEI COMANDI - INIZIO
+# GENERIC FUNCTIONS FOR COMMAND OPTIONS - START
 # ===============================================================================
 
 
 def extractUpperCaseSubstr(str):
-   # estraggo la parte maiuscola della stringa
+   # I extract the uppercase part of the string
    upperPart = ""
    for letter in str:
       if letter.isupper():
@@ -77,27 +100,27 @@ def extractUpperCaseSubstr(str):
 
 
 def evaluateCmdKeyWords(cmd, keyWordList):
-   # Riceve un comando e la lista delle parole chiave delle opzioni di un comando
-   # La funzione ritorna la keyword del comando seguito da un eventuale messaggio di errore se la keyword = None
-   
-   # The required portion of the keyword is specified in uppercase characters, 
+   # Receives a command and the list of command option keywords
+   # The function returns the keyword of the command followed by a possible error message if the keyword = None
+
+   # The required portion of the keyword is specified in uppercase characters,
    # and the remainder of the keyword is specified in lowercase characters.
    # The uppercase abbreviation can be anywhere in the keyword
-   if cmd == "": # se cmd = "" la funzione find ritorna 0 (no comment)
+   if cmd == "": # if cmd = "" the find function returns 0 (no comment)
       return None, None
    upperCmd = cmd.upper()
    selectedKeyWords = []
    for keyWord in keyWordList:
-      # estraggo la parte maiuscola della parola chiave
+      # I extract the capital part of the keyword
       upperPart = extractUpperCaseSubstr(keyWord)
-      
-      if upperPart.find(upperCmd) == 0: # se la parte maiuscola della parola chiave inizia per upperCmd
-         if upperPart == upperCmd: # Se uguale
+
+      if upperPart.find(upperCmd) == 0: # if the uppercase part of the keyword begins with upperCmd
+         if upperPart == upperCmd: # If equal
             return keyWord, None
          else:
             selectedKeyWords.append(keyWord)
-      elif keyWord.upper().find(upperCmd) == 0: # se la parola chiave inizia per cmd (insensitive)
-         if keyWord.upper() == upperCmd: # Se uguale
+      elif keyWord.upper().find(upperCmd) == 0: # if the keyword begins with cmd (insensitive)
+         if keyWord.upper() == upperCmd: # If equal
             return keyWord, None
          else:
             selectedKeyWords.append(keyWord)
@@ -117,30 +140,30 @@ def evaluateCmdKeyWords(cmd, keyWordList):
             ambiguousMsg = ambiguousMsg + QadMsg.translate("QAD", " or ") + keyWord
 
       Msg = Msg + "\n" + ambiguousMsg + QadMsg.translate("QAD", " ?\n")
-      
+
    return None, Msg
 
 
 # ===============================================================================
-# FUNZIONI GENERICHE PER LE OPZIONI DEI COMANDI - FINE
-# FUNZIONI GENERICHE PER I WIDGET - INIZIO
+# GENERIC FUNCTIONS FOR COMMAND OPTIONS - END
+# GENERIC FUNCTIONS FOR WIDGETS - TOP
 # ===============================================================================
 
 
 # ===============================================================================
 # setMapCanvasToolTip
 # ===============================================================================
-# visualizza il testo della tooltip del mapCanvas con l'aspetto determinato da DYNTOOLTIPS
+# displays the mapCanvas tooltip text with the appearance determined by DYNTOOLTIPS
 def setMapCanvasToolTip(msg):
    canvas = qgis.utils.iface.mapCanvas()
    pt = canvas.mapToGlobal(canvas.mouseLastXY())
-   
+
    if QadVariables.get(QadMsg.translate("Environment variables", "DYNTOOLTIPS")) == 1:
       font_size = 8 + QadVariables.get(QadMsg.translate("Environment variables", "TOOLTIPSIZE"))
 
       #opacity = 100 - QadVariables.get(QadMsg.translate("Environment variables", "TOOLTIPTRANSPARENCY"))
       #fc.setAlphaF(opacity/100.0) # non va
-      
+
       fColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITFORECOLOR")))
       bColor = QColor(QadVariables.get(QadMsg.translate("Environment variables", "DYNEDITBACKCOLOR")))
    else:
@@ -162,14 +185,14 @@ def setMapCanvasToolTip(msg):
       QToolTip.setPalette(toolTipPalette)
 
    QToolTip.showText(pt, msg)
-   
+
    return
 
 
 # ===============================================================================
 # floatLineEditWidgetValidation
 # ===============================================================================
-# controlla che il valore di un widget di tipo line edit soddisfi l'intervallo ammesso per la variabile di ambiente
+# checks that the value of a line edit widget satisfies the allowed range for the environment variable
 def intLineEditWidgetValidation(widget, var, msg):
    err = False
    string = widget.text()
@@ -182,7 +205,7 @@ def intLineEditWidgetValidation(widget, var, msg):
       if var.maxNum is not None:
          if str2int(string) > var.maxNum:
             err = True
-   
+
    if err:
       msg = msg + QadMsg.translate("QAD", ": enter a number")
       if var.minNum is not None:
@@ -202,7 +225,7 @@ def intLineEditWidgetValidation(widget, var, msg):
 # ===============================================================================
 # floatLineEditWidgetValidation
 # ===============================================================================
-# controlla che il valore di un widget di tipo line edit soddisfi l'intervallo ammesso per la variabile di ambiente
+# checks that the value of a line edit widget satisfies the allowed range for the environment variable
 def floatLineEditWidgetValidation(widget, var, msg):
    err = False
    string = widget.text()
@@ -215,7 +238,7 @@ def floatLineEditWidgetValidation(widget, var, msg):
       if var.maxNum is not None:
          if str2float(string) > var.maxNum:
             err = True
-   
+
    if err:
       msg = msg + QadMsg.translate("QAD", ": enter a number")
       if var.minNum is not None:
@@ -235,7 +258,7 @@ def floatLineEditWidgetValidation(widget, var, msg):
 
 
 # ===============================================================================
-# FUNZIONI GENERICHE PER I WIDGET - FINE
+# GENERIC FUNCTIONS FOR WIDGETS - END
 # ===============================================================================
 
 
@@ -243,9 +266,7 @@ def floatLineEditWidgetValidation(widget, var, msg):
 # isNumericField
 # ===============================================================================
 def isNumericField(field):
-   """
-   La funzione verifica che il campo di tipo QgsField sia numerico
-   """
+   """The function verifies that the QgsField type field is numeric"""
    fldType = field.type()
    if fldType == QMetaType.Double or fldType == QMetaType.LongLong or fldType == QMetaType.Int or \
       fldType == QMetaType.ULongLong or fldType == QMetaType.UInt:
@@ -258,13 +279,12 @@ def isNumericField(field):
 # checkUniqueNewName
 # ===============================================================================
 def checkUniqueNewName(newName, nameList, prefix = None, suffix = None, caseSensitive = True):
-   """
-   La funzione verifica che il nuovo nome non esistà già nella lista <nameList>.
-   Se nella lista dovesse già esistere allora aggiunge un prefisso (se <> None) o un suffisso (se <> None)
-   finchè il nome non è più presnete nella lista
+   """The function checks that the new name does not already exist in the <nameList> list.
+      If it already exists in the list then add a prefix (if <> None) or a suffix (if <> None)
+      until the name is no longer in the list
    """
    ok = False
-   result = newName 
+   result = newName
    while ok == False:
       ok = True
       for name in nameList:
@@ -276,7 +296,7 @@ def checkUniqueNewName(newName, nameList, prefix = None, suffix = None, caseSens
             if name.upper() == result.upper():
                ok = False
                break
-        
+
       if ok == True:
          return result
       if prefix is not None:
@@ -284,21 +304,20 @@ def checkUniqueNewName(newName, nameList, prefix = None, suffix = None, caseSens
       else:
          if suffix is not None:
             result = result + suffix
-   
+
    return None
 
 # ===============================================================================
 # wildCard2regularExpr
 # ===============================================================================
 def wildCard2regularExpr(wildCard, ignoreCase = True):
-   """
-   Ritorna la conversione di una stringa con wildcards (es. "gas*")
-   in forma di regular expression (es. "[g][a][s].*")
+   """Returns the conversion of a string with wildcards (e.g. "gas*")
+      in the form of a regular expression (e.g. "[g][a][s].*")
    """
    # ? -> .
    # * -> .*
-   # altri caratteri -> [carattere]
-   regularExpr = "" 
+   # other characters -> [character]
+   regularExpr = ""
    for ch in wildCard:
       if ch == "?":
          regularExpr = regularExpr + "."
@@ -308,7 +327,7 @@ def wildCard2regularExpr(wildCard, ignoreCase = True):
          if ignoreCase:
             regularExpr = regularExpr + "[" + ch.upper() + ch.lower() + "]"
          else:
-            regularExpr = regularExpr + "[" + ch + "]"         
+            regularExpr = regularExpr + "[" + ch + "]"
 
    return regularExpr
 
@@ -317,9 +336,7 @@ def wildCard2regularExpr(wildCard, ignoreCase = True):
 # str2float
 # ===============================================================================
 def str2float(s):
-   """
-   Ritorna la conversione di una stringa in numero reale
-   """  
+   """Returns the conversion of a string to a real number"""
    try:
       n = float(s)
       return n
@@ -331,9 +348,7 @@ def str2float(s):
 # str2long
 # ===============================================================================
 def str2long(s):
-   """
-   Ritorna la conversione di una stringa in numero lungo
-   """  
+   """Returns the conversion of a string to a long number"""
    try:
       n = long(s)
       return n
@@ -345,9 +360,7 @@ def str2long(s):
 # str2int
 # ===============================================================================
 def str2int(s):
-   """
-   Ritorna la conversione di una stringa in numero intero
-   """  
+   """Returns the conversion of a string to an integer"""
    try:
       n = int(s)
       return n
@@ -359,13 +372,11 @@ def str2int(s):
 # str2bool
 # ===============================================================================
 def str2bool(s):
-   """
-   Ritorna la conversione di una stringa in bool
-   """  
+   """Returns the conversion of a string to bool"""
    try:
       upperS = s.upper()
       # 16 = "N", 17 = "NO"
-      # "F" "FALSO" 
+      # "F" "FALSO"
       if upperS == "0" or \
          upperS == QadMsg.translate("QAD", "N") or \
          upperS == QadMsg.translate("QAD", "NO") or \
@@ -383,28 +394,27 @@ def str2bool(s):
 # str2QgsPoint
 # ===============================================================================
 def str2QgsPoint(s, lastPoint = None, currenPoint = None, oneNumberAllowed = True):
+   """Returns the conversion of a string to QgsPointXY point
+      if <oneNumberAllowed> = False it means that s cannot be a single number
+      which would represent the distance from the last angled point based on the current point
+      (this is prohibited when you want to accept a number or a point)
+      lastPoint is used only for expressions like @10<45 (from last point, length 10, angle 45 degrees)
+      or @ (from the last period)
+      or @10.20 (from the last point, +10 for the X and +20 for the Y)
+      or 100 (from last point, distance 100, angle based on current point)
    """
-   Ritorna la conversione di una stringa in punto QgsPointXY
-   se <oneNumberAllowed> = False significa che s non può essere un solo numero
-   che rappresenterebbe la distanza dall'ultimo punto con angolo in base al punto corrente
-   (questo viene vietato quando si vuole accettare un numero o un punto)
-   lastPoint viene usato solo per le espressioni tipo @10<45 (dall'ultimo punto, lunghezza 10, angolo 45 gradi)
-   o @ (dall'ultimo punto)
-   o @10,20 (dall'ultimo punto, + 10 per la X e + 20 per la Y)
-   o 100 (dall'ultimo punto, distanza 100, angolo in base al punto corrente)
-   """   
-   expression = s.strip() # senza spazi iniziali e finali
+   expression = s.strip() # without leading or trailing spaces
    if len(expression) == 0:
       return None
 
    if expression[0] == "@": # coordinate relative a lastpoint
       if lastPoint is None:
          return None
-      
+
       if len(expression) == 1:
          return lastPoint
-      
-      expression = expression[1:] # scarto il primo carattere "@"
+
+      expression = expression[1:] # I discard the first "@" character
       coords = expression.split(",")
       if len(coords) == 2:
          OffSetX = str2float(coords[0].strip())
@@ -415,24 +425,24 @@ def str2QgsPoint(s, lastPoint = None, currenPoint = None, oneNumberAllowed = Tru
       else:
          if len(coords) != 1:
             return None
-         # verifico se si sta usando la coordinata polare
+         # check if the polar coordinate is being used
          expression = coords[0].strip()
          values = expression.split("<")
-         if len(values) != 2: 
+         if len(values) != 2:
             return None
          dist = str2float(values[0].strip())
          angle = str2float(values[1].strip())
          if (dist is None) or (angle is None):
-            return None     
-         coords = getPolarPointByPtAngle(lastPoint, math.radians(angle), dist)     
+            return None
+         coords = getPolarPointByPtAngle(lastPoint, math.radians(angle), dist)
          return QgsPointXY(coords[0], coords[1])
    else:
-      # verifico se è specificato un CRS
+      # check if a CRS is specified
       CRS, newExpr = strFindCRS(expression)
       if CRS is not None:
          if CRS.isGeographic():
             pt = strLatLon2QgsPoint(newExpr)
-         else:               
+         else:
             coords = newExpr.split(",")
             if len(coords) != 2:
                return None
@@ -441,10 +451,10 @@ def str2QgsPoint(s, lastPoint = None, currenPoint = None, oneNumberAllowed = Tru
             if (x is None) or (y is None):
                return None
             pt = QgsPointXY(x, y)
-            
+
          if pt is not None:
-            destCRS = qgis.utils.iface.mapCanvas().mapSettings().destinationCrs() # CRS corrente
-            return QgsCoordinateTransform(CRS, destCRS, QgsProject.instance()).transform(pt) # trasformo le coord
+            destCRS = qgis.utils.iface.mapCanvas().mapSettings().destinationCrs() # Current CRS
+            return QgsCoordinateTransform(CRS, destCRS, QgsProject.instance()).transform(pt) # I transform the coordinates
 
 
       coords = expression.split(",")
@@ -455,16 +465,16 @@ def str2QgsPoint(s, lastPoint = None, currenPoint = None, oneNumberAllowed = Tru
             return None
          return QgsPointXY(x, y)
       else:
-         if oneNumberAllowed == False: # vietato che la stringa sia un solo numero
+         if oneNumberAllowed == False: # forbidden for the string to be a single number
             return None
-         
+
          dist = str2float(expression)
 
          if (dist is None) or (lastPoint is None) or (currenPoint is None):
             return None
-         
+
          angle = getAngleBy2Pts(lastPoint, currenPoint)
-         coords = getPolarPointByPtAngle(lastPoint, angle, dist)     
+         coords = getPolarPointByPtAngle(lastPoint, angle, dist)
          return QgsPointXY(coords[0], coords[1])
 
 
@@ -472,9 +482,7 @@ def str2QgsPoint(s, lastPoint = None, currenPoint = None, oneNumberAllowed = Tru
 # pointToStringFmt
 # ===============================================================================
 def pointToStringFmt(pt):
-   """
-   Ritorna la conversione di un punto QgsPointXY in stringa formattata
-   """
+   """Returns the conversion of a QgsPointXY point to a formatted string"""
    return numToStringFmt(pt.x()) + "," + numToStringFmt(pt.y())
 
 
@@ -484,25 +492,23 @@ def pointToStringFmt(pt):
 def numToStringFmt(n, textDecimals = 4, textDecimalSep = '.', \
                       textSuppressLeadingZeros = False, textDecimalZerosSuppression = True,
                       textPrefix = "", textSuffix = ""):
-   """
-   Restituisce la conversione di un numero (int o float) in stringa formattata
-   """
-   strIntPart, strDecPart = getStrIntDecParts(round(n, textDecimals)) # numero di decimali
-   
-   if strIntPart == "0" and textSuppressLeadingZeros == True: # per sopprimere o meno gli zero all'inizio del testo
+   """Returns the conversion of a number (int or float) to a formatted string"""
+   strIntPart, strDecPart = getStrIntDecParts(round(n, textDecimals)) # number of decimals
+
+   if strIntPart == "0" and textSuppressLeadingZeros == True: # to suppress zeros at the beginning of the text or not
       strIntPart = ""
-   
-   for i in range(0, textDecimals - len(strDecPart), 1):  # aggiunge "0" per arrivare al numero di decimali
+
+   for i in range(0, textDecimals - len(strDecPart), 1):  # adds "0" to arrive at the number of decimals
       strDecPart = strDecPart + "0"
-      
-   if textDecimalZerosSuppression == True: # per sopprimere gli zero finali nei decimali
+
+   if textDecimalZerosSuppression == True: # to suppress trailing zeros in decimals
       strDecPart = strDecPart.rstrip("0")
-   
+
    formattedText = "-" if n < 0 else "" # segno
-   formattedText = formattedText + strIntPart # parte intera
-   if len(strDecPart) > 0: # parte decimale
-      formattedText = formattedText + textDecimalSep + strDecPart # Separatore dei decimali
-   # aggiungo prefisso e suffisso per il testo della quota
+   formattedText = formattedText + strIntPart # entire part
+   if len(strDecPart) > 0: # decimal part
+      formattedText = formattedText + textDecimalSep + strDecPart # decimal separator
+   # add prefix and suffix for the dimension text
    return textPrefix + formattedText + textSuffix
 
 
@@ -510,11 +516,10 @@ def numToStringFmt(n, textDecimals = 4, textDecimalSep = '.', \
 # strLatLon2QgsPoint
 # ===============================================================================
 def strFindCRS(s):
-   """
-   Cerca il sistema di coordinate in una stringa indicante un punto (usa authid).
-   Il sistema di coordinate va espresso in qualsiasi punto della stringa e deve essere
-   racchiuso tra parentesi tonde (es "111,222 (EPSG:3003)")
-   Ritorna il SR e la stringa depurata del SR (es "111,222")
+   """Looks up the coordinate system in a string indicating a point (use authid).
+      The coordinate system must be expressed anywhere in the string and must be
+      enclosed in round brackets (e.g. "111,222 (EPSG:3003)")
+      Returns the SR and the purified SR string (e.g. "111,222")
    """
    initial = s.find("(")
    if initial == -1:
@@ -523,7 +528,7 @@ def strFindCRS(s):
    if initial > final:
       return None, s
    authId = s[initial+1:final]
-   authId = authId.strip() # senza spazi iniziali e finali
+   authId = authId.strip() # without leading or trailing spaces
    return QgsCoordinateReferenceSystem(authId), s.replace(s[initial:final+1], "")
 
 
@@ -531,30 +536,29 @@ def strFindCRS(s):
 # strLatLon2QgsPoint
 # ===============================================================================
 def strLatLon2QgsPoint(s):
+   """Returns the conversion of a string containing a coordinate into latitude longitude
+      o'clock QgsPointXY.
+
+      The following formats are supported:
+      DDD decimal degrees (49.11675S or S49.11675 or 49.11675 S or S 49.11675 or -49.1167)
+      DMS degrees minutes seconds (49 7 20.06)
+      DMM degrees minutes with decimal seconds (49 7.0055)
+
+      Syntax latitude longitude:
+      The separator can be a space, you can also use ' for minutes and " for seconds (47 7'20.06")
+      The direction notation is uppercase or lowercase N, S, E, W before or after the coordinate
+      ("N 37 24 23.3" or "N37 24 23.3" or "37 24 23.3 N" or "37 24 23.3N")
+      You can also use negative coordinates for west and south.
+
+      The first coordinate is interpreted as latitude unless you specify a direction letter (E or W)
+      ("122 05 08.40 W 37 25 19.07 N")
+      You can use a space, comma, or slash to delimit value pairs
+      ("37.7 N 122.2 W" or "37.7 N,122.2 W" or "37.7 N/122.2 W")
    """
-   Ritorna la conversione di una stringa contenente una coordinata in latitudine longitudine
-   in punto QgsPointXY.
-   
-   Sono supportati i seguenti formati:
-   DDD gradi decimali (49.11675S o S49.11675 o 49.11675 S o S 49.11675 o -49.1167)
-   DMS gradi minuti secondi (49 7 20.06)
-   DMM gradi minuti con secondi decimali (49 7.0055)
-   
-   Sintassi latitudine longitudine:
-   Il separatore può essere uno spazio, puoi anche usare ' per i minuti e " per i secondi (47 7'20.06")
-   La notazione di direzione è N, S, E, W maiuscolo o minuscolo prima o dopo la coordinata
-   ("N 37 24 23.3" o "N37 24 23.3" o "37 24 23.3 N" o "37 24 23.3N")
-   Puoi usare anche le coordinate negative per l'ovest e il sud.
-   
-   La prima coordinata viene interpretata come latitudine a meno che specifichi una lettera di direzione (E o W)
-   ("122 05 08.40 W 37 25 19.07 N")
-   Puoi usare uno spazio, una virgola o una barra per delimitare le coppie di valori
-   ("37.7 N 122.2 W" o "37.7 N,122.2 W" o "37.7 N/122.2 W") 
-   """
-   expression = s.strip() # senza spazi iniziali e finali
+   expression = s.strip() # without leading or trailing spaces
    if len(expression) == 0:
       return None
-   
+
    numbers = []
    directions = []
    word = ""
@@ -580,7 +584,7 @@ def strLatLon2QgsPoint(s):
    if numbers_len == 2: # DDD
       lat = numbers[0]
       lon = numbers[1]
-   elif numbers_len == 4: # DMM 
+   elif numbers_len == 4: # DMM
       degrees = numbers[0]
       minutes = numbers[1]
       lat = degrees + minutes / 60
@@ -598,7 +602,7 @@ def strLatLon2QgsPoint(s):
       lon = degrees + minutes / 60 + seconds / 3600
    else:
       return None
-   
+
    if directions_len == 2:
       if lat < 0 or lon < 0:
          return None
@@ -611,7 +615,7 @@ def strLatLon2QgsPoint(s):
          lon = dummy if directions[1] == "S" else -value2
       else:
          return None
-         
+
       return QgsPointXY(lon, lat)
    else: # latitude first
       return QgsPointXY(lon, lat)
@@ -621,12 +625,11 @@ def strLatLon2QgsPoint(s):
 # strip
 # ===============================================================================
 def strip(s, stripList):
-   """
-   Rimuove dalla stringa <s> tutte le stringhe nella lista <stripList> che sono 
-   all'inizio e anche alla fine della stringa <s>
+   """Removes from the string <s> all the strings in the list <stripList> that are
+      at the beginning and also at the end of the <s> string
    """
    for item in stripList:
-      s = s.strip(item) # rimuovo prima e dopo
+      s = s.strip(item) # remove before and after
    return s
 
 
@@ -634,16 +637,15 @@ def strip(s, stripList):
 # findFile
 # ===============================================================================
 def findFile(fileName):
-   """
-   Cerca il file indicato usando i percorsi indicati dalla variabile "SUPPORTPATH" 
-   più il percorso locale di QAD. Ritorna il percorso del file in caso di successo
-   oppure "" in caso di file non trovato
+   """Searc for the indicated file using the paths indicated by the "SUPPORTPATH" variable
+      plus the local path of QAD. Returns the file path if successful
+      or "" in case of file not found
    """
    path = QadVariables.get(QadMsg.translate("Environment variables", "SUPPORTPATH"))
    if len(path) > 0:
-      path += ";"        
+      path += ";"
    path += QgsApplication.qgisSettingsDirPath() + "python/plugins/qad/"
-   # lista di directory separate da ";"
+   # list of directories separated by ";"
    dirList = path.strip().split(";")
    for _dir in dirList:
       _dir = QDir.cleanPath(_dir)
@@ -651,7 +653,7 @@ def findFile(fileName):
          if _dir.endswith("/") == False:
             _dir = _dir + "/"
          _dir = _dir + fileName
-         
+
          if os.path.exists(_dir):
             return _dir
 
@@ -664,9 +666,7 @@ def findFile(fileName):
 # getQADPath
 # ===============================================================================
 def getQADPath():
-   """
-   Restituisce la path di installazione di QAD
-   """
+   """Returns the QAD installation path"""
    return os.path.dirname(os.path.realpath(__file__))
 
 
@@ -685,7 +685,7 @@ def toRadians(angle):
 # ===============================================================================
 def toDegrees(angle):
    """
-   Converte da radianti a gradi 
+   Converte da radianti a gradi
    """
    return math.degrees(angle)
 
@@ -694,11 +694,10 @@ def toDegrees(angle):
 # normalizeAngle
 # ===============================================================================
 def normalizeAngle(angle, norm = math.pi * 2):
-   """
-   Normalizza un angolo a da [0 - 2pi] o da [0 - pi].
-   Così, ad esempio, se un angolo é più grande di 2pi viene ridotto all'angolo giusto 
-   (il raffronto in gradi sarebbe da 380 a 20 gradi) o se é negativo diventa positivo
-   (il raffronto in gradi sarebbe da -90 a 270 gradi)  
+   """Normalize an angle to from [0 - 2pi] or from [0 - pi].
+      So, for example, if an angle is larger than 2pi it is reduced to the right angle
+      (the comparison in degrees would be from 380 to 20 degrees) or if it is negative it becomes positive
+      (the comparison in degrees would be -90 to 270 degrees)
    """
    if angle == 0:
       return 0
@@ -712,9 +711,7 @@ def normalizeAngle(angle, norm = math.pi * 2):
 # getStrIntDecParts
 # ===============================================================================
 def getStrIntDecParts(n):
-   """
-   Restituisce due stringhe rappresentanti la parte intera senza segno e la parte decimale di un numero
-   """
+   """Returns two strings representing the unsigned integer part and the decimal part of a number"""
    if type(n) == int or type(n) == long or type(n) == float:
       nStr = str(n)
       if "." in nStr:
@@ -724,13 +721,13 @@ def getStrIntDecParts(n):
          return nStr, ""
    else:
       return None
-   
+
 
 # ===============================================================================
 # distMapToLayerCoordinates
 # ===============================================================================
 def distMapToLayerCoordinates(dist, canvas, layer):
-   # trovo il punto centrale dello schermo  
+   # I find the central point of the screen
    boundBox = canvas.extent()
    x = (boundBox.xMinimum() + boundBox.xMaximum()) / 2
    y = (boundBox.yMinimum() + boundBox.yMaximum()) / 2
@@ -739,72 +736,70 @@ def distMapToLayerCoordinates(dist, canvas, layer):
    transformedPt1 = canvas.mapSettings().mapToLayerCoordinates(layer, pt1)
    transformedPt2 = canvas.mapSettings().mapToLayerCoordinates(layer, pt2)
    return getDistance(transformedPt1, transformedPt2)
-         
+
 
 # ===============================================================================
 # filterFeaturesByType
 # ===============================================================================
 def filterFeaturesByType(features, filterByGeomType):
-   """
-   Riceve una lista di features e la tipologia di geometria che deve essere filtrata.
-   La funzione modifica la lista <features> depurandola dalle geometrie di tipo diverso
-   da <filterByGeomType>.   
-   Restituisce 3 liste rispettivamente di punti, linee e poligoni.
-   La lista del tipo indicato dal parametro <filterByGeomType> sarà vuota, le altre
-   due liste conterranno geometrie.
+   """Receives a list of features and the type of geometry that needs to be filtered.
+      The function modifies the <features> list, purifying it of geometries of different types
+      from <filterByGeomType>.
+      Returns 3 lists of points, lines and polygons respectively.
+      The list of the type indicated by the <filterByGeomType> parameter will be empty, the others
+      two lists will contain geometries.
    """
    resultPoint = []
    resultLine = []
    resultPolygon = []
 
-   for i in range(len(features) - 1, -1, -1): 
+   for i in range(len(features) - 1, -1, -1):
       f = features[i]
       g = f.geometry()
       geomType = g.type()
       if geomType != filterByGeomType:
-         if geomType == QgsWkbTypes.PointGeometry:      
+         if geomType == QgsWkbTypes.PointGeometry:
             resultPoint.append(QgsGeometry(g))
-            
-         elif geomType == QgsWkbTypes.LineGeometry:      
+
+         elif geomType == QgsWkbTypes.LineGeometry:
             resultLine.append(QgsGeometry(g))
-            
-         elif geomType == QgsWkbTypes.PolygonGeometry:      
+
+         elif geomType == QgsWkbTypes.PolygonGeometry:
             resultPolygon.append(QgsGeometry(g))
-            
+
          del features[i]
 
    return resultPoint, resultLine, resultPolygon
-         
+
 
 # ===============================================================================
 # filterGeomsByType
 # ===============================================================================
 def filterGeomsByType(geoms, filterByGeomType):
-   """
-   Riceve una lista di geometrie e la tipologia di geometria che deve essere filtrata.
-   La funzine modifica la lista <geoms> depurandola dalle geometrie di tipo diverso
-   da <filterByGeomType>.   
-   Restituisce 3 liste rispettivamente di punti, linee e poligoni.
-   La lista del tipo indicato dal parametro <filterByGeomType> sarà vuota, le altre
-   due liste conterranno geometrie.
+   """Receives a list of geometries and the type of geometry that needs to be filtered.
+      The function modifies the <geoms> list, purging it of geometries of different types
+      from <filterByGeomType>.
+      Returns 3 lists of points, lines and polygons respectively.
+      The list of the type indicated by the <filterByGeomType> parameter will be empty, the others
+      two lists will contain geometries.
    """
    resultPoint = []
    resultLine = []
    resultPolygon = []
 
-   for i in range(len(geoms) - 1, -1, -1): 
+   for i in range(len(geoms) - 1, -1, -1):
       g = geoms[i]
       geomType = g.type()
-      if geomType != filterByGeomType:            
-         if geomType == QgsWkbTypes.PointGeometry:      
+      if geomType != filterByGeomType:
+         if geomType == QgsWkbTypes.PointGeometry:
             resultPoint.append(QgsGeometry(g))
-            
-         elif geomType == QgsWkbTypes.LineGeometry:      
+
+         elif geomType == QgsWkbTypes.LineGeometry:
             resultLine.append(QgsGeometry(g))
-            
-         elif geomType == QgsWkbTypes.PolygonGeometry:      
+
+         elif geomType == QgsWkbTypes.PolygonGeometry:
             resultPolygon.append(QgsGeometry(g))
-            
+
          del geoms[i]
 
    return resultPoint, resultLine, resultPolygon
@@ -814,15 +809,13 @@ def filterGeomsByType(geoms, filterByGeomType):
 # getEntSelCursor
 # ===============================================================================
 def getEntSelCursor():
-   """
-   Ritorna l'immagine del cursore per la selezione di un'entità
-   """
-   
+   """Returns the image of the cursor for selecting an entity"""
+
    size = 1 + QadVariables.get(QadMsg.translate("Environment variables", "PICKBOX")) * 2
    # <width/cols> <height/rows> <colors> <char on pixel>
    row = str(size) + " " + str(size) + " 2 1"
    xpm = [row]
-   # <Colors> 
+   # <Colors>
    xpm.append("  c None")
    xpm.append("+ c " + QadVariables.get(QadMsg.translate("Environment variables", "PICKBOXCOLOR")))
    # <Pixels>
@@ -837,20 +830,18 @@ def getEntSelCursor():
       for i in range(size - 2): # da 0
          xpm.append(row)
       xpm.append("+" * size)
-      
+
    return QCursor(QPixmap(xpm))
 
 
 def getGetPointCursor():
-   """
-   Ritorna l'immagine del cursore per la selezione di un punto 
-   """
+   """Returns the image of the cursor for selecting a point"""
    pickBox = QadVariables.get(QadMsg.translate("Environment variables", "CURSORSIZE"))
    size = 1 + pickBox * 2
    # <width/cols> <height/rows> <colors> <char on pixel>
    row = str(size) + " " + str(size) + " 2 1"
    xpm = [row]
-   # <Colors> 
+   # <Colors>
    xpm.append("  c None")
    xpm.append("+ c " + QadVariables.get(QadMsg.translate("Environment variables", "PICKBOXCOLOR")))
    # <Pixels>
@@ -859,7 +850,7 @@ def getGetPointCursor():
    # es . "+++++",
    # es . "  +  ",
    # es . "  +  ",
-   row = (" " * pickBox) + "+" + (" " * pickBox) 
+   row = (" " * pickBox) + "+" + (" " * pickBox)
    xpm.append(row)
    if size > 1:
       for i in range(pickBox - 1): # da 0
@@ -867,53 +858,53 @@ def getGetPointCursor():
       xpm.append("+" * (size))
       for i in range(pickBox - 1): # da 0
          xpm.append(row)
-      
+
    return QCursor(QPixmap(xpm))
 
-   
+
 # ===============================================================================
 # getFeatureRequest
 # ===============================================================================
 def getFeatureRequest(fetchAttributes = [], fetchGeometry = True, \
                       rect = None, useIntersect = False):
-   # PER ORA <fetchGeometry> NON VIENE USATO PERCHE' NON SO FARE IL CAST in QgsFeatureRequest.Flags
-   # restituisce un oggetto QgsFeatureRequest per interrogare un layer
+   # FOR NOW <fetchGeometry> IS NOT USED BECAUSE I DON'T KNOW HOW TO CAST in QgsFeatureRequest.Flags
+   # returns a QgsFeatureRequest object to query a layer
    # It can get 4 arguments, all of them are optional:
    # fetchAttributes: List of attributes which should be fetched.
    #                  None = disable fetching attributes, Empty list means that all attributes are used.
    #                  default: empty list
    # fetchGeometry: Whether geometry of the feature should be fetched. Default: True
    # rect: Spatial filter by rectangle.
-   #       None = nessuna ricerca spaziale, empty rect means (QgsRectangle()), all features are fetched.
+   #       None = no spatial search, empty rect means (QgsRectangle()), all features are fetched.
    #       Default: none
-   # useIntersect: When using spatial filter, this argument says whether accurate test for intersection 
+   # useIntersect: When using spatial filter, this argument says whether accurate test for intersection
    # should be done or whether test on bounding box suffices.
    # This is needed e.g. for feature identification or selection. Default: False
-      
+
    request = QgsFeatureRequest()
-   
+
    #flag = QgsFeatureRequest.NoFlags
-        
+
 #    if fetchGeometry == False:
 #       flag = flag | QgsFeatureRequest.NoGeometry
-             
+
    if rect is not None:
       r = QgsRectangle(rect)
-      
-        # non serve più
-#       # Se il rettangolo é schiacciato in verticale o in orizzontale
-#       # risulta una linea e la funzione fa casino, allora in questo caso lo allargo un pochino
+
+        # no longer needed
+#       # If the rectangle is squashed vertically or horizontally
+#       # it turns out to be a line and the function makes a mess, so in this case I widen it a little
 #       if doubleNear(r.xMinimum(), r.xMaximum(), 1.e-6):
 #          r.setXMaximum(r.xMaximum() + 1.e-6)
 #          r.setXMinimum(r.xMinimum() - 1.e-6)
 #       if doubleNear(r.yMinimum(), r.yMaximum(), 1.e-6):
 #          r.setYMaximum(r.yMaximum() + 1.e-6)
 #          r.setYMinimum(r.yMinimum() - 1.e-6)
-         
+
       request.setFilterRect(r)
 
       if useIntersect == True:
-         request.setFlags(QgsFeatureRequest.ExactIntersect)   
+         request.setFlags(QgsFeatureRequest.ExactIntersect)
 
    if fetchAttributes is None:
       request.setSubsetOfAttributes([])
@@ -928,10 +919,10 @@ def getFeatureRequest(fetchAttributes = [], fetchGeometry = True, \
 # getVisibleVectorLayers
 # ===============================================================================
 def getVisibleVectorLayers(canvas):
-   # Tutti i layer vettoriali visibili
+   # All vector layers visible
    layers = canvas.layers()
    for i in range(len(layers) - 1, -1, -1):
-      # se il layer non è vettoriale o non è visibile a questa scala
+      # if the layer is not vector or not visible at this scale
       if layers[i].type() != QgsMapLayer.VectorLayer or \
          layers[i].hasScaleBasedVisibility() and \
          (canvas.mapSettings().scale() > layers[i].minimumScale() or canvas.mapSettings().scale() < layers[i].maximumScale()):
@@ -957,14 +948,14 @@ def getSnappableVectorLayers(canvas):
       layers = list(cfg.layer for cfg in canvas.snappingUtils().layers())
    else: # mode == QgsSnappingConfig.AllLayers:
       layers = canvas.layers()
-         
-   # Solo i layer vettoriali visibili
+
+   # Only vector layers visible
    for i in range(len(layers) - 1, -1, -1):
-      # se il layer non è vettoriale o non è visibile a questa scala
+      # if the layer is not vector or not visible at this scale
       if layers[i].type() != QgsMapLayer.VectorLayer or \
          layers[i].hasScaleBasedVisibility() and \
          (canvas.mapSettings().scale() > layers[i].minimumScale() or canvas.mapSettings().scale() < layers[i].maximumScale()):
-         del layers[i]         
+         del layers[i]
    return layers
 
 
@@ -975,39 +966,38 @@ def getEntSel(point, mQgsMapTool, boxSize, \
               layersToCheck = None, checkPointLayer = True, checkLineLayer = True, checkPolygonLayer = True,
               onlyBoundary = True, onlyEditableLayers = False, \
               firstLayerToCheck = None, layerCacheGeomsDict = None, returnFeatureCached = False):
+   """given a point (in screen coordinates) and a QgsMapTool,
+      the function searces for the first entity inside the square
+      of size <boxSize> (in pixels) centered on the point <point>
+      layersToCheck = optional, list of layers to searc
+      checkPointLayer = optional, consider point layers
+      checkLineLayer = optional, consider line layers
+      checkPolygonLayer = optional, consider polygon-type layers
+      onlyBoundary = is used to consider only the edge of the polygons or even their interior
+      onlyEditableLayers = to searc only editable layers
+      firstLayerToCheck = to optimize the searc, first layer to check
+      layerCacheGeomsDict = to optimize the searc, it is a cache of the layer geometries
+      returnFeatureCached = to optimize, returns the feature read from the cache (when only the geometry is interested)
+
+      Returns a list consisting of a QgsFeature and its layer and selection point
+      if successful otherwise None
    """
-   dato un punto (in screen coordinates) e un QgsMapTool, 
-   la funzione cerca la prima entità dentro il quadrato
-   di dimensioni <boxSize> (in pixel) centrato sul punto <point>
-   layersToCheck = opzionale, lista dei layer in cui cercare
-   checkPointLayer = opzionale, considera i layer di tipo punto
-   checkLineLayer = opzionale, considera i layer di tipo linea
-   checkPolygonLayer = opzionale, considera i layer di tipo poligono
-   onlyBoundary = serve per considerare solo il bordo dei poligoni o anche il loro interno
-   onlyEditableLayers = per cercare solo nei layer modificabili
-   firstLayerToCheck = per ottimizzare la ricerca, primo layer da controllare
-   layerCacheGeomsDict = per ottimizzare la ricerca, è una chache delle geometrie dei layer
-   returnFeatureCached = per ottimizzare, ritorna la featura letta dalla cache (quando interessa solo la geometria)
-   
-   Restituisce una lista composta da una QgsFeature e il suo layer e il punto di selezione 
-   in caso di successo altrimenti None 
-   """           
-   
+
    if checkPointLayer == False and checkLineLayer == False and checkPolygonLayer == False:
       return None
-      
+
    #QApplication.setOverrideCursor(Qt.WaitCursor)
-   
+
    if layersToCheck is None:
-      # Tutti i layer vettoriali visibili
-      _layers = getVisibleVectorLayers(mQgsMapTool.canvas) # Tutti i layer vettoriali visibili
+      # All vector layers visible
+      _layers = getVisibleVectorLayers(mQgsMapTool.canvas) # All vector layers visible
    else:
-      # solo la lista passata come parametro
+      # only the list passed as a parameter
       _layers = layersToCheck
 
-   # se il processo può essere ottimizzato con il primo layer in cui cercare
+   # if the process can be optimized with the first layer to searc
    if firstLayerToCheck is not None:
-      # considero solo se layer vettoriale visibile che è filtrato per tipo
+      # I only consider if visible vector layer that is filtered by type
       if firstLayerToCheck.type() == QgsMapLayer.VectorLayer and \
          (onlyEditableLayers == False or firstLayerToCheck.isEditable()) and \
          (firstLayerToCheck.hasScaleBasedVisibility() == False or \
@@ -1015,23 +1005,23 @@ def getEntSel(point, mQgsMapTool, boxSize, \
          ((firstLayerToCheck.geometryType() == QgsWkbTypes.PointGeometry and checkPointLayer == True) or \
           (firstLayerToCheck.geometryType() == QgsWkbTypes.LineGeometry and checkLineLayer == True) or \
           (firstLayerToCheck.geometryType() == QgsWkbTypes.PolygonGeometry and checkPolygonLayer == True)):
-         # restituisce feature, point
+         # returns feature, point
          res = getEntSelOnLayer(point, mQgsMapTool, boxSize, firstLayerToCheck, onlyBoundary, layerCacheGeomsDict, returnFeatureCached)
          if res is not None:
             return res[0], firstLayerToCheck, res[1]
-      
-   for layer in _layers: # ciclo sui layer
-      # se il processo può essere ottimizzato con il primo layer in cui cercare lo salto in questo ciclo
+
+   for layer in _layers: # cycle on layers
+      # if the process can be optimized with the first layer to look for the jump in this loop
       if (firstLayerToCheck is not None) and firstLayerToCheck.id() == layer.id():
          continue;
-      
-      # considero solo i layer vettoriali che sono filtrati per tipo
+
+      # I only consider vector layers that are filtered by type
       if layer.type() == QgsMapLayer.VectorLayer and \
           (onlyEditableLayers == False or layer.isEditable()) and \
           ((layer.geometryType() == QgsWkbTypes.PointGeometry and checkPointLayer == True) or \
            (layer.geometryType() == QgsWkbTypes.LineGeometry and checkLineLayer == True) or \
            (layer.geometryType() == QgsWkbTypes.PolygonGeometry and checkPolygonLayer == True)):
-         # restituisce feature, point
+         # returns feature, point
          res = getEntSelOnLayer(point, mQgsMapTool, boxSize, layer, onlyBoundary, layerCacheGeomsDict, returnFeatureCached)
          if res is not None:
             return res[0], layer, res[1]
@@ -1045,16 +1035,15 @@ def getEntSel(point, mQgsMapTool, boxSize, \
 # ===============================================================================
 def getEntSelOnLayer(point, mQgsMapTool, boxSize, layer, onlyBoundary = True, \
                      layerCacheGeomsDict = None, returnFeatureCached = False):
+   """given a point (in screen coordinates) and a QgsMapTool,
+      the function searces for the first entity of the layer inside the square
+      of size <boxSize> (in pixels) centered on the point <point>
+      onlyBoundary = is used to consider only the edge of the polygons or even their interior
+      layerCacheGeomsDict = to optimize the searc, it is a cache of the layer geometries
+
+      Returns a list consisting of a QgsFeature and the selection point
+      if successful otherwise None
    """
-   dato un punto (in screen coordinates) e un QgsMapTool,
-   la funzione cerca la prima entità del layer dentro il quadrato
-   di dimensioni <boxSize> (in pixel) centrato sul punto <point>
-   onlyBoundary = serve per considerare solo il bordo dei poligoni o anche il loro interno
-   layerCacheGeomsDict = per ottimizzare la ricerca, è una chache delle geometrie dei layer
-   
-   Restituisce una lista composta da una QgsFeature e il punto di selezione 
-   in caso di successo altrimenti None 
-   """           
    layerCoords = mQgsMapTool.toLayerCoordinates(layer, point)
    ToleranceInMapUnits = QgsTolerance.toleranceInMapUnits(boxSize, layer, \
                                                           mQgsMapTool.canvas.mapSettings(), \
@@ -1063,38 +1052,38 @@ def getEntSelOnLayer(point, mQgsMapTool, boxSize, layer, onlyBoundary = True, \
    selectRect = QgsRectangle(layerCoords.x() - ToleranceInMapUnits, layerCoords.y() - ToleranceInMapUnits, \
                              layerCoords.x() + ToleranceInMapUnits, layerCoords.y() + ToleranceInMapUnits)
 
-   # se il processo può essere ottimizzato con la cache
+   # whether the process can be optimized with cache
    if layerCacheGeomsDict is not None:
       cachedFeatures = layerCacheGeomsDict.getFeatures(layer, selectRect)
-      
+
       featureRequest = QgsFeatureRequest()
       featureRequest.setSubsetOfAttributes([])
-      
+
       for cachedFeature in cachedFeatures:
-         # se é un layer contenente poligoni allora verifico se considerare solo i bordi
+         # if it is a layer containing polygons then check whether to consider only the edges
          if onlyBoundary == False or layer.geometryType() != QgsWkbTypes.PolygonGeometry:
             if cachedFeature.geometry().intersects(selectRect):
-               if returnFeatureCached: # ritorna la feature della cache
+               if returnFeatureCached: # returns the cache feature
                   return cachedFeature, point
-               # ottengo la feature del layer
+               # I get the layer feature
                featureRequest.setFilterFid(cachedFeature.attribute("index"))
-               featureIterator = layer.getFeatures(featureRequest)      
+               featureIterator = layer.getFeatures(featureRequest)
                for feature in featureIterator:
                   return feature, point
          else:
-            # considero solo i bordi delle geometrie e non lo spazio interno dei poligoni
-            # Riduco le geometrie in point o polyline
+            # I only consider the edges of the geometries and not the internal space of the polygons
+            # I reduce geometries to points or polylines
             geoms = asPointOrPolyline(cachedFeature.geometry())
             for g in geoms:
                #start = time.time() # test
                #for i in range(1, 10):
                if g.intersects(selectRect):
-                  if returnFeatureCached: # ritorna la feature della cache
+                  if returnFeatureCached: # returns the cache feature
                      return cachedFeature, point
-                  
-                  # ottengo la feature del layer
+
+                  # I get the layer feature
                   featureRequest.setFilterFid(cachedFeature.attribute("index"))
-                  featureIterator = layer.getFeatures(featureRequest)      
+                  featureIterator = layer.getFeatures(featureRequest)
                   for feature in featureIterator:
                      return feature, point
                #tempo = ((time.time() - start) * 1000) # test
@@ -1102,15 +1091,15 @@ def getEntSelOnLayer(point, mQgsMapTool, boxSize, layer, onlyBoundary = True, \
    else:
       featureIterator = layer.getFeatures(getFeatureRequest([], True, selectRect, True))
       feature = QgsFeature()
-   
-      # se é un layer contenente poligoni allora verifico se considerare solo i bordi
+
+      # if it is a layer containing polygons then check whether to consider only the edges
       if onlyBoundary == False or layer.geometryType() != QgsWkbTypes.PolygonGeometry:
          for feature in featureIterator:
             return feature, point
       else:
-         # considero solo i bordi delle geometrie e non lo spazio interno dei poligoni
+         # I only consider the edges of the geometries and not the internal space of the polygons
          for feature in featureIterator:
-            # Riduco le geometrie in point o polyline
+            # I reduce geometries to points or polylines
             geoms = asPointOrPolyline(feature.geometry())
             for g in geoms:
                if g.intersects(selectRect):
@@ -1123,87 +1112,83 @@ def getEntSelOnLayer(point, mQgsMapTool, boxSize, layer, onlyBoundary = True, \
 # getFeatureById
 # ===============================================================================
 def getFeatureById(layer, id):
-   """
-   Ricava una feature dal suo id.
-   """
+   """Get a feature from its id."""
    feature = QgsFeature()
    if layer.getFeatures(QgsFeatureRequest().setFilterFid(id)).nextFeature(feature):
       return feature
    else:
       return None
 
-   
+
 # ===============================================================================
 # isGeomInBox
 # ===============================================================================
 def isGeomInBox(point, mQgsMapTool, geom, boxSize, crs = None, \
                 checkPointLayer = True, checkLineLayer = True, checkPolygonLayer = True,
                 onlyBoundary = True):
+   """given a point (in screen coordinates) and a QgsMapTool,
+      the function checks whether the geometry is inside the square
+      of boxSize dimensions (in pixels) centered on the point
+      geom = geometry to verify
+      crs = geometry coordinate system (if = NOT means in map coordinates)
+      checkPointLayer = optional, consider point geometry
+      checkLineLayer = optional, consider line-type geometry
+      checkPolygonLayer = optional, considers polygon-type geometry
+      onlyBoundary = is used to consider only the edge of the polygons or even their interior
+      Returns True if the geometry is in the square of size boxSize in (pixel) otherwise False
    """
-   dato un punto (in screen coordinates) e un QgsMapTool, 
-   la funzione verifica se la geometria é dentro il quadrato
-   di dimensioni boxSize (in pixel) centrato sul punto
-   geom = geometria da verificare
-   crs = sistema di coordinate della geometria (se = NON significa in map coordinates)
-   checkPointLayer = opzionale, considera la geometria di tipo punto
-   checkLineLayer = opzionale, considera la geometria di tipo linea
-   checkPolygonLayer = opzionale, considera la geometria di tipo poligono
-   onlyBoundary = serve per considerare solo il bordo dei poligoni o anche il loro interno
-   Restituisce True se la geometria é nel quadrato di dimensione boxSize in (pixel) altrimenti False 
-   """   
    if geom is None:
       return False
    if checkPointLayer == False and checkLineLayer == False and checkPolygonLayer == False:
       return False
-   
-   # considero solo la geometria filtrata per tipo
+
+   # I only consider geometry filtered by type
    if ((geom.type() == QgsWkbTypes.PointGeometry and checkPointLayer == True) or \
        (geom.type() == QgsWkbTypes.LineGeometry and checkLineLayer == True) or \
-       (geom.type() == QgsWkbTypes.PolygonGeometry and checkPolygonLayer == True)):      
+       (geom.type() == QgsWkbTypes.PolygonGeometry and checkPolygonLayer == True)):
       mapPoint = mQgsMapTool.toMapCoordinates(point)
       mapGeom = QgsGeometry(geom)
       if crs is not None and mQgsMapTool.canvas.mapSettings().destinationCrs() != crs:
-         # trasformo le coord della geometria in map coordinates
-         coordTransform = QgsCoordinateTransform(crs, mQgsMapTool.canvas.mapSettings().destinationCrs(), QgsProject.instance())          
-         mapGeom.transform(coordTransform)      
-         
+         # transform the geometry coordinates into map coordinates
+         coordTransform = QgsCoordinateTransform(crs, mQgsMapTool.canvas.mapSettings().destinationCrs(), QgsProject.instance())
+         mapGeom.transform(coordTransform)
+
       ToleranceInMapUnits = boxSize * mQgsMapTool.canvas.mapSettings().mapUnitsPerPixel()
       selectRect = QgsRectangle(mapPoint.x() - ToleranceInMapUnits, mapPoint.y() - ToleranceInMapUnits, \
                                 mapPoint.x() + ToleranceInMapUnits, mapPoint.y() + ToleranceInMapUnits)
-                                           
-      # se é una geometria poligono allora verifico se considerare solo i bordi
+
+      # if it is a polygon geometry then check whether to consider only the edges
       if onlyBoundary == False or geom.type() != QgsWkbTypes.PolygonGeometry:
          if mapGeom.intersects(selectRect):
             return True
       else:
-         # considero solo i bordi della geometria e non lo spazio interno del poligono
-         # Riduco la geometria in point o polyline
+         # I only consider the edges of the geometry and not the internal space of the polygon
+         # I reduce the geometry to points or polylines
          geoms = asPointOrPolyline(mapGeom)
          for g in geoms:
             if g.intersects(selectRect):
                return True
-   
+
    return False
 
-   
+
 # ===============================================================================
 # getGeomInBox
 # ===============================================================================
 def getGeomInBox(point, mQgsMapTool, geoms, boxSize, crs = None, \
                  checkPointLayer = True, checkLineLayer = True, checkPolygonLayer = True,
                  onlyBoundary = True):
+   """given a point (in screen coordinates) and a QgsMapTool,
+      the function searces for the first geometry inside the square
+      of boxSize dimensions (in pixels) centered on the point
+      geoms = list of geometries to verify
+      crs = geometry coordinate system (if = NOT means in map coordinates)
+      checkPointLayer = optional, consider point geometry
+      checkLineLayer = optional, consider line-type geometry
+      checkPolygonLayer = optional, considers polygon-type geometry
+      onlyBoundary = is used to consider only the edge of the polygons or even their interior
+      Returns the geometry that is in the square of size boxSize otherwise None
    """
-   dato un punto (in screen coordinates) e un QgsMapTool, 
-   la funzione cerca la prima geometria dentro il quadrato
-   di dimensioni boxSize (in pixel) centrato sul punto
-   geoms = lista di geometrie da verificare
-   crs = sistema di coordinate della geometria (se = NON significa in map coordinates)
-   checkPointLayer = opzionale, considera la geometria di tipo punto
-   checkLineLayer = opzionale, considera la geometria di tipo linea
-   checkPolygonLayer = opzionale, considera la geometria di tipo poligono
-   onlyBoundary = serve per considerare solo il bordo dei poligoni o anche il loro interno
-   Restituisce la geometria che é nel quadrato di dimensini boxSize altrimenti None 
-   """   
    if geoms is None:
       return False
    for geom in geoms:
@@ -1216,33 +1201,30 @@ def getGeomInBox(point, mQgsMapTool, geoms, boxSize, crs = None, \
 # getActualSingleSelection
 # ===============================================================================
 def getActualSingleSelection(layers):
-   """
-   la funzione cerca se esiste una sola entità selezionata tra i layer
-   Restituisce un QgsFeature e il suo layer in caso di successo altrimenti None 
+   """the function searces if there is only one selected entity between the layers
+      Returns a QgsFeature and its layer on success otherwise None
    """
    selFeature = []
 
-   for layer in layers: # ciclo sui layer
+   for layer in layers: # cycle on layers
       if (layer.type() == QgsMapLayer.VectorLayer):
          selectedFeatureCount = layer.selectedFeaturCount()
          if selectedFeatureCount == 1:
             selFeature = layer.selectedFeatures()
             selLayer = Layer
          elif selectedFeatureCount > 1:
-            del selFeature[:] # svuoto la lista
+            del selFeature[:] # I empty the list
             break
-      
-   if len(selFeature) == 1: # se c'era solo una entità selezionata
+
+   if len(selFeature) == 1: # if there was only one entity selected
       return selFeature[0], selLayer
-  
+
    return None
 
 
 def deselectAll(layers):
-   """
-   la funzione deseleziona tutte le entità selezionate nei layer
-   """
-   for layer in layers: # ciclo sui layer
+   """the function deselects all selected entities in the layers"""
+   for layer in layers: # cycle on layers
       if (layer.type() == QgsMapLayer.VectorLayer):
          layer.removeSelection()
 
@@ -1251,9 +1233,8 @@ def deselectAll(layers):
 # appendUniquePointToList
 # ===============================================================================
 def appendUniquePointToList(pointList, point):
-   """
-   Aggiunge un punto alla lista verificando che non sia già presente.
-   Resituisce True se l'inserimento é avvenuto False se il punto c'era già.
+   """Adds a point to the list checking that it is not already present.
+      Returns True if the insertion occurred, False if the point was already there.
    """
    for iPoint in pointList:
       if ptNear(iPoint, point):
@@ -1267,23 +1248,22 @@ def appendUniquePointToList(pointList, point):
 # getPerpendicularPointOnInfinityLine
 # ===============================================================================
 def getPerpendicularPointOnInfinityLine(p1, p2, pt):
+   """the function returns the perpendicular projection point of pt
+      to the line passing through p1-p2.
    """
-   la funzione ritorna il punto di proiezione perpendicolare di pt 
-   alla linea passante per p1-p2.
-   """
-   
+
    diffX = p2.x() - p1.x()
    diffY = p2.y() - p1.y()
-                          
-   if doubleNear(diffX, 0): # se la retta passante per p1 e p2 é verticale
+
+   if doubleNear(diffX, 0): # if the straight line passing through p1 and p2 is vertical
       return QgsPointXY(p1.x(), pt.y())
-   elif doubleNear(diffY, 0): # se la retta passante per p1 e p2 é orizzontale
+   elif doubleNear(diffY, 0): # if the straight line passing through p1 and p2 is horizontal
       return QgsPointXY(pt.x(), p1.y())
    else:
       coeff = diffY / diffX
       x = (coeff * p1.x() - p1.y() + pt.x() / coeff + pt.y()) / (coeff + 1 / coeff)
       y = coeff * (x - p1.x()) + p1.y()
-      
+
       return QgsPointXY(x, y)
 
 
@@ -1291,9 +1271,8 @@ def getPerpendicularPointOnInfinityLine(p1, p2, pt):
 # getInfinityLinePerpOnMiddle
 # ===============================================================================
 def getInfinityLinePerpOnMiddle(pt1, pt2):
-   """
-   dato un segmento pt1-pt2, la funzione trova una linea perpendicolare al segmento
-   che passa per il suo punto medio. La funzione restituisce 2 punti della linea.
+   """given a segment pt1-pt2, the function finds a line perpendicular to the segment
+      which passes through its midpoint. The function returns 2 points of the line.
    """
    ptMiddle = getMiddlePoint(pt1, pt2)
    dist = getDistance(pt1, ptMiddle)
@@ -1308,9 +1287,7 @@ def getInfinityLinePerpOnMiddle(pt1, pt2):
 # getMiddleAngle
 # ===============================================================================
 def getMiddleAngle(angle1, angle2):
-   """
-   dati 2 angoli, la funzione restituisce l'angolo medio. 
-   """
+   """given 2 angles, the function returns the average angle."""
    a1 = normalizeAngle(angle1)
    a2 = normalizeAngle(angle2)
    if a2 < a1: a2 = (math.pi * 2) + a2
@@ -1321,18 +1298,17 @@ def getMiddleAngle(angle1, angle2):
 # getBisectorInfinityLine
 # ===============================================================================
 def getBisectorInfinityLine(pt1, pt2, pt3, acuteMode = True):
+   """given an angle defined by 3 points whose second point is the vertex of the angle,
+      the function returns the line bisector of the angle through 2 points
+      of the line (the vertex of the angle and another calculated point how far away
+      the distance of pt1 from pt2).
+      acuteMode = True considers the acute angle, acuteMode = False the obtuse angle
    """
-   dato un angolo definito da 3 punti il cui secondo punto é vertice dell'angolo,
-   la funzione restituisce la linea bisettrice dell'angolo attraverso 2 punti 
-   della linea (il vertice dell'angolo e un altro punto calcolato distante quanto
-   la distanza di pt1 da pt2).
-   acuteMode = True considera l'angolo acuto, acuteMode = False l'angolo ottuso 
-   """   
    angle1 = getAngleBy2Pts(pt2, pt1)
    angle2 = getAngleBy2Pts(pt2, pt3)
-   angle = (angle1 + angle2) / 2 # angolo medio
+   angle = (angle1 + angle2) / 2 # average angle
 #   return pt2, getPolarPointByPtAngle(pt2, angle, 10)
-   
+
    dist = getDistance(pt1, pt2)
    ptProj = getPolarPointByPtAngle(pt2, angle, dist)
    ptInverseProj = getPolarPointByPtAngle(pt2, angle - math.pi, dist)
@@ -1352,18 +1328,17 @@ def getBisectorInfinityLine(pt1, pt2, pt3, acuteMode = True):
 # getXOnInfinityLine
 # ===============================================================================
 def getXOnInfinityLine(p1, p2, y):
+   """given the Y coordinate of a point the function returns the X coordinate of the same
+      on the line passing through p1-p2
    """
-   data la coordinata Y di un punto la funzione ritorna la coordinata X dello stesso
-   sulla linea passante per p1-p2 
-   """
-   
+
    diffX = p2.x() - p1.x()
    diffY = p2.y() - p1.y()
-                          
-   if doubleNear(diffX, 0): # se la retta passante per p1 e p2 é verticale
+
+   if doubleNear(diffX, 0): # if the straight line passing through p1 and p2 is vertical
       return p1.x()
-   elif doubleNear(diffY, 0): # se la retta passante per p1 e p2 é orizzontale
-      return None # infiniti punti
+   elif doubleNear(diffY, 0): # if the straight line passing through p1 and p2 is horizontal
+      return None # infinite points
    else:
       coeff = diffY / diffX
       return p1.x() + (y - p1.y()) / coeff
@@ -1373,17 +1348,16 @@ def getXOnInfinityLine(p1, p2, y):
 # getYOnInfinityLine
 # ===============================================================================
 def getYOnInfinityLine(p1, p2, x):
+   """given the Y coordinate of a point the function returns the X coordinate of the same
+      on the line passing through p1-p2
    """
-   data la coordinata Y di un punto la funzione ritorna la coordinata X dello stesso
-   sulla linea passante per p1-p2 
-   """
-   
+
    diffX = p2.x() - p1.x()
    diffY = p2.y() - p1.y()
-                          
-   if doubleNear(diffX, 0): # se la retta passante per p1 e p2 é verticale
-      return None # infiniti punti
-   elif doubleNear(diffY, 0): # se la retta passante per p1 e p2 é orizzontale
+
+   if doubleNear(diffX, 0): # if the straight line passing through p1 and p2 is vertical
+      return None # infinite points
+   elif doubleNear(diffY, 0): # if the straight line passing through p1 and p2 is horizontal
       return p1.y()
    else:
       coeff = diffY / diffX
@@ -1394,12 +1368,10 @@ def getYOnInfinityLine(p1, p2, x):
 # getSqrDistance
 # ===============================================================================
 def getSqrDistance(p1, p2):
-   """
-   la funzione ritorna la distanza al quadrato tra 2 punti (QgsPointXY)
-   """
+   """the function returns the squared distance between 2 points (QgsPointXY)"""
    dx = p2.x() - p1.x()
    dy = p2.y() - p1.y()
-   
+
    return dx * dx + dy * dy
 
 
@@ -1407,9 +1379,7 @@ def getSqrDistance(p1, p2):
 # getDistance
 # ===============================================================================
 def getDistance(p1, p2):
-   """
-   la funzione ritorna la distanza tra 2 punti (QgsPointXY)
-   """
+   """the function returns the distance between 2 points (QgsPointXY)"""
    return math.sqrt(getSqrDistance(p1, p2))
 
 
@@ -1417,9 +1387,8 @@ def getDistance(p1, p2):
 # getMinDistancePtBetweenSegmentAndPt
 # ===============================================================================
 def getMinDistancePtBetweenSegmentAndPt(p1, p2, pt):
-   """
-   la funzione ritorna il punto di distanza minima e la distanza minima tra un segmento ed un punto
-   (<punto di distanza minima><distanza minima>)
+   """the function returns the minimum distance point and the minimum distance between a segment and a point
+      (<minimum distance point><minimum distance>)
    """
    if isPtOnSegment(p1, p2, pt) == True:
       return [pt, 0]
@@ -1440,12 +1409,10 @@ def getMinDistancePtBetweenSegmentAndPt(p1, p2, pt):
 # getMiddlePoint
 # ===============================================================================
 def getMiddlePoint(p1, p2):
-   """
-   la funzione ritorna il punto medio tra 2 punti (QgsPointXY)
-   """
+   """the function returns the midpoint between 2 points (QgsPointXY)"""
    x = (p1.x() + p2.x()) / 2
    y = (p1.y() + p2.y()) / 2
-   
+
    return QgsPointXY(x, y)
 
 
@@ -1453,17 +1420,15 @@ def getMiddlePoint(p1, p2):
 # getAngleBy2Pts
 # ===============================================================================
 def getAngleBy2Pts(p1, p2, tolerance = None):
-   """
-   la funzione ritorna l'angolo in radianti della retta passante per p1 e p2
-   """
+   """the function returns the angle in radians of the straight line passing through p1 and p2"""
    diffX = p2.x() - p1.x()
    diffY = p2.y() - p1.y()
-   if doubleNear(diffX, 0, tolerance): # se la retta passante per p1 e p2 é verticale
+   if doubleNear(diffX, 0, tolerance): # if the straight line passing through p1 and p2 is vertical
       if p1.y() < p2.y():
          angle = math.pi / 2
       else :
          angle = math.pi * 3 / 2
-   elif doubleNear(diffY, 0, tolerance): # se la retta passante per p1 e p2 é orizzontale
+   elif doubleNear(diffY, 0, tolerance): # if the straight line passing through p1 and p2 is horizontal
       if p1.x() <= p2.x():
          angle = 0.0
       else:
@@ -1483,20 +1448,19 @@ def getAngleBy2Pts(p1, p2, tolerance = None):
 # getAngleBy3Pts
 # ===============================================================================
 def getAngleBy3Pts(p1, vertex, p2, clockWise):
+   """the function returns the angle in radians of the angle starting from <p1>
+      to get to <p2> with vertex <vertex> in the <clockWise> direction (clockwise or counterclockwise)
    """
-   la funzione ritorna l'angolo in radianti dell'angolo che parte da <p1> 
-   per arrivare a <p2> con vertice <vertex> nella direzione <clockWise> (oraria o antioraria)
-   """
-   angle1 = getAngleBy2Pts(p1, vertex)   
+   angle1 = getAngleBy2Pts(p1, vertex)
    angle2 = getAngleBy2Pts(p2, vertex)
    if clockWise: # senso orario
       if angle2 > angle1:
-         return (2 * math.pi) - (angle2 - angle1)      
+         return (2 * math.pi) - (angle2 - angle1)
       else:
-         return angle1 - angle2      
+         return angle1 - angle2
    else: # senso anti-orario
       if angle2 < angle1:
-         return (2 * math.pi) - (angle1 - angle2)      
+         return (2 * math.pi) - (angle1 - angle2)
       else:
          return angle2 - angle1
 
@@ -1505,35 +1469,33 @@ def getAngleBy3Pts(p1, vertex, p2, clockWise):
 # isAngleBetweenAngles
 # ===============================================================================
 def isAngleBetweenAngles(startAngle, endAngle, angle):
-   """
-   la funzione ritorna True se l'angolo si trova entro l'angolo di partenza e quello finale
-   estremi compresi
+   """the function returns True if the angle is within the starting and ending angles
+      extremes included
    """
    _angle = angle % (math.pi * 2) # modulo
-      
+
    if startAngle < endAngle:
       if (_angle > startAngle or doubleNear(_angle, startAngle)) and \
          (_angle < endAngle or doubleNear(_angle, endAngle)):
-         return True      
+         return True
    else:
       if (_angle > 0 or doubleNear(_angle, 0)) and \
          (_angle < endAngle or doubleNear(_angle, endAngle)):
-         return True      
+         return True
 
       if (_angle < (math.pi * 2) or doubleNear(_angle, (math.pi * 2))) and \
          (_angle > startAngle or doubleNear(_angle, startAngle)):
-         return True      
-   
+         return True
+
    return False
 
 
 def getPolarPointBy2Pts(p1, p2, dist):
-   """
-   la funzione ritorna il punto sulla retta passante per p1 e p2 che
-   dista da p1 verso p2 <dist>.
+   """the function returns the point on the line passing through p1 and p2 which
+      distance from p1 to p2 <dist>.
    """
    angle = getAngleBy2Pts(p1, p2)
-         
+
    return getPolarPointByPtAngle(p1, angle, dist)
 
 
@@ -1541,9 +1503,8 @@ def getPolarPointBy2Pts(p1, p2, dist):
 # isPtOnSegment
 # ===============================================================================
 def isPtOnSegment(p1, p2, point):
-   """
-   la funzione ritorna true se il punto é sul segmento (estremi compresi).
-   p1, p2 e point sono QgsPointXY.
+   """the function returns true if the point is on the segment (extremes included).
+      p1, p2 and point are QgsPointXY.
    """
    if p1.x() < p2.x():
       xMin = p1.x()
@@ -1551,10 +1512,10 @@ def isPtOnSegment(p1, p2, point):
    else:
       xMax = p1.x()
       xMin = p2.x()
-	  
-   # verifico se il punto può essere sul segmento 22/07/2017
+
+   # check if the point can be on the 07/22/2017 segment
    if doubleSmaller(point.x(), xMin) or doubleGreater(point.x(), xMax): return False
-      
+
    if p1.y() < p2.y():
       yMin = p1.y()
       yMax = p2.y()
@@ -1562,46 +1523,45 @@ def isPtOnSegment(p1, p2, point):
       yMax = p1.y()
       yMin = p2.y()
 
-   # verifico se il punto può essere sul segmento 22/07/2017
+   # check if the point can be on the 07/22/2017 segment
    if doubleSmaller(point.y(), yMin) or doubleGreater(point.y(), yMax): return False
-	  
+
    y = getYOnInfinityLine(p1, p2, point.x())
-   if y is None: # il segmento p1-p2 é verticale
+   if y is None: # the p1-p2 segment is vertical
       return True
    else:
-      # se il punto é sulla linea infinita che passa da p1-p2
+      # if the point is on the infinite line that passes from p1-p2
       if doubleNear(point.y(), y):
          return True
-         
-   return False  
+
+   return False
 
 
 # ===============================================================================
 # getIntersectionPointOn2InfinityLines
 # ===============================================================================
 def getIntersectionPointOn2InfinityLines(line1P1, line1P2, line2P1, line2P2):
-   """
-   la funzione ritorna il punto di intersezione tra la linea passante per line1P1-line1P2 e
-   la linea passante per line2P1-line2P2.
+   """the function returns the point of intersection between the line passing through line1P1-line1P2 and
+      the line passing through line2P1-line2P2.
    """
    line1DiffX = line1P2.x() - line1P1.x()
    line1DiffY = line1P2.y() - line1P1.y()
 
    line2DiffX = line2P2.x() - line2P1.x()
-   line2DiffY = line2P2.y() - line2P1.y()   
-   
-   if doubleNear(line1DiffX, 0) and doubleNear(line2DiffX, 0): # se la retta1 e la retta2 sono verticale
+   line2DiffY = line2P2.y() - line2P1.y()
+
+   if doubleNear(line1DiffX, 0) and doubleNear(line2DiffX, 0): # if line1 and line2 are vertical
       return None # sono parallele
-   elif doubleNear(line1DiffY, 0) and doubleNear(line2DiffY, 0): # se la retta1 e la retta2 sono orizzontali
+   elif doubleNear(line1DiffY, 0) and doubleNear(line2DiffY, 0): # if line1 and line2 are horizontal
       return None # sono parallele
 
-   if doubleNear(line1DiffX, 0): # se la retta1 é verticale
+   if doubleNear(line1DiffX, 0): # if line 1 is vertical
       return QgsPointXY(line1P2.x(), getYOnInfinityLine(line2P1, line2P2, line1P2.x()))
-   if doubleNear(line1DiffY, 0): # se la retta1 é orizzontale
+   if doubleNear(line1DiffY, 0): # if line 1 is horizontal
       return QgsPointXY(getXOnInfinityLine(line2P1, line2P2, line1P2.y()), line1P2.y())
-   if doubleNear(line2DiffX, 0): # se la retta2 é verticale
+   if doubleNear(line2DiffX, 0): # if line2 is vertical
       return QgsPointXY(line2P2.x(), getYOnInfinityLine(line1P1, line1P2, line2P2.x()))
-   if doubleNear(line2DiffY, 0): # se la retta2 é orizzontale
+   if doubleNear(line2DiffY, 0): # if line2 is horizontal
       return QgsPointXY(getXOnInfinityLine(line1P1, line1P2, line2P2.y()), line2P2.y())
 
    line1Coeff = line1DiffY / line1DiffX
@@ -1609,15 +1569,15 @@ def getIntersectionPointOn2InfinityLines(line1P1, line1P2, line2P1, line2P2):
 
    if line1Coeff == line2Coeff: # sono parallele
       return None
-     
+
    D = line1Coeff - line2Coeff
-   # se D é così vicino a zero 
+   # if D is so close to zero
    if doubleNear(D, 0.0):
-      return None   
+      return None
    x = line1P1.x() * line1Coeff - line1P1.y() - line2P1.x() * line2Coeff + line2P1.y()
    x = x / D
    y = (x - line1P1.x()) * line1Coeff + line1P1.y()
-   
+
    return QgsPointXY(x, y)
 
 
@@ -1625,13 +1585,11 @@ def getIntersectionPointOn2InfinityLines(line1P1, line1P2, line2P1, line2P2):
 # getNearestPoints
 # ===============================================================================
 def getNearestPoints(point, points, tolerance = 0):
-   """
-   Ritorna una lista di punti più vicino a point.
-   """   
-   result = []   
+   """Returns a list of points closest to point."""
+   result = []
    minDist = sys.float_info.max
-   
-   if tolerance == 0: # solo il punto più vicino
+
+   if tolerance == 0: # only the closest point
       for pt in points:
          dist = getDistance(point, pt)
          if dist < minDist:
@@ -1641,9 +1599,9 @@ def getNearestPoints(point, points, tolerance = 0):
       if minDist != sys.float_info.max: # trovato
          result.append(nearestPoint)
    else:
-      nearest = getNearestPoints(point, points) # punto più vicino
+      nearest = getNearestPoints(point, points) # closest point
       nearestPoint = nearest[0]
-      
+
       for pt in points:
          dist = getDistance(nearestPoint, pt)
          if dist <= tolerance:
@@ -1656,9 +1614,8 @@ def getNearestPoints(point, points, tolerance = 0):
 # getPolarPointByPtAngle
 # ===============================================================================
 def getPolarPointByPtAngle(p1, angle, dist):
-   """
-   la funzione ritorna il punto sulla retta passante per p1 con angolo <angle> che
-   dista da p1 <dist>.
+   """the function returns the point on the line passing through p1 with angle <angle> that
+      is distant from p1 <dist>.
    """
    y = dist * math.sin(angle)
    x = dist * math.cos(angle)
@@ -1669,43 +1626,41 @@ def getPolarPointByPtAngle(p1, angle, dist):
 # asPointOrPolyline
 # ===============================================================================
 def asPointOrPolyline(geom):
-   """
-   la funzione ritorna una lista di geometrie di punti e/o polilinee in cui viene trasformata la geometria. 
-   """
-   # Trasformo le geometrie in point o polyline
+   """the function returns a list of point and/or polyline geometries into which the geometry is transformed."""
+   # I transform the geometries into points or polylines
    result = []
    for g in geom.asGeometryCollection():
       gType = g.type()
       if g.isMultipart() == False:
          if gType == QgsWkbTypes.PointGeometry or gType == QgsWkbTypes.LineGeometry:
             result.append(g)
-            
+
          elif gType == QgsWkbTypes.PolygonGeometry:
-            lineList = g.asPolygon() # vettore di linee    
+            lineList = g.asPolygon() # vettore di linee
             for line in lineList:
                _g = QgsGeometry.fromPolylineXY(line)
-               result.append(_g) 
-                          
+               result.append(_g)
+
       else: # multi
          if gType == QgsWkbTypes.PointGeometry:
-            pointList = g.asMultiPoint() # vettore di punti
+            pointList = g.asMultiPoint() # vector of points
             for point in pointList:
                _g = QgsGeometry.fromPointXY(point)
                result.append(_g)
-               
+
          elif gType == QgsWkbTypes.LineGeometry:
             lineList = g.asMultiPolyline() # vettore di linee
             for line in lineList:
                _g = QgsGeometry.fromPolylineXY(line)
-               result.append(_g)   
-                        
+               result.append(_g)
+
          elif gType == QgsWkbTypes.PolygonGeometry:
             polygonList = g.asMultiPolygon() # vettore di poligoni
             for polygon in polygonList:
                for line in polygon:
                   _g = QgsGeometry.fromPolylineXY(line)
                   result.append(_g)
-               
+
    return result
 
 
@@ -1714,9 +1669,7 @@ def asPointOrPolyline(geom):
 # ===============================================================================
 # usare qad_line
 def leftOfLineCoords(x, y, x1, y1, x2, y2):
-   """
-   la funzione ritorna una numero < 0 se il punto x,y é alla sinistra della linea x1,y1 -> x2,y2
-   """
+   """the function returns a number < 0 if the point x,y is to the left of the line x1,y1 -> x2,y2"""
    f1 = x - x1
    f2 = y2 - y1
    f3 = y - y1
@@ -1729,15 +1682,15 @@ def leftOfLine(pt, pt1, pt2):
 
 
 # ===============================================================================
-# get a and b for line equation (y = ax + b) 
+# get a and b for line equation (y = ax + b)
 # ===============================================================================
 # usare qad_line
 def get_A_B_LineEquation(x1, y1, x2, y2):
-   # dati 2 punti vengono calcolati a e b dell'equazione della retta passante per i due punti (y = ax + b)
+   # given 2 points, a and b of the equation of the straight line passing through the two points are calculated (y = ax + b)
    a = (y2 - y1) / (x2 - x1)
    # y = ax + b -> b = y - ax
    b = y1 - (a * x1)
-   
+
    return a, b
 
 
@@ -1756,14 +1709,12 @@ def cbrt(x):
 # ptNear
 # ===============================================================================
 def ptNear(pt1, pt2, tolerance = None):
-   """
-   la funzione compara 2 punti (ma permette una tolleranza)
-   """
+   """the function compares 2 points (but allows a tolerance)"""
    if tolerance is None:
       myTolerance = QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2COINCIDENT"))
    else:
       myTolerance = tolerance
-   
+
    return getDistance(pt1, pt2) <= myTolerance
 
 
@@ -1771,14 +1722,12 @@ def ptNear(pt1, pt2, tolerance = None):
 # doubleNear
 # ===============================================================================
 def doubleNear(a, b, tolerance = None):
-   """
-   la funzione compara 2 float (ma permette una tolleranza)
-   """
+   """the function compares 2 floats (but allows a tolerance)"""
    if tolerance is None:
       myTolerance = QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2COINCIDENT"))
    else:
       myTolerance = tolerance
-   
+
    diff = a - b
    return diff >= -myTolerance and diff <= myTolerance
 
@@ -1787,14 +1736,12 @@ def doubleNear(a, b, tolerance = None):
 # doubleGreater
 # ===============================================================================
 def doubleGreater(a, b, tolerance = None):
-   """
-   la funzione compara 2 float (ma permette una tolleranza)
-   """
+   """the function compares 2 floats (but allows a tolerance)"""
    if tolerance is None:
       myTolerance = QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2COINCIDENT"))
    else:
       myTolerance = tolerance
-   
+
    return a > b and not doubleNear(a, b, myTolerance)
 
 
@@ -1802,14 +1749,12 @@ def doubleGreater(a, b, tolerance = None):
 # doubleGreaterOrEquals
 # ===============================================================================
 def doubleGreaterOrEquals(a, b, tolerance = None):
-   """
-   la funzione compara 2 float (ma permette una tolleranza)
-   """
+   """the function compares 2 floats (but allows a tolerance)"""
    if tolerance is None:
       myTolerance = QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2COINCIDENT"))
    else:
       myTolerance = tolerance
-   
+
    return a > b or doubleNear(a, b, myTolerance)
 
 
@@ -1817,44 +1762,38 @@ def doubleGreaterOrEquals(a, b, tolerance = None):
 # doubleSmaller
 # ===============================================================================
 def doubleSmaller(a, b, tolerance = None):
-   """
-   la funzione compara 2 float (ma permette una tolleranza)
-   """
+   """the function compares 2 floats (but allows a tolerance)"""
    if tolerance is None:
       myTolerance = QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2COINCIDENT"))
    else:
       myTolerance = tolerance
-   
+
    return a < b and not doubleNear(a, b, myTolerance)
 
-   
+
 # ===============================================================================
 # doubleSmallerOrEquals
 # ===============================================================================
 def doubleSmallerOrEquals(a, b, tolerance = None):
-   """
-   la funzione compara 2 float (ma permette una tolleranza)
-   """
+   """the function compares 2 floats (but allows a tolerance)"""
    if tolerance is None:
       myTolerance = QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2COINCIDENT"))
    else:
       myTolerance = tolerance
-   
+
    return a < b or doubleNear(a, b, myTolerance)
 
-   
+
 # ===============================================================================
 # TanDirectionNear
 # ===============================================================================
 def TanDirectionNear(a, b, tolerance = None):
-   """
-   la funzione compara 2 direzioni di tangenti (ma permette una tolleranza)
-   """
+   """the function compares 2 tangent directions (but allows a tolerance)"""
    if tolerance is None:
       myTolerance = QadVariables.get(QadMsg.translate("Environment variables", "TOLERANCE2COINCIDENT"))
    else:
       myTolerance = tolerance
-   
+
    a1 = normalizeAngle(a)
    b1 = normalizeAngle(b)
    if a1 > b1:
@@ -1863,7 +1802,7 @@ def TanDirectionNear(a, b, tolerance = None):
    else:
       diff1 = b1 - a1
       diff2 = (2 * math.pi + a1) - b1
-      
+
    return diff1 <= myTolerance or diff2 <= myTolerance
 
 
@@ -1871,15 +1810,13 @@ def TanDirectionNear(a, b, tolerance = None):
 # numericListAvg
 # ===============================================================================
 def numericListAvg(dblList):
-   """
-   la funzione calcola la media di una lista di numeri
-   """
+   """the function calculates the average of a list of numbers"""
    if (dblList is None) or len(dblList) == 0:
       return None
    sum = 0
    for num in dblList:
       sum = sum + num
-      
+
    return sum / len(dblList)
 
 
@@ -1888,22 +1825,21 @@ def numericListAvg(dblList):
 # ===============================================================================
 # usare qad_line fino qui
 def sqrDistToSegment(point, x1, y1, x2, y2, epsilon):
-   """
-   la funzione ritorna una lista con 
-   (<minima distanza al quadrato>
-    <punto più vicino>)
+   """the function returns a list with
+      (<minimum distance squared>
+       <nearest point>)
    """
    minDistPoint = QgsPointXY()
-   
+
    if x1 == x2 and y1 == y2:
       minDistPoint.setX(x1)
       minDistPoint.setY(y1)
    else:
       nx = y2 - y1
       ny = -( x2 - x1 )
-   
+
       t = (point.x() * ny - point.y() * nx - x1 * ny + y1 * nx ) / (( x2 - x1 ) * ny - ( y2 - y1 ) * nx )
-   
+
       if t < 0.0:
          minDistPoint.setX(x1)
          minDistPoint.setY(y1)
@@ -1915,12 +1851,12 @@ def sqrDistToSegment(point, x1, y1, x2, y2, epsilon):
          minDistPoint.setY( y1 + t *( y2 - y1 ) )
 
    dist = point.sqrDist(minDistPoint)
-   # prevent rounding errors if the point is directly on the segment 
+   # prevent rounding errors if the point is directly on the segment
    if doubleNear( dist, 0.0, epsilon ):
       minDistPoint.setX( point.x() )
       minDistPoint.setY( point.y() )
       return (0.0, minDistPoint)
-  
+
    return (dist, minDistPoint)
 
 
@@ -1928,12 +1864,11 @@ def sqrDistToSegment(point, x1, y1, x2, y2, epsilon):
 # closestSegmentWithContext
 # ===============================================================================
 def closestSegmentWithContext(point, geom, epsilon = 1.e-15):
-   """
-   la funzione ritorna una lista con 
-   (<minima distanza al quadrato>
-    <punto più vicino>
-    <indice vertice successivo del segmento più vicino (nel caso la geom fosse linea o poligono)>
-    <"a sinistra di" se il punto é alla sinista del segmento (< 0 -> sinistra, > 0 -> destra)
+   """the function returns a list with
+      (<minimum distance squared>
+       <nearest point>
+       <next vertex index of the closest segment (if the geometry is a line or polygon)>
+       <"to the left of" if the point is to the left of the segment (< 0 -> left, > 0 -> right)
    """
    minDistPoint = QgsPointXY()
    closestSegmentIndex = 0
@@ -1945,120 +1880,120 @@ def closestSegmentWithContext(point, geom, epsilon = 1.e-15):
          minDistPoint = geom.asPoint()
          point.sqrDist(minDistPoint)
          return (point.sqrDist(minDistPoint), minDistPoint, None, None)
-      
+
       elif gType == QgsWkbTypes.LineGeometry:
-         points = geom.asPolyline() # vettore di punti
+         points = geom.asPolyline() # vector of points
          index = 0
          for pt in points:
             if index > 0:
                prevX = thisX
                prevY = thisY
-              
+
             thisX = pt.x()
             thisY = pt.y()
-   
+
             if index > 0:
                result = sqrDistToSegment(point, prevX, prevY, thisX, thisY, epsilon)
                testdist = result[0]
-               distPoint = result[1] 
-                         
+               distPoint = result[1]
+
                if testdist < sqrDist:
                   closestSegmentIndex = index
                   sqrDist = testdist
                   minDistPoint = distPoint
-                  
+
             index = index + 1
-   
+
          leftOf = leftOfLine(point, geom.vertexAt(closestSegmentIndex - 1), geom.vertexAt(closestSegmentIndex))
          return (sqrDist, minDistPoint, closestSegmentIndex, leftOf)
-      
+
       elif gType == QgsWkbTypes.PolygonGeometry:
-         lines = geom.asPolygon() # lista di linee    
+         lines = geom.asPolygon() # list of lines
          index = 0
          for line in lines:
             prevX = 0
             prevY = 0
-   
-            for pt in line: # lista di punti
+
+            for pt in line: # list of points
                thisX = pt.x()
                thisY = pt.y()
-   
+
                if prevX and prevY:
                   result = sqrDistToSegment(point, prevX, prevY, thisX, thisY, epsilon)
                   testdist = result[0]
-                  distPoint = result[1] 
-   
+                  distPoint = result[1]
+
                   if testdist < sqrDist:
                      closestSegmentIndex = index
                      sqrDist = testdist
                      minDistPoint = distPoint
-   
+
                prevX = thisX
                prevY = thisY
                index = index + 1
-               
+
          leftOf = leftOfLine(point, geom.vertexAt(closestSegmentIndex - 1), geom.vertexAt(closestSegmentIndex))
          return (sqrDist, minDistPoint, closestSegmentIndex, leftOf)
-      
+
    else: # multi
       if gType == QgsWkbTypes.PointGeometry:
-         minDistPoint = getNearestPoints(point, geom.asMultiPoint())[0] # vettore di punti
+         minDistPoint = getNearestPoints(point, geom.asMultiPoint())[0] # vector of points
          return (point.sqrDist(minDistPoint), minDistPoint, None, None)
-      
+
       elif gType == QgsWkbTypes.LineGeometry:
-         lines = geom.asMultiPolyline() # lista di linee
+         lines = geom.asMultiPolyline() # list of lines
          pointindex = 0
          for line in lines:
             prevX = 0
             prevY = 0
-           
-            for pt in line: # lista di punti
+
+            for pt in line: # list of points
                thisX = pt.x()
                thisY = pt.y()
-             
+
                if prevX and prevY:
                   result = sqrDistToSegment(point, prevX, prevY, thisX, thisY, epsilon)
                   testdist = result[0]
-                  distPoint = result[1] 
-   
+                  distPoint = result[1]
+
                   if testdist < sqrDist:
                      closestSegmentIndex = pointindex
                      sqrDist = testdist
                      minDistPoint = distPoint
-   
+
                prevX = thisX
                prevY = thisY
                pointindex = pointindex + 1
-            
-         leftOf = leftOfLine(point, geom.vertexAt(closestSegmentIndex - 1), geom.vertexAt(closestSegmentIndex))         
+
+         leftOf = leftOfLine(point, geom.vertexAt(closestSegmentIndex - 1), geom.vertexAt(closestSegmentIndex))
          return (sqrDist, minDistPoint, closestSegmentIndex, leftOf)
-      
+
       elif gType == QgsWkbTypes.PolygonGeometry:
          polygons = geom.asMultiPolygon() # vettore di poligoni
          pointindex = 0
          for polygon in polygons:
-            for line in polygon: # lista di linee
+            for line in polygon: # list of lines
                prevX = 0
                prevY = 0
-            
-               for pt in line: # lista di punti
+
+               for pt in line: # list of points
                   thisX = pt.x()
                   thisY = pt.y()
-      
+
                   if prevX and prevY:
                      result = sqrDistToSegment(point, prevX, prevY, thisX, thisY, epsilon)
                      testdist = result[0]
-                     distPoint = result[1] 
-      
+                     distPoint = result[1]
+
                      if testdist < sqrDist:
                         closestSegmentIndex = pointindex
                         sqrDist = testdist
                         minDistPoint = distPoint
-      
+
                   prevX = thisX
                   prevY = thisY
                   pointindex = pointindex + 1
-         
+
          leftOf = leftOfLine(point, geom.vertexAt(closestSegmentIndex - 1), geom.vertexAt(closestSegmentIndex))
          return (sqrDist, minDistPoint, closestSegmentIndex, leftOf)
 
@@ -2069,9 +2004,7 @@ def closestSegmentWithContext(point, geom, epsilon = 1.e-15):
 # rotatePoint
 # ===============================================================================
 def rotatePoint(point, basePt, angle):
-   """
-   la funzione ruota un punto QgsPointXY secondo un punto base <basePt> e un angolo <angle> in radianti 
-   """
+   """the function rotates a point QgsPointXY according to a base point <basePt> and an angle <angle> in radians"""
    return getPolarPointByPtAngle(basePt, getAngleBy2Pts(basePt, point) + angle, getDistance(basePt, point))
 
 
@@ -2079,9 +2012,7 @@ def rotatePoint(point, basePt, angle):
 # scalePoint
 # ===============================================================================
 def scalePoint(point, basePt, scale):
-   """
-   la funzione scala un punto QgsPointXY secondo un punto base <basePt> e un fattore di scala
-   """
+   """the function scales a QgsPointXY point according to a base point <basePt> and a scale factor"""
    return getPolarPointByPtAngle(basePt, getAngleBy2Pts(basePt, point), getDistance(basePt, point) * scale)
 
 
@@ -2089,9 +2020,7 @@ def scalePoint(point, basePt, scale):
 # movePoint
 # ===============================================================================
 def movePoint(point, offsetX, offsetY):
-   """
-   la funzione sposta un punto QgsPointXY secondo un offset X e uno Y
-   """
+   """the function moves a QgsPointXY point according to an X and a Y offset"""
    return QgsPointXY(point.x() + offsetX, point.y() + offsetY)
 
 
@@ -2099,13 +2028,12 @@ def movePoint(point, offsetX, offsetY):
 # mirrorPoint
 # ===============================================================================
 def mirrorPoint(point, mirrorPt, mirrorAngle):
-   """
-   la funzione sposta un punto QgsPointXY secondo una linea speculare passante per un 
-   un punto <mirrorPt> ed avente angolo <mirrorAngle>
+   """the function moves a QgsPointXY point along a mirrored line passing through a
+      a point <mirrorPt> and having angle <mirrorAngle>
    """
    pointAngle = getAngleBy2Pts(mirrorPt, point)
    dist = getDistance(mirrorPt, point)
-    
+
    return getPolarPointByPtAngle(mirrorPt, mirrorAngle + (mirrorAngle - pointAngle), dist)
 
 
@@ -2113,75 +2041,75 @@ def mirrorPoint(point, mirrorPt, mirrorAngle):
 # getSubGeomAtVertex
 # ===============================================================================
 def getSubGeomAtVertex(geom, atVertex):
-   # ritorna la sotto-geometria al vertice <atVertex> e la sua posizione nella geometria (0-based)
-   # la posizione é espressa con una lista (<index ogg. princ> [<index ogg. sec.>])
+   # returns the sub-geometry at the vertex <atVertex> and its position in the geometry (0-based)
+   # the position is expressed with a list (<main object index> [<secondary object index>])
    gType = geom.type()
    if geom.isMultipart() == False:
       if gType == QgsWkbTypes.PointGeometry:
          if atVertex == 0:
             return QgsGeometry(geom), [0]
-         
+
       elif gType == QgsWkbTypes.LineGeometry:
-         pts = geom.asPolyline() # lista di punti
+         pts = geom.asPolyline() # list of points
          if atVertex > len(pts) - 1:
             return None, None
          else:
             return QgsGeometry(geom), [0]
-         
+
       elif gType == QgsWkbTypes.PolygonGeometry:
-         lines = geom.asPolygon() # lista di linee
+         lines = geom.asPolygon() # list of lines
          if len(lines) > 0:
             i = 0
             iRing = -1
             for line in lines:
                lineLen = len(line)
-               if atVertex >= i and atVertex < i + lineLen: # il numero di vertice ricade in questa linea
-                  if iRing == -1: # si tratta della parte più esterna
-                     return QgsGeometry.fromPolylineXY(line), [0] # parte <0>, ring <0>
+               if atVertex >= i and atVertex < i + lineLen: # the vertex number falls on this line
+                  if iRing == -1: # this is the most external part
+                     return QgsGeometry.fromPolylineXY(line), [0] # part <0>, ring <0>
                   else:
-                     return QgsGeometry.fromPolylineXY(line), [0, iRing] # parte <0>, ring <iRing>
-               i = i + lineLen 
+                     return QgsGeometry.fromPolylineXY(line), [0, iRing] # part <0>, ring <iRing>
+               i = i + lineLen
                iRing = iRing + 1
          return None, None
-      
+
    else: # multi
       if gType == QgsWkbTypes.PointGeometry:
-         pts = geom.asMultiPoint() # lista di punti
+         pts = geom.asMultiPoint() # list of points
          if atVertex > len(pts) - 1:
             return None, None
          else:
             return QgsGeometry.fromPointXY(pts[atVertex]), [atVertex]
-         
+
       elif gType == QgsWkbTypes.LineGeometry:
-         # cerco in quale linea é il vertice <atVertex>
+         # I searc in which line the vertex <atVertex> is
          i = 0
          iLine = 0
-         lines = geom.asMultiPolyline() # lista di linee
+         lines = geom.asMultiPolyline() # list of lines
          for line in lines:
             lineLen = len(line)
             if atVertex >= i and atVertex < i + lineLen:
                return QgsGeometry.fromPolylineXY(line), [iLine]
-            i = i + lineLen 
+            i = i + lineLen
             iLine = iLine + 1
          return None, None
-      
+
       elif gType == QgsWkbTypes.PolygonGeometry:
          i = 0
          iPolygon = 0
-         polygons = geom.asMultiPolygon() # lista di poligoni
+         polygons = geom.asMultiPolygon() # list of polygons
          for polygon in polygons:
             iRing = -1
             for line in polygon:
                lineLen = len(line)
-               if atVertex >= i and atVertex < i + lineLen: # il numero di vertice ricade in questa linea
-                  if iRing == -1: # si tratta della parte più esterna
-                     return QgsGeometry.fromPolylineXY(line), [iPolygon] # parte <iPolygon>
+               if atVertex >= i and atVertex < i + lineLen: # the vertex number falls on this line
+                  if iRing == -1: # this is the most external part
+                     return QgsGeometry.fromPolylineXY(line), [iPolygon] # part <iPolygon>
                   else:
-                     return QgsGeometry.fromPolylineXY(line), [iPolygon, iRing] # parte <iPolygon>, ring <iRing>
-               
-               i = i + lineLen 
+                     return QgsGeometry.fromPolylineXY(line), [iPolygon, iRing] # part <iPolygon>, ring <iRing>
+
+               i = i + lineLen
                iRing = iRing + 1
-            iPolygon = iPolygon + 1   
+            iPolygon = iPolygon + 1
 
    return None, None
 
@@ -2190,47 +2118,47 @@ def getSubGeomAtVertex(geom, atVertex):
 # getSubGeomAt
 # ===============================================================================
 def getSubGeomAt(geom, atSubGeom):
-   # ritorna la sotto-geometria la cui posizione
-   # é espressa con una lista (<index ogg. princ> [<index ogg. sec.>])
+   # returns the sub-geometry whose position
+   # is expressed with a list (<index main object> [<index subobject>])
    gType = geom.type()
    if geom.isMultipart() == False:
       if gType == QgsWkbTypes.PointGeometry or gType == QgsWkbTypes.LineGeometry:
          if atSubGeom[0] == 0:
             return QgsGeometry(geom)
-      
+
       elif gType == QgsWkbTypes.PolygonGeometry:
          if atSubGeom[0] == 0:
-            lines = geom.asPolygon() # lista di linee
-            if len(atSubGeom) == 1: # si tratta della parte più esterna
+            lines = geom.asPolygon() # list of lines
+            if len(atSubGeom) == 1: # this is the most external part
                return QgsGeometry.fromPolylineXY(lines[0])
             else:
                iRing = atSubGeom[1]
                if iRing + 1 < len(lines):
                   return QgsGeometry.fromPolylineXY(lines[iRing + 1])
-      
+
    else: # multi
       if gType == QgsWkbTypes.PointGeometry:
          nPoint = atSubGeom[0]
          return QgsGeometry(geom.vertexAt(nPoint))
-      
+
       elif gType == QgsWkbTypes.LineGeometry:
          nLine = atSubGeom[0]
-         lines = geom.asMultiPolyline() # lista di linee
+         lines = geom.asMultiPolyline() # list of lines
          if nLine < len(lines):
             return QgsGeometry.fromPolylineXY(lines[nLine])
-      
-      elif gType == QgsWkbTypes.PolygonGeometry:   
+
+      elif gType == QgsWkbTypes.PolygonGeometry:
          nPolygon = atSubGeom[0]
-         polygons = geom.asMultiPolygon() # lista di poligoni
+         polygons = geom.asMultiPolygon() # list of polygons
          if nPolygon < len(polygons):
             lines = polygons[nPolygon]
-            if len(atSubGeom) == 1: # si tratta della parte più esterna
+            if len(atSubGeom) == 1: # this is the most external part
                return QgsGeometry.fromPolylineXY(lines[0])
             else:
                iRing = atSubGeom[1]
                if iRing + 1 < len(lines):
                   return QgsGeometry.fromPolylineXY(lines[iRing + 1])
-         
+
    return None
 
 
@@ -2238,7 +2166,7 @@ def getSubGeomAt(geom, atSubGeom):
 # setSubGeom
 # ===============================================================================
 def setSubGeom(geom, subGeom, atSubGeom):
-   # restituisce una geometria con la sotto-geometria alla posizione <atSubGeom> 
+   # returns a geometry with sub-geometry at position <atSubGeom>
    # sostituita da <subGeom>
    gType = geom.type()
    subGType = subGeom.type()
@@ -2249,15 +2177,15 @@ def setSubGeom(geom, subGeom, atSubGeom):
          if atSubGeom[0] == 0:
             if subGeom.isMultipart() == False and (subGType == QgsWkbTypes.PointGeometry or subGType == QgsWkbTypes.LineGeometry):
                return QgsGeometry(SubGeom)
-            
+
       elif gType == QgsWkbTypes.PolygonGeometry:
          if subGeom.isMultipart() == False and subGType == QgsWkbTypes.LineGeometry:
             if atSubGeom[0] == 0:
-               lines = geom.asPolygon() # lista di linee
-               if len(atSubGeom) == 1: # si tratta della parte più esterna
+               lines = geom.asPolygon() # list of lines
+               if len(atSubGeom) == 1: # this is the most external part
                   del lines[0]
                   lines.insert(0, SubGeom.asPolyline())
-                  # per problemi di approssimazione con LL il primo punto e l'ultimo non sono uguali quindi lo forzo
+                  # for approximation problems with LL the first point and the last point are not equal so I force it
                   lines[0][-1].set(lines[0][0].x(), lines[0][0].y())
                   return QgsGeometry.fromPolygonXY(lines)
                else:
@@ -2265,10 +2193,10 @@ def setSubGeom(geom, subGeom, atSubGeom):
                   if iRing + 1 < len(lines):
                      del lines[iRing + 1]
                      lines.insert(iRing + 1, SubGeom.asPolyline())
-                     # per problemi di approssimazione con LL il primo punto e l'ultimo non sono uguali quindi lo forzo
+                     # for approximation problems with LL the first point and the last point are not equal so I force it
                      lines[iRing + 1][-1].set(lines[iRing + 1][0].x(), lines[iRing + 1][0].y())
                      return QgsGeometry.fromPolygonXY(lines)
-      
+
    else: # multi
       if gType == QgsWkbTypes.PointGeometry:
          nPoint = atSubGeom[0]
@@ -2277,26 +2205,26 @@ def setSubGeom(geom, subGeom, atSubGeom):
             pt = SubGeom.asPoint()
             if result.moveVertex(pt.x, pt.y(), nPoint) == True:
                return result
-      
+
       elif gType == QgsWkbTypes.LineGeometry:
          if subGeom.isMultipart() == False and subGType == QgsWkbTypes.LineGeometry:
             nLine = atSubGeom[0]
-            lines = geom.asMultiPolyline() # lista di linee
+            lines = geom.asMultiPolyline() # list of lines
             if nLine < len(lines) and nLine >= -len(lines):
                del lines[nLine]
                lines.insert(nLine, SubGeom.asPolyline())
                return QgsGeometry.fromMultiPolylineXY(lines)
-      
-      elif gType == QgsWkbTypes.PolygonGeometry:   
+
+      elif gType == QgsWkbTypes.PolygonGeometry:
          if subGeom.isMultipart() == False and subGType == QgsWkbTypes.LineGeometry:
             nPolygon = atSubGeom[0]
-            polygons = geom.asMultiPolygon() # lista di poligoni
+            polygons = geom.asMultiPolygon() # list of polygons
             if nPolygon < len(polygons):
                lines = polygons[nPolygon]
-               if len(atSubGeom) == 1: # si tratta della parte più esterna
+               if len(atSubGeom) == 1: # this is the most external part
                   del lines[0]
                   lines.insert(0, SubGeom.asPolyline())
-                  # per problemi di approssimazione con LL il primo punto e l'ultimo non sono uguali quindi lo forzo
+                  # for approximation problems with LL the first point and the last point are not equal so I force it
                   lines[0][-1].set(lines[0][0].x(), lines[0][0].y())
                   return QgsGeometry.fromMultiPolygonXY(polygons)
                else:
@@ -2304,17 +2232,17 @@ def setSubGeom(geom, subGeom, atSubGeom):
                   if iRing + 1 < len(lines):
                      del lines[iRing + 1]
                      lines.insert(iRing + 1, SubGeom.asPolyline())
-                     # per problemi di approssimazione con LL il primo punto e l'ultimo non sono uguali quindi lo forzo
+                     # for approximation problems with LL the first point and the last point are not equal so I force it
                      lines[iRing + 1][-1].set(lines[iRing + 1][0].x(), lines[iRing + 1][0].y())
                      return QgsGeometry.fromMultiPolygonXY(polygons)
          elif subGeom.isMultipart() == False and subGType == QgsWkbTypes.PolygonGeometry:
             nPolygon = atSubGeom[0]
-            polygons = geom.asMultiPolygon() # lista di poligoni
+            polygons = geom.asMultiPolygon() # list of polygons
             if nPolygon < len(polygons):
                del polygons[nPolygon]
                polygons.insert(nPolygon, SubGeom.asPolygon())
                return QgsGeometry.fromMultiPolygonXY(polygons)
-         
+
    return None
 
 
@@ -2322,24 +2250,24 @@ def setSubGeom(geom, subGeom, atSubGeom):
 # delSubGeom
 # ===============================================================================
 def delSubGeom(geom, atSubGeom):
-   # Cancella la sotto-geometria alla posizione <atSubGeom> dalla geometria
+   # Delete the subgeometry at position <atSubGeom> from the geometry
    gType = geom.type()
    if geom.isMultipart() == False:
       if gType == QgsWkbTypes.PointGeometry or gType == QgsWkbTypes.LineGeometry:
          return None
-            
+
       elif gType == QgsWkbTypes.PolygonGeometry:
          if atSubGeom[0] == 0:
-            lines = geom.asPolygon() # lista di linee
-            if len(atSubGeom) == 1: # si tratta della parte più esterna
+            lines = geom.asPolygon() # list of lines
+            if len(atSubGeom) == 1: # this is the most external part
                del lines[0]
-               return QgsGeometry() # geometria vuota perchè il poligono è stato cancellato
+               return QgsGeometry() # empty geometry because the polygon has been deleted
             else:
                iRing = atSubGeom[1]
                if iRing + 1 < len(lines):
                   del lines[iRing + 1]
                   return QgsGeometry.fromPolygonXY(lines)
-      
+
    else: # multi
       if gType == QgsWkbTypes.PointGeometry:
          nPoint = atSubGeom[0]
@@ -2347,27 +2275,27 @@ def delSubGeom(geom, atSubGeom):
          pt = SubGeom.asPoint()
          if result.deleteVertex(nPoint) == True:
             return result
-      
+
       elif gType == QgsWkbTypes.LineGeometry:
          nLine = atSubGeom[0]
-         lines = geom.asMultiPolyline() # lista di linee
+         lines = geom.asMultiPolyline() # list of lines
          if nLine < len(lines) and nLine >= -len(lines):
             del lines[nLine]
             return QgsGeometry.fromMultiPolylineXY(lines)
-      
-      elif gType == QgsWkbTypes.PolygonGeometry:   
+
+      elif gType == QgsWkbTypes.PolygonGeometry:
          nPolygon = atSubGeom[0]
-         polygons = geom.asMultiPolygon() # lista di poligoni
+         polygons = geom.asMultiPolygon() # list of polygons
          if nPolygon < len(polygons):
             lines = polygons[nPolygon]
-            if len(atSubGeom) == 1: # si tratta della parte più esterna
+            if len(atSubGeom) == 1: # this is the most external part
                del polygons[nPolygon]
                return QgsGeometry.fromMultiPolygonXY(polygons)
             else:
                iRing = atSubGeom[1]
                if iRing + 1 < len(lines):
                   del lines[iRing + 1]
-                  return QgsGeometry.fromMultiPolygonXY(polygons)   
+                  return QgsGeometry.fromMultiPolygonXY(polygons)
 
    return None
 
@@ -2377,17 +2305,17 @@ def delSubGeom(geom, atSubGeom):
 # ===============================================================================
 def getAdjustedRubberBandVertex(vertexBefore, vertex):
    adjustedVertex = QgsPointXY(vertex)
-         
-   # per un baco non ancora capito in QGIS: se la linea ha solo 2 vertici e 
-   # hanno la stessa x o y (linea orizzontale o verticale) 
-   # la linea non viene disegnata perciò sposto un pochino la x o la y
-   # del secondo vertice
-   # 1.e-7 è derivato dal fatto che l'operatore == di QgsPointXY ha una tolleranza di 1E-8      
+
+   # for a bug not yet understood in QGIS: if the line has only 2 vertices and
+   # have the same x or y (horizontal or vertical line)
+   # the line is not drawn so I move the x or y a little
+   # of the second summit
+   # 1.e-7 is derived from the fact that QgsPointXY's == operator has a tolerance of 1E-8
    if vertexBefore.x() == vertex.x():
       adjustedVertex.setX(vertex.x() + 1.e-7)
    if vertexBefore.y() == vertex.y():
       adjustedVertex.setY(vertex.y() + 1.e-7)
-      
+
    return adjustedVertex
 
 
@@ -2399,7 +2327,7 @@ class QadRawConfigParser(configparser.RawConfigParser):
    def __init__(self, defaults=None, dict_type=configparser._default_dict,
                  allow_no_value=False):
       configparser.RawConfigParser.__init__(self, defaults, dict_type, allow_no_value)
-      
+
    def write(self, fp):
       """Fixed for Unicode output"""
       if self._defaults:
@@ -2413,7 +2341,7 @@ class QadRawConfigParser(configparser.RawConfigParser):
             if key != "__name__":
                fp.write("%s = %s\n" % (key, unicode(value).replace('\n','\n\t')))
          fp.write("\n")
- 
+
 
 # ===============================================================================
 # Timer class for profiling

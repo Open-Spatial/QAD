@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin ok
 
- comando INSERT per inserire un simbolo
- 
+ INSERT command to insert a symbol
+
                               -------------------
         begin                : 2013-12-31
         copyright            : iiiii
@@ -39,11 +39,11 @@ from ..qad_msg import QadMsg
 from ..qad_point import QadPoint
 
 
-# Classe che gestisce il comando INSERT
+# Class that manages the INSERT command
 class QadINSERTCommandClass(QadCommandClass):
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadINSERTCommandClass(self.plugIn)
 
    def getName(self):
@@ -54,14 +54,14 @@ class QadINSERTCommandClass(QadCommandClass):
 
    def connectQAction(self, action):
       action.triggered.connect(self.plugIn.runINSERTCommand)
-   
+
    def getIcon(self):
       return QIcon(":/plugins/qad/icons/insert.svg")
 
    def getNote(self):
-      # impostare le note esplicative del comando
+      # set the explanatory notes of the command
       return QadMsg.translate("Command_INSERT", "Insert a symbol.")
-   
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
       self.insPt = None
@@ -79,10 +79,10 @@ class QadINSERTCommandClass(QadCommandClass):
 
 
    def getPointMapTool(self, drawMode = QadGetPointDrawModeEnum.NONE):
-      # quando si é in fase di richiesta distanza (scala)
+      # when you are requesting distance (scale)
       if self.step == 2:
          return self.GetDistClass.getPointMapTool()
-      # quando si é in fase di richiesta rotazione
+      # when the rotation request is in progress
       elif self.step == 3:
          return self.GetAngleClass.getPointMapTool()
       else:
@@ -90,10 +90,10 @@ class QadINSERTCommandClass(QadCommandClass):
 
 
    def getCurrentContextualMenu(self):
-      # quando si é in fase di richiesta distanza (scala)
+      # when you are requesting distance (scale)
       if self.step == 2:
          return self.GetDistClass.getCurrentContextualMenu()
-      # quando si é in fase di richiesta rotazione
+      # when the rotation request is in progress
       elif self.step == 3:
          return self.GetAngleClass.getCurrentContextualMenu()
       else:
@@ -109,77 +109,77 @@ class QadINSERTCommandClass(QadCommandClass):
       # Add attribute fields to feature.
       #fields = layer.fields()
       #f.setFields(fields)
-      
-      # # assegno i valori di default
+
+      # # assign default values
       # provider = layer.dataProvider()
       # for field in fields.toList():
       #    i = fields.indexFromName(field.name())
       #    f[field.name()] = provider.defaultValue(i)
-      
-      
-      # se la scala dipende da un campo 
+
+
+      # if the scale depends on a field
       scaleFldName = qad_layer.get_symbolScaleFieldName(layer)
       if len(scaleFldName) > 0:
          f.setAttribute(scaleFldName, self.scale)
-      
-      # se la rotazione dipende da un campo
+
+      # if the rotation depends on a field
       rotFldName = qad_layer.get_symbolRotationFieldName(layer)
       if len(rotFldName) > 0:
          f.setAttribute(rotFldName, qad_utils.toDegrees(self.rot))
-      
-      return qad_layer.addFeatureToLayer(self.plugIn, layer, f)               
-      
-      
+
+      return qad_layer.addFeatureToLayer(self.plugIn, layer, f)
+
+
    def run(self, msgMapTool = False, msg = None):
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
-      
+         return True # end command
+
       currLayer, errMsg = qad_layer.getCurrLayerEditable(self.plugIn.canvas, QgsWkbTypes.PointGeometry)
       if currLayer is None:
          self.showErr(errMsg)
-         return True # fine comando
+         return True # end command
 
       if qad_layer.isSymbolLayer(currLayer) == False:
          errMsg = QadMsg.translate("QAD", "\nCurrent layer is not a symbol layer.")
          errMsg = errMsg + QadMsg.translate("QAD", "\nA symbol layer is a vector punctual layer without label.\n")
-         self.showErr(errMsg)         
-         return True # fine comando
+         self.showErr(errMsg)
+         return True # end command
 
-               
+
       # =========================================================================
-      # RICHIESTA PUNTO DI INSERIMENTO
-      if self.step == 0: # inizio del comando
-         self.waitForPoint() # si appresta ad attendere un punto
+      # INSERT POINT REQUEST
+      if self.step == 0: # start of command
+         self.waitForPoint() # is preparing to wait for a point
          self.step = self.step + 1
          return False
-      
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA PUNTO DI INSERIMENTO
-      elif self.step == 1: # dopo aver atteso un punto si riavvia il comando
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
-                  return True # fine comando
+      # RESPONSE TO INSERT POINT REQUEST
+      elif self.step == 1: # after waiting for a point the command restarts
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
 
             pt = self.getPointMapTool().point
-         else: # il punto arriva come parametro della funzione
+         else: # the dot comes as a parameter of the function
             pt = msg
 
          self.insPt = QgsPointXY(pt)
          self.plugIn.setLastPoint(self.insPt)
-         
-         # se la scala dipende da un campo 
+
+         # if the scale depends on a field
          scaleFldName = qad_layer.get_symbolScaleFieldName(currLayer)
          if len(scaleFldName) > 0:
-            # si appresta ad attendere la scala                      
+            # prepares to wait for the ladder
             self.GetDistClass = QadGetDistClass(self.plugIn)
             prompt = QadMsg.translate("Command_INSERT", "Specify the symbol scale <{0}>: ")
             self.GetDistClass.msg = prompt.format(str(self.scale))
@@ -189,28 +189,28 @@ class QadINSERTCommandClass(QadCommandClass):
             self.step = 2
             self.GetDistClass.run(msgMapTool, msg)
             return False
-         else: 
-            # se la rotazione dipende da un campo 
+         else:
+            # if the rotation depends on a field
             rotFldName = qad_layer.get_symbolRotationFieldName(currLayer)
             if len(rotFldName) > 0:
                if self.GetAngleClass is not None:
-                  del self.GetAngleClass                  
-               # si appresta ad attendere l'angolo di rotazione                      
+                  del self.GetAngleClass
+               # prepares to wait for the rotation angle
                self.GetAngleClass = QadGetAngleClass(self.plugIn)
                prompt = QadMsg.translate("Command_INSERT", "Specify the symbol rotation <{0}>: ")
                self.GetAngleClass.msg = prompt.format(str(qad_utils.toDegrees(self.rot)))
                self.GetAngleClass.angle = self.rot
-               self.GetAngleClass.startPt = self.insPt               
+               self.GetAngleClass.startPt = self.insPt
                self.step = 3
-               self.GetAngleClass.run(msgMapTool, msg)               
+               self.GetAngleClass.run(msgMapTool, msg)
                return False
             else:
                self.addFeature(currLayer)
 
          return True
-      
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA SCALA (da step = 1)
+      # RESPONSE TO THE SCALE REQUEST (from step = 1)
       elif self.step == 2:
          if self.GetDistClass.run(msgMapTool, msg) == True:
             if self.GetDistClass.dist is not None:
@@ -218,37 +218,37 @@ class QadINSERTCommandClass(QadCommandClass):
                self.plugIn.setLastScale(self.scale)
                del self.GetDistClass
                self.GetDistClass = None
-                
-               # se la rotazione dipende da un campo 
+
+               # if the rotation depends on a field
                rotFldName = qad_layer.get_symbolRotationFieldName(currLayer)
                if len(rotFldName) > 0:
                   if self.GetAngleClass is not None:
-                     del self.GetAngleClass                  
-                  # si appresta ad attendere l'angolo di rotazione                      
+                     del self.GetAngleClass
+                  # prepares to wait for the rotation angle
                   self.GetAngleClass = QadGetAngleClass(self.plugIn)
                   prompt = QadMsg.translate("Command_INSERT", "Specify the symbol rotation <{0}>: ")
                   self.GetAngleClass.msg = prompt.format(str(qad_utils.toDegrees(self.rot)))
                   self.GetAngleClass.angle = self.rot
-                  self.GetAngleClass.startPt = self.insPt               
+                  self.GetAngleClass.startPt = self.insPt
                   self.step = 3
-                  self.GetAngleClass.run(msgMapTool, msg)         
+                  self.GetAngleClass.run(msgMapTool, msg)
                   return False
                else:
-                  self.addFeature(currLayer)               
-                  return True   
+                  self.addFeature(currLayer)
+                  return True
             else:
-               return True   
+               return True
          return False
-      
+
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA ROTAZIONE (da step = 1 o 2)
+      # RESPONSE TO THE ROTATION REQUEST (from step = 1 or 2)
       elif self.step == 3:
          if self.GetAngleClass.run(msgMapTool, msg) == True:
             if self.GetAngleClass.angle is not None:
                self.rot = self.GetAngleClass.angle
                self.plugIn.setLastRot(self.rot)
                self.addFeature(currLayer)
-               return True # fine comando
+               return True # end command
             else:
                return True
          return False

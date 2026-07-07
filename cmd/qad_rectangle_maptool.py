@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per gestire il map tool in ambito del comando rectangle
- 
+ class to manage the map tool for the rectangle command
+
                               -------------------
         begin                : 2013-12-3
         copyright            : iiiii
@@ -35,31 +35,31 @@ from ..qad_rubberband import QadRubberBand
 # Qad_rectangle_maptool_ModeEnum class.
 # ===============================================================================
 class Qad_rectangle_maptool_ModeEnum():
-   # noto niente si richiede il primo angolo
-   NONE_KNOWN_ASK_FOR_FIRST_CORNER = 1     
-   # noto il primo angolo si richiede l'angolo opposto
-   FIRST_CORNER_KNOWN_ASK_FOR_SECOND_CORNER = 2     
-   # noto il primo angolo si richiede la rotazione
+   # I know nothing, the first corner is requested
+   NONE_KNOWN_ASK_FOR_FIRST_CORNER = 1
+   # Once the first angle is known, the opposite angle is required
+   FIRST_CORNER_KNOWN_ASK_FOR_SECOND_CORNER = 2
+   # once the first angle is known, rotation is required
    FIRST_CORNER_KNOWN_ASK_FOR_ROTATION = 3
 
 # ===============================================================================
 # Qad_rotate_maptool class
 # ===============================================================================
 class Qad_rectangle_maptool(QadGetPoint):
-    
+
    def __init__(self, plugIn):
       QadGetPoint.__init__(self, plugIn)
-                        
+
       self.firstCorner = None
       self.secondCorner = None
       self.basePt = None
       self.gapType = 0 # 0 = Angoli retti; 1 = Raccorda i segmenti; 2 = Cima i segmenti
-      self.gapValue1 = 0 # se gapType = 1 -> raggio di curvatura; se gapType = 2 -> prima distanza di cimatura
-      self.gapValue2 = 0 # se gapType = 2 -> seconda distanza di cimatura
+      self.gapValue1 = 0 # if gapType = 1 -> radius of curvature; if gapType = 2 -> first trimming distance
+      self.gapValue2 = 0 # if gapType = 2 -> second trimming distance
       self.rot = 0
       self.polyline = QadPolyline()
 
-      self.__rubberBand = QadRubberBand(self.canvas, True)   
+      self.__rubberBand = QadRubberBand(self.canvas, True)
       self.geomType = QgsWkbTypes.PolygonGeometry
 
    def hidePointMapToolMarkers(self):
@@ -69,20 +69,20 @@ class Qad_rectangle_maptool(QadGetPoint):
    def showPointMapToolMarkers(self):
       QadGetPoint.showPointMapToolMarkers(self)
       self.__rubberBand.show()
-                             
+
    def clear(self):
       QadGetPoint.clear(self)
       self.__rubberBand.reset()
-      self.mode = None                
-      
+      self.mode = None
+
    def canvasMoveEvent(self, event):
       QadGetPoint.canvasMoveEvent(self, event)
-      
+
       self.__rubberBand.reset()
 
       result = False
-               
-      # noto il primo angolo si richiede l'angolo opposto
+
+      # Once the first angle is known, the opposite angle is required
       if self.mode == Qad_rectangle_maptool_ModeEnum.FIRST_CORNER_KNOWN_ASK_FOR_SECOND_CORNER:
          result = self.polyline.getRectByCorners(self.firstCorner, self.tmpPoint, self.rot, \
                                                  self.gapType, self.gapValue1, self.gapValue2)
@@ -93,13 +93,13 @@ class Qad_rectangle_maptool(QadGetPoint):
             self.__rubberBand.setPolygon(vertices)
          else:
             self.__rubberBand.setLine(vertices)
-         
+
    def activate(self):
-      QadGetPoint.activate(self)            
+      QadGetPoint.activate(self)
       self.__rubberBand.show()
 
    def deactivate(self):
-      try: # necessario perché se si chiude QGIS parte questo evento nonostante non ci sia più l'oggetto maptool !
+      try: # necessary because if you close QGIS this event starts even though the map tool object is no longer there!
          QadGetPoint.deactivate(self)
          self.__rubberBand.hide()
       except:
@@ -107,14 +107,14 @@ class Qad_rectangle_maptool(QadGetPoint):
 
    def setMode(self, mode):
       self.mode = mode
-      # noto niente si richiede il primo angolo
+      # I know nothing, the first corner is requested
       if self.mode == Qad_rectangle_maptool_ModeEnum.NONE_KNOWN_ASK_FOR_FIRST_CORNER:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
-      # noto il primo angolo si richiede l'angolo opposto
+      # Once the first angle is known, the opposite angle is required
       elif self.mode == Qad_rectangle_maptool_ModeEnum.FIRST_CORNER_KNOWN_ASK_FOR_SECOND_CORNER:
          self.setDrawMode(QadGetPointDrawModeEnum.NONE)
-      # noto il primo angolo si richiede la rotazione
+      # once the first angle is known, rotation is required
       elif self.mode == Qad_rectangle_maptool_ModeEnum.FIRST_CORNER_KNOWN_ASK_FOR_ROTATION:
          self.setDrawMode(QadGetPointDrawModeEnum.ELASTIC_LINE)
          self.setStartPoint(self.firstCorner)
-      
+

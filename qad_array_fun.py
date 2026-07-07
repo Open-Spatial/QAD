@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin ok
 
- funzioni per fare serie di oggetti grafici
- 
+ functions for creating arrays of graphical objects
+
                               -------------------
         begin                : 2016-05-26
         copyright            : iiiii
@@ -47,52 +47,52 @@ from .qad_multi_geom import fromQadGeomToQgsGeom
 # doMoveAndRotateGeom
 # ===============================================================================
 def doMoveAndRotateGeom(plugIn, entity, offsetX, offsetY, angle, basePt, addToLayer, highlightObj):
-   # funzione di ausilio
-   if entity.whatIs() == "ENTITY":   
+   # assistive function
+   if entity.whatIs() == "ENTITY":
       qadGeom = entity.getQadGeom().copy()
       qadGeom.move(offsetX, offsetY)
       if angle is not None:
          qadGeom.rotate(basePt, angle)
-         
+
       g = fromQadGeomToQgsGeom(qadGeom, entity.layer)
       if addToLayer:
-         newF = QgsFeature(entity.getFeature()) # la copio perchè altrimenti qgis si incarta
+         newF = QgsFeature(entity.getFeature()) # I'm copying it because otherwise it'll end up in paper
          newF.setGeometry(g)
-         
+
          if len(entity.rotFldName) > 0:
             rotValue = newF.attribute(entity.rotFldName)
             # a volte vale None e a volte null (vai a capire...)
-            rotValue = 0 if rotValue is None or rotValue == NULL else qad_utils.toRadians(rotValue) # la rotazione é in gradi nel campo della feature
+            rotValue = 0 if rotValue is None or rotValue == NULL else qad_utils.toRadians(rotValue) # the rotation is in degrees in the feature field
             rotValue = rotValue + angle
-            newF.setAttribute(entity.rotFldName, qad_utils.toDegrees(qad_utils.normalizeAngle(rotValue)))               
-         
-         # plugIn, layer, feature, coordTransform, refresh, check_validity
+            newF.setAttribute(entity.rotFldName, qad_utils.toDegrees(qad_utils.normalizeAngle(rotValue)))
+
+         # plugin, layer, feature, coordTransform, refresh, check_validity
          if qad_layer.addFeatureToLayer(plugIn, entity.layer, newF, None, False, False, False) == False:
             return False
-   
+
       if highlightObj is not None:
          highlightObj.addGeometry(g, entity.layer)
-   
+
       del qadGeom
       del g
-      
-   elif ent.whatIs() == "DIMENTITY": # se l'entità è una quotatura
+
+   elif ent.whatIs() == "DIMENTITY": # if the entity is a dimension
       newDimEntity = QadDimEntity(dimEntity)
       newDimEntity.move(offsetX, offsetY)
       if angle is not None:
          newDimEntity.rotate(basePt, angle)
-      
+
       if addToLayer:
          if newDimEntity.addToLayers(plugIn) == False:
-            return False             
-   
+            return False
+
       if highlightObj is not None:
          highlightObj.addGeometry(newDimEntity.textualFeature.geometry(), newDimEntity.getTextualLayer())
          highlightObj.addGeometries(newDimEntity.getLinearGeometryCollection(), newDimEntity.getLinearLayer())
          highlightObj.addGeometries(newDimEntity.getSymbolGeometryCollection(), newDimEntity.getSymbolLayer())
-      
-      del newDimEntity      
-   
+
+      del newDimEntity
+
    return True
 
 
@@ -101,20 +101,19 @@ def doMoveAndRotateGeom(plugIn, entity, offsetX, offsetY, angle, basePt, addToLa
 # ===============================================================================
 def arrayRectangleEntity(plugIn, ent, basePt, rows, cols, distanceBetweenRows, distanceBetweenCols, angle, itemsRotation,
                          addToLayer, highlightObj):
-   """
-   serie rettangolare
-   ent = entità QAD di cui fare la serie (QadEntity o QadDimEntity)
-   basePt = punto base in map coordinate (QgsPointXY)
-   rows = numero di righe
-   cols = numero di colonne
-   distanceBetweenRows = distanza tra le righe in map coordinate
-   distanceBetweenCols = distanza tra le colonne in map coordinate
-   angle = angolo della serie (radianti)
-   itemsRotation = True se si vuole ruotare gli elementi come l'angolo della serie
-   addToLayer = se è True aggiunge le nuove entità al layer
-   highlightObj = se è diverso da None vengono aggiunge le geometrie all'oggetto QadHighlight
-                
-   la funzione restituisce True in caso di successo e Falso in caso di errore
+   """rectangular series
+      ent = QAD entity to create the series (QadEntity or QadDimEntity)
+      basePt = base point in map coordinates (QgsPointXY)
+      rows = number of rows
+      cols = number of columns
+      distanceBetweenRows = distance between rows in map coordinates
+      distanceBetweenCols = distance between columns in map coordinates
+      angle = series angle (radians)
+      itemsRotation = True if you want to rotate the items as the corner of the array
+      addToLayer = if True adds the new entities to the layer
+      highlightObj = if it is different from None, the geometries are added to the QadHighlight object
+
+      the function returns True on success and False on error
    """
    for row in range(0, rows):
       firstBasePt = qad_utils.getPolarPointByPtAngle(basePt, angle + math.pi / 2, distanceBetweenRows * row)
@@ -123,7 +122,7 @@ def arrayRectangleEntity(plugIn, ent, basePt, rows, cols, distanceBetweenRows, d
          newBasePt = qad_utils.getPolarPointByPtAngle(firstBasePt, angle, distanceBetweenCols * col)
          offsetX = newBasePt.x() - basePt.x()
          offsetY = newBasePt.y() - basePt.y()
-         
+
          if doMoveAndRotateGeom(plugIn, ent, offsetX, offsetY, \
                                 angle if itemsRotation else None, \
                                 newBasePt, addToLayer, highlightObj) == False:
@@ -139,34 +138,33 @@ def arrayRectangleEntity(plugIn, ent, basePt, rows, cols, distanceBetweenRows, d
 # ===============================================================================
 def arrayPathEntity(plugIn, ent, basePt, rows, cols, distanceBetweenRows, distanceBetweenCols, tangentDirection, itemsRotation, \
                     pathPolyline, distanceFromStartPt, addToLayer, highlightObj):
-   """
-   serie traiettoria
-   ent = entità QAD di cui fare la serie (QadEntity o QadDimEntity)
-   basePt = punto base in map coordinate (QgsPointXY)
-   rows = numero di righe
-   cols = numero di colonne
-   distanceBetweenRows = distanza tra le righe in map coordinate
-   distanceBetweenCols = distanza tra le colonne in map coordinate
-   tangentDirection = specifica il modo in cui gli elementi disposti in serie sono allineati rispetto alla direzione iniziale della traiettoria 
-   itemsRotation = True se si vuole ruotare gli elementi come l'angolo della serie
-   pathPolyline = traiettoria da seguire (QadPolyline) in map coordinate
-   distanceFromStartPt = distanza dal punto iniziale della traccia
-   addToLayer = se è True aggiunge le nuove entità al layer
-   highlightObj = se è diverso da None vengono aggiunge le geometrie all'oggetto QadHighlight
-   
-   la funzione restituisce True in caso di successo e Falso in caso di errore
+   """trajectory series
+      ent = QAD entity to create the series (QadEntity or QadDimEntity)
+      basePt = base point in map coordinates (QgsPointXY)
+      rows = number of rows
+      cols = number of columns
+      distanceBetweenRows = distance between rows in map coordinates
+      distanceBetweenCols = distance between columns in map coordinates
+      tangentDirection = specifies how the elements arranged in series are aligned with respect to the initial direction of the trajectory
+      itemsRotation = True if you want to rotate the items as the corner of the array
+      pathPolyline = path to follow (QadPolyline) in map coordinates
+      distanceFromStartPt = distance from the start point of the track
+      addToLayer = if True adds the new entities to the layer
+      highlightObj = if it is different from None, the geometries are added to the QadHighlight object
+
+      the function returns True on success and False on error
    """
    firstBasePt = basePt
    firstTanDirection = pathPolyline.getTanDirectionOnStartPt()
    for col in range(0, cols):
       distX = (distanceBetweenCols * col) + distanceFromStartPt
-      firstBasePt, angle = pathPolyline.getPointFromStart(distX) # ritorna il punto e la direzione della tang in quel punto
+      firstBasePt, angle = pathPolyline.getPointFromStart(distX) # returns the point and the direction of the tang at that point
       if firstBasePt is not None:
          for row in range(0, rows):
             newBasePt = qad_utils.getPolarPointByPtAngle(firstBasePt, angle + math.pi/2, distanceBetweenRows * row)
             offsetX = newBasePt.x() - basePt.x()
             offsetY = newBasePt.y() - basePt.y()
-            
+
             if doMoveAndRotateGeom(plugIn, ent, offsetX, offsetY, \
                                    angle - tangentDirection if itemsRotation else -tangentDirection, \
                                    newBasePt, addToLayer, highlightObj) == False:
@@ -182,18 +180,17 @@ def arrayPathEntity(plugIn, ent, basePt, rows, cols, distanceBetweenRows, distan
 # ===============================================================================
 def arrayPolarEntity(plugIn, ent, basePt, centerPt, itemsNumber, angleBetween, rows, distanceBetweenRows, itemsRotation, \
                      addToLayer, highlightObj):
-   """
-   serie polare
-   ent = entità QAD di cui fare la serie (QadEntity o QadDimEntity)
-   basePt = punto base in map coordinate (QgsPointXY)
-   centerPt = punto centrale in map coordinate (QgsPointXY)
-   itemsNumber = numero di copie da creare
-   angleBetween = angolo tra un elemento e l'altro (radianti)
-   rows = numero di righe
-   distanceBetweenRows = distanza tra le righe in map coordinate
-   itemsRotation = True se si vuole ruotare gli elementi intorno al cerchio
-   addToLayer = se è True aggiunge le nuove entità al layer
-   highlightObj = se è diverso da None vengono aggiunge le geometrie all'oggetto QadHighlight
+   """polar series
+      ent = QAD entity to create the series (QadEntity or QadDimEntity)
+      basePt = base point in map coordinates (QgsPointXY)
+      centerPt = center point in map coordinates (QgsPointXY)
+      itemsNumber = number of copies to create
+      angleBetween = angle between one element and another (radians)
+      rows = number of rows
+      distanceBetweenRows = distance between rows in map coordinates
+      itemsRotation = True if you want to rotate the items around the circle
+      addToLayer = if True adds the new entities to the layer
+      highlightObj = if it is different from None, the geometries are added to the QadHighlight object
    """
    firstAngle = qad_utils.getAngleBy2Pts(centerPt, basePt)
    dist = qad_utils.getDistance(centerPt, basePt)
@@ -203,7 +200,7 @@ def arrayPolarEntity(plugIn, ent, basePt, centerPt, itemsNumber, angleBetween, r
          newBasePt = qad_utils.getPolarPointByPtAngle(centerPt, angle, dist)
          offsetX = newBasePt.x() - basePt.x()
          offsetY = newBasePt.y() - basePt.y()
-      
+
          if doMoveAndRotateGeom(plugIn, ent, offsetX, offsetY, \
                                 i * angleBetween if itemsRotation else None, \
                                 newBasePt, addToLayer, highlightObj) == False:

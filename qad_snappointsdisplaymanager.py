@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per visualizzare i punti di snap
- 
+ class to display snap points
+
                               -------------------
         begin                : 2013-05-22
         copyright            : iiiii
@@ -29,7 +29,7 @@ from qgis.core import *
 from qgis.gui import *
 import time # profiling
 
-from . import qad_utils 
+from . import qad_utils
 from .qad_variables import QadVariables, QadAUTOSNAPEnum
 from .qad_snapper import QadSnapTypeEnum, snapTypeEnum2Descr
 from .qad_vertexmarker import QadVertexmarkerIconTypeEnum, QadVertexMarker
@@ -39,23 +39,21 @@ from .qad_geom_relations import QadPerpendicularity
 
 
 class QadSnapPointsDisplayManager():
-   """
-   Classe che gestisce la visualizzazione dei punti di snap
-   """
+   """Class that manages the display of snap points"""
 
-   
+
    # ============================================================================
    # __init__
    # ============================================================================
    def __init__(self, mapCanvas):
       self.__mapCanvas = mapCanvas
-      self.__vertexMarkers = [] # lista dei marcatori puntuali visualizzati
-      self.__startPoint = QgsPointXY()  
+      self.__vertexMarkers = [] # list of displayed point markers
+      self.__startPoint = QgsPointXY()
       self.__iconSize = QadVariables.get(QadMsg.translate("Environment variables", "AUTOSNAPSIZE"))
       self.__color = QColor(255, 0, 0) # color of the marker
-      self.__penWidth = 2 # pen width 
-      self.__lineMarkers = [] # lista dei RubberBand visualizzati
-   
+      self.__penWidth = 2 # pen width
+      self.__lineMarkers = [] # list of RubberBands displayed
+
    # ============================================================================
    # __del__
    # ============================================================================
@@ -65,13 +63,13 @@ class QadSnapPointsDisplayManager():
 
    def removeItems(self):
       self.hide()
-      
-      # svuoto la lista dei marker rimuovendoli dal canvas
+
+      # I empty the list of markers by removing them from the canvas
       for vertexMarker in self.__vertexMarkers:
          vertexMarker.removeItem()
       del self.__vertexMarkers[:]
 
-      # svuoto la linea di estensione rimuovendoli dal canvas
+      # I empty the extension line by removing them from the canvas
       for lineMarker in self.__lineMarkers:
          self.__mapCanvas.scene().removeItem(lineMarker)
       del self.__lineMarkers[:]
@@ -90,13 +88,11 @@ class QadSnapPointsDisplayManager():
 
 
    def setStartPoint(self, point):
-      """
-      Setta il punto di partenza per la modalità di snap PAR
-      """
+      """Sets the starting point for PAR snap mode"""
       self.__startPoint = point
 
 
-   def __getIconType(self, snapType):     
+   def __getIconType(self, snapType):
       if snapType == QadSnapTypeEnum.END or snapType == QadSnapTypeEnum.END_PLINE:
          return QadVertexmarkerIconTypeEnum.BOX
       elif snapType == QadSnapTypeEnum.MID:
@@ -130,44 +126,43 @@ class QadSnapPointsDisplayManager():
       elif snapType == QadSnapTypeEnum.PER_DEF:
          return QadVertexmarkerIconTypeEnum.PERP_DEFERRED
       elif snapType == QadSnapTypeEnum.TAN_DEF:
-         return QadVertexmarkerIconTypeEnum.TANGENT_DEFERRED      
+         return QadVertexmarkerIconTypeEnum.TANGENT_DEFERRED
       else:
-         return QadVertexmarkerIconTypeEnum.NONE      
-      
-      
+         return QadVertexmarkerIconTypeEnum.NONE
+
+
    def hide(self):
       """
-      Nasconde i marcatori precedentemente visualizzati
+      Hides previously displayed markers
       """
       for vertexMarker in self.__vertexMarkers:
          vertexMarker.hide()
-      
+
       for lineMarker in self.__lineMarkers:
          lineMarker.hide()
 
-         
+
    def show(self, SnapPoints, \
             extLinearObjs = None, \
             parLines = None, \
             intExtLinearObjs = None, \
             oSnapPointsForPolar = None, \
             oSnapLinesForPolar = None):
-      """
-      Visualizza i punti di snap, riceve un dizionario di liste di punti di snap
-      suddivisi per tipi di snap (es. {END : [pt1 .. ptn] MID : [pt1 .. ptn]})
-      e
-      lista degli oggetti lineari da estendere (lista di QadLine o QadArc o QadEllipseArc) per la modalità di snap EXT
-      lista delle linee per modo parallelo (lista di QadLine) per la modalità di snap PAR
-      linea degli oggetti lineari per intersezione su estensione (lista di QadLine o QadArc o QadEllipseArc) per la modalità di snap EXT_INT
+      """Displays snap points, receives a dictionary of snap point lists
+            divided by snap types (e.g. {END : [pt1 .. ptn] MID : [pt1 .. ptn]})
+            e
+            list of linear objects to extend (list of QadLine or QadArc or QadEllipseArc) for EXT snap mode
+            list of lines for parallel mode (QadLine list) for PAR snap mode
+            line of linear objects for intersection on extension (list of QadLine or QadArc or QadEllipseArc) for EXT_INT snap mode
       """
       self.hide()
 
-      # svuoto la lista dei marker
+      # I empty the marker list
       for vertexMarker in self.__vertexMarkers:
          vertexMarker.removeItem()
       del self.__vertexMarkers[:]
-      
-      # svuoto la linea di estensione
+
+      # I empty the extension line
       for lineMarker in self.__lineMarkers:
          self.__mapCanvas.scene().removeItem(lineMarker)
       del self.__lineMarkers[:]
@@ -175,56 +170,56 @@ class QadSnapPointsDisplayManager():
       autoSnap = QadVariables.get(QadMsg.translate("Environment variables", "AUTOSNAP"))
 
       self.__mapCanvas.setToolTip("")
-      
-      # punti di snap
+
+      # snap points
       for snapPoint in SnapPoints.items():
          snapType = snapPoint[0]
          i = -1
          for point in snapPoint[1]:
             i = i + 1
-            
+
             if autoSnap & QadAUTOSNAPEnum.DISPLAY_MARK: # Turns on the AutoSnap mark
                self.__vertexMarkers.append(self.getVertexMarker(snapType, point))
-               # disegno il marcatore di snap
+               # I draw the snap marker
                #self.__vertexMarkers.append(self.getVertexMarker(snapType, point))
 
             if autoSnap & QadAUTOSNAPEnum.DISPLAY_TOOLTIPS: # Turns on the AutoSnap tooltips
                qad_utils.setMapCanvasToolTip(snapTypeEnum2Descr(snapType))
 
-            # linee di estensione
+            # extension lines
             if snapType == QadSnapTypeEnum.EXT and (extLinearObjs is not None):
                for extLinearObj in extLinearObjs:
                   geomType = extLinearObj.whatIs()
                   if geomType == "LINE":
                      dummyPt = QadPerpendicularity.fromPointToInfinityLine(point, extLinearObj)
-                     # se dummyPt e point sono così vicini da essere considerati uguali
+                     # if dummyPt and point are so close that they are considered equal
                      if qad_utils.ptNear(point, dummyPt):
-                        # prendo il vertice più vicino a point
+                        # I take the vertex closest to point
                         if qad_utils.getDistance(point, extLinearObj.getStartPt()) < qad_utils.getDistance(point, extLinearObj.getEndPt()):
                            dummyPt = extLinearObj.getStartPt()
                         else:
                            dummyPt = extLinearObj.getEndPt()
-                                                
-                        # per un baco non ancora capito: se la linea ha solo 2 vertici e 
-                        # hanno la stessa x o y (linea orizzontale o verticale) 
-                        # la linea non viene disegnata perciò sposto un pochino la x o la y         
-                        dummyPt = qad_utils.getAdjustedRubberBandVertex(point, dummyPt)                     
-                        # disegno la linea di estensione
+
+                        # for a bug not yet understood: if the line has only 2 vertices and
+                        # have the same x or y (horizontal or vertical line)
+                        # the line is not drawn so I move the x or y a little
+                        dummyPt = qad_utils.getAdjustedRubberBandVertex(point, dummyPt)
+                        # I draw the extension line
                         self.__lineMarkers.append(self.getLineMarker(point, dummyPt))
                   else: # ARC o ELLIPSE_ARC
                      clonedLinearObj = extLinearObj.copy()
-                     
+
                      if qad_utils.getDistance(point, clonedLinearObj.getStartPt()) > \
                         qad_utils.getDistance(point, clonedLinearObj.getEndPt()):
                         clonedLinearObj.setEndAngleByPt(point)
                      else:
                         clonedLinearObj.setStartAngleByPt(point)
-                           
-                     # disegno l'arco di estensione
+
+                     # I draw the extension arc
                      arcMarker = self.getLinearObjMarker(clonedLinearObj)
                      if arcMarker is not None:
                         self.__lineMarkers.append(arcMarker)
-            
+
             # linee di parallelismo
             if snapType == QadSnapTypeEnum.PAR and (self.__startPoint is not None):
                boundBox = self.__mapCanvas.extent()
@@ -236,11 +231,11 @@ class QadSnapPointsDisplayManager():
                upperIntersX = qad_utils.getXOnInfinityLine(self.__startPoint, point, yMax)
                if upperIntersX > xMax or upperIntersX < xMin:
                   upperIntersX = None
-                                                           
+
                lowerIntersX = qad_utils.getXOnInfinityLine(self.__startPoint, point, yMin)
                if lowerIntersX > xMax or lowerIntersX < xMin:
                   lowerIntersX = None
-                  
+
                leftIntersY  = qad_utils.getYOnInfinityLine(self.__startPoint, point, xMin)
                if leftIntersY > yMax or leftIntersY < yMin:
                   leftIntersY = None
@@ -251,104 +246,98 @@ class QadSnapPointsDisplayManager():
 
                p1 = None
                p2 = None
-               
+
                if upperIntersX is not None:
                   p1 = QgsPointXY(upperIntersX, yMax)
-                  
+
                if leftIntersY is not None:
                   if leftIntersY != yMax:
                      if p1 is None:
                         p1 = QgsPointXY(xMin, leftIntersY)
-                     else:       
-                        p2 = QgsPointXY(xMin, leftIntersY)   
-                                          
+                     else:
+                        p2 = QgsPointXY(xMin, leftIntersY)
+
                if lowerIntersX is not None:
                   if lowerIntersX != xMin:
                      if p1 is None:
                         p1 = QgsPointXY(lowerIntersX, yMin)
-                     elif p2 is None:                  
-                        p2 = QgsPointXY(lowerIntersX, yMin)   
+                     elif p2 is None:
+                        p2 = QgsPointXY(lowerIntersX, yMin)
 
                if rightIntersY is not None:
                   if rightIntersY != yMin:
                      if p2 is None:
                         p2 = QgsPointXY(xMax, rightIntersY)
 
-               if (p1 is not None) and (p2 is not None):                    
-                  # per un baco non ancora capito: se la linea ha solo 2 vertici e 
-                  # hanno la stessa x o y (linea orizzontale o verticale) 
-                  # la linea non viene disegnata perciò sposto un pochino la x o la y         
-                  p2 = qad_utils.getAdjustedRubberBandVertex(p1, p2)                                          
-                  # disegno la linea parallela
+               if (p1 is not None) and (p2 is not None):
+                  # for a bug not yet understood: if the line has only 2 vertices and
+                  # have the same x or y (horizontal or vertical line)
+                  # the line is not drawn so I move the x or y a little
+                  p2 = qad_utils.getAdjustedRubberBandVertex(p1, p2)
+                  # I draw the parallel line
                   self.__lineMarkers.append(self.getLineMarker(p1, p2))
 
-      # linee per il puntamento polare
+      # lines for polar pointing
       if oSnapLinesForPolar is not None:
          for line in oSnapLinesForPolar:
             lineMarker = self.getLineMarkerForPolar(line.getStartPt(), line.getEndPt())
             if lineMarker is not None:
-               # disegno la linea
+               # I draw the line
                self.__lineMarkers.append(lineMarker)
 
-      # punti medi degli oggetti lineari marcati come da estendere
+      # midpoints of linear objects marked as to be extended
       if extLinearObjs is not None:
          for extLinearObj in extLinearObjs:
             point = extLinearObj.getMiddlePt()
-            # disegno il marcatore di estensionel            
+            # I draw the extension marker
             self.__vertexMarkers.append(self.getVertexMarker(QadSnapTypeEnum.EXT, point))
 
-      # punti medi delle linee marcate come parallele
+      # midpoints of lines marked as parallel
       if parLines is not None:
          for parLine in parLines:
             point = parLine.getMiddlePt()
-            # disegno il marcatore di parallelo    
+            # I draw the parallel marker
             self.__vertexMarkers.append(self.getVertexMarker(QadSnapTypeEnum.PAR, point))
 
-      # punto medio della linea marcata come intersezione estesa
+      # midpoint of the line marked as extended intersection
       if intExtLinearObjs is not None:
          for intExtLinearObj in intExtLinearObjs:
             point = intExtLinearObj.getMiddlePt()
-            # disegno il marcatore
+            # I draw the marker
             self.__vertexMarkers.append(self.getVertexMarker(QadSnapTypeEnum.EXT_INT, point))
 
-      # punti di osnap usati per l'opzione polare
+      # osnap points used for the polar option
       if oSnapPointsForPolar is not None:
          for snapPoint in oSnapPointsForPolar.items():
             snapType = snapPoint[0]
             for item in snapPoint[1]:
-               # disegno il marcatore di snap
+               # I draw the snap marker
                self.__vertexMarkers.append(self.getVertexMarker(snapType, item))
 
-            
+
    def getVertexMarker(self, snapType, point):
-      """
-      Crea un marcatore puntuale
-      """
+      """Create a point marker"""
       vertexMarker = QadVertexMarker(self.__mapCanvas)
       vertexMarker.setIconSize(self.__iconSize)
       vertexMarker.setColor(self.__color)
-      vertexMarker.setPenWidth(self.__penWidth)              
-      vertexMarker.setIconType(self.__getIconType(snapType))              
+      vertexMarker.setPenWidth(self.__penWidth)
+      vertexMarker.setIconType(self.__getIconType(snapType))
       vertexMarker.setCenter(point)
       return vertexMarker
 
 
    def getLineMarker(self, pt1, pt2):
-      """
-      Crea un marcatore lineare
-      """
+      """Create a linear marker"""
       lineMarker = createRubberBand(self.__mapCanvas, QgsWkbTypes.LineGeometry, True)
       lineMarker.setColor(self.__color)
       lineMarker.setLineStyle(Qt.DashLine)
       lineMarker.addPoint(pt1, False)
-      lineMarker.addPoint(pt2, True)      
+      lineMarker.addPoint(pt2, True)
       return lineMarker
 
 
    def getLineMarkerForPolar(self, startPoint, point):
-      """
-      Crea un marcatore lineare per il puntamento polare
-      """
+      """Creates a linear marker for polar tracking"""
       boundBox = self.__mapCanvas.extent()
       xMin = boundBox.xMinimum()
       yMin = boundBox.yMinimum()
@@ -357,27 +346,27 @@ class QadSnapPointsDisplayManager():
 
       p1 = startPoint
       p2 = point
-               
+
       x2 = None
-      if p2.y() > p1.y(): # semiretta che va verso l'alto
+      if p2.y() > p1.y(): # half-line that goes upwards
          x2 = qad_utils.getXOnInfinityLine(p1, p2, yMax)
-      elif p2.y() < p1.y(): # semiretta che va verso il basso
-         x2 = qad_utils.getXOnInfinityLine(p1, p2, yMin)                  
-      else: # semiretta retta orizzontale
-         if p2.x() > p1.x(): # semiretta che va verso destra
+      elif p2.y() < p1.y(): # half-line going downwards
+         x2 = qad_utils.getXOnInfinityLine(p1, p2, yMin)
+      else: # horizontal ray line
+         if p2.x() > p1.x(): # half-line going to the right
             x2 = xMax
-         elif p2.x() < p1.x(): # semiretta che va verso sinistra
+         elif p2.x() < p1.x(): # half-line going to the left
             x2 = xMin
 
       y2 = None
-      if p2.x() > p1.x(): # semiretta che va verso destra
+      if p2.x() > p1.x(): # half-line going to the right
          y2 = qad_utils.getYOnInfinityLine(p1, p2, xMax)
-      elif p2.x() < p1.x(): # semiretta che va verso sinistra
-         y2 = qad_utils.getYOnInfinityLine(p1, p2, xMin)                  
-      else: # semiretta retta verticale
-         if p2.y() > p1.y(): # semiretta che va verso l'alto
+      elif p2.x() < p1.x(): # half-line going to the left
+         y2 = qad_utils.getYOnInfinityLine(p1, p2, xMin)
+      else: # vertical ray line
+         if p2.y() > p1.y(): # half-line that goes upwards
             y2 = yMax
-         elif p2.y() < p1.y(): # semiretta che va verso il basso
+         elif p2.y() < p1.y(): # half-line going downwards
             y2 = yMin
 
       if x2 is not None:
@@ -385,29 +374,27 @@ class QadSnapPointsDisplayManager():
             x2 = xMax
          elif x2 < xMin:
             x2 = xMin
-      
+
       if y2 is not None:
          if y2 > yMax:
             y2 = yMax
          elif y2 < yMin:
             y2 = yMin
-                                                                             
+
       if (x2 is not None) and (y2 is not None):
-         p2 = QgsPointXY(x2, y2)                     
-         # per un baco non ancora capito: se la linea ha solo 2 vertici e 
-         # hanno la stessa x o y (linea orizzontale o verticale) 
-         # la linea non viene disegnata perciò sposto un pochino la x o la y         
-         p2 = qad_utils.getAdjustedRubberBandVertex(p1, p2)                                          
-         # disegno la linea
+         p2 = QgsPointXY(x2, y2)
+         # for a bug not yet understood: if the line has only 2 vertices and
+         # have the same x or y (horizontal or vertical line)
+         # the line is not drawn so I move the x or y a little
+         p2 = qad_utils.getAdjustedRubberBandVertex(p1, p2)
+         # I draw the line
          return self.getLineMarker(p1, p2)
       else:
          return None
 
 
    def getLinearObjMarker(self, linearObj):
-      """
-      Crea un marcatore lineare x un oggetto lineare
-      """
+      """Creates a linear marker x a linear object"""
       lineMarker = createRubberBand(self.__mapCanvas, QgsWkbTypes.LineGeometry, True)
       lineMarker.setColor(self.__color)
       lineMarker.setLineStyle(Qt.DotLine)
@@ -422,4 +409,3 @@ class QadSnapPointsDisplayManager():
       lineMarker.addPoint(points[i], True)
       return lineMarker
 
-      

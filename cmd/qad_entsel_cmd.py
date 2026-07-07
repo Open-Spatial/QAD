@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- comando da inserire in altri comandi per la selezione di una feature
- 
+ command to insert into other commands for feature selection
+
                               -------------------
         begin                : 2013-09-18
         copyright            : iiiii
@@ -41,29 +41,27 @@ from ..qad_variables import QadVariables
 # QadEntSelClass
 # ===============================================================================
 class QadEntSelClass(QadCommandClass):
-   """
-      Questa classe seleziona un'entità. Non è in grado di selezionare una quotatura ma solo un componente di una quotatura.
-   """
+   """This class selects an entity. It is not able to select a dimension but only a component of a dimension."""
 
    def instantiateNewCmd(self):
-      """ istanzia un nuovo comando dello stesso tipo """
+      """instantiates a new command of the same type"""
       return QadEntSelClass(self.plugIn)
-      
+
    def __init__(self, plugIn):
       QadCommandClass.__init__(self, plugIn)
       self.entity = QadEntity()
       self.point = None
-      # opzioni per limitare gli oggetti da selezionare
-      self.onlyEditableLayers = False     
+      # options to limit the objects to select
+      self.onlyEditableLayers = False
       self.checkPointLayer = True
       self.checkLineLayer = True
       self.checkPolygonLayer = True
       self.checkDimLayers = True
-      self.selDimEntity = False # per restituire o meno un oggetto QadDimEntity
+      self.selDimEntity = False # to return a QadDimEntity object or not
       self.msg = QadMsg.translate("QAD", "Select object: ")
       self.deselectOnFinish = False
-      self.canceledByUsr = False # diventa true se l'utente non vuole scegliere niente (es. se usato il tasto destro del mouse)
-      
+      self.canceledByUsr = False # becomes true if the user does not want to choose anything (e.g. if the right mouse button is used)
+
    def __del__(self):
       QadCommandClass.__del__(self)
       if self.deselectOnFinish:
@@ -75,16 +73,16 @@ class QadEntSelClass(QadCommandClass):
    # ============================================================================
    def setEntity(self, layer, fid):
       del self.entity
-      if self.selDimEntity: # se è possibile restituire un oggetto QadDimEntity
-         # verifico se l'entità appartiene ad uno stile di quotatura
+      if self.selDimEntity: # whether a QadDimEntity object can be returned
+         # check if the entity belongs to a dimensioning style
          self.entity = QadDimStyles.getDimEntity(layer, fid)
-         if self.entity is None: # se non è una quota
+         if self.entity is None: # if it is not a dimension
             self.entity = QadEntity()
             self.entity.set(layer, fid)
       else:
          self.entity = QadEntity()
          self.entity.set(layer, fid)
-      
+
       self.entity.selectOnLayer()
 
 
@@ -93,91 +91,91 @@ class QadEntSelClass(QadCommandClass):
    # ============================================================================
    def getLayersToCheck(self):
       layerList = []
-      for layer in qad_utils.getVisibleVectorLayers(self.plugIn.canvas): # Tutti i layer vettoriali visibili
-         # considero solo i layer vettoriali che sono filtrati per tipo
+      for layer in qad_utils.getVisibleVectorLayers(self.plugIn.canvas): # All vector layers visible
+         # I only consider vector layers that are filtered by type
          if ((layer.geometryType() == QgsWkbTypes.PointGeometry and self.checkPointLayer == True) or \
              (layer.geometryType() == QgsWkbTypes.LineGeometry and self.checkLineLayer == True) or \
              (layer.geometryType() == QgsWkbTypes.PolygonGeometry and self.checkPolygonLayer == True)) and \
              (self.onlyEditableLayers == False or layer.isEditable()):
-            # se devo includere i layers delle quotature
+            # if I need to include dimension layers
             if self.checkDimLayers == True or \
                len(QadDimStyles.getDimListByLayer(layer)) == 0:
                layerList.append(layer)
-         
+
       return layerList
 
-            
+
    def run(self, msgMapTool = False, msg = None):
       if self.plugIn.canvas.mapSettings().destinationCrs().isGeographic():
          self.showMsg(QadMsg.translate("QAD", "\nThe coordinate reference system of the project must be a projected coordinate system.\n"))
-         return True # fine comando
+         return True # end command
 
       # =========================================================================
-      # RICHIESTA PUNTO o ENTITA'
-      if self.step == 0: # inizio del comando
-         # imposto il map tool
+      # POINT or ENTITY REQUEST
+      if self.step == 0: # start of command
+         # set the map tool
          self.getPointMapTool().setSelectionMode(QadGetPointSelectionModeEnum.ENTITY_SELECTION)
-         # imposto i layer da controllare sul maptool
+         # set the layers to check on the map tool
          self.getPointMapTool().layersToCheck = self.getLayersToCheck()
-                  
+
          keyWords = QadMsg.translate("Command_ENTSEL", "Last")
-                  
+
          englishKeyWords = "Last"
          keyWords += "_" + englishKeyWords
-         # si appresta ad attendere un punto o enter o una parola chiave         
-         # msg, inputType, default, keyWords, nessun controllo
+         # is preparing to wait for a point or Enter or a keyword
+         # msg, inputType, default, keyWords, no check
          self.waitFor(self.msg, \
                       QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS, \
                       None, \
                       keyWords, QadInputModeEnum.NONE)
-         
+
          self.step = 1
          return False
 
       # =========================================================================
-      # RISPOSTA ALLA RICHIESTA PUNTO o ENTITA'
-      elif self.step == 1: # dopo aver atteso un punto si riavvia il comando
+      # RESPONSE TO THE POINT or ENTITY REQUEST
+      elif self.step == 1: # after waiting for a point the command restarts
          entity = None
-         if msgMapTool == True: # il punto arriva da una selezione grafica
-            # la condizione seguente si verifica se durante la selezione di un punto
-            # é stato attivato un altro plugin che ha disattivato Qad
-            # quindi stato riattivato il comando che torna qui senza che il maptool
-            # abbia selezionato un punto            
-            if self.getPointMapTool().point is None: # il maptool é stato attivato senza un punto
-               if self.getPointMapTool().rightButton == True: # se usato il tasto destro del mouse
+         if msgMapTool == True: # the point comes from a graphic selection
+            # the following condition occurs if while selecting a point
+            # Another plugin was activated which deactivated Qad
+            # so the command that returns here has been reactivated without the map tool
+            # has selected a point
+            if self.getPointMapTool().point is None: # the map tool was activated without a dot
+               if self.getPointMapTool().rightButton == True: # if used with the right mouse button
                   self.canceledByUsr = True
-                  return True # fine comando
+                  return True # end command
                else:
-                  self.setMapTool(self.getPointMapTool()) # riattivo il maptool
+                  self.setMapTool(self.getPointMapTool()) # I reactivate the map tool
                   return False
-               
+
             value = self.getPointMapTool().point
             if self.getPointMapTool().entity.isInitialized():
-               entity = self.getPointMapTool().entity               
-         else: # il punto arriva come parametro della funzione
+               entity = self.getPointMapTool().entity
+         else: # the dot comes as a parameter of the function
             value = msg
 
          if value is None:
             self.canceledByUsr = True
-            return True # fine comando
-         
+            return True # end command
+
          if type(value) == unicode:
             if value == QadMsg.translate("Command_ENTSEL", "Last") or value == "Last":
-               # Seleziona l'ultima entità inserita
+               # Select the last inserted entity
                lastEnt = self.plugIn.getLastEntity()
                if lastEnt is not None:
-                  # controllo sul layer
+                  # layer control
                   if self.onlyEditableLayers == False or lastEnt.layer.isEditable() == True:
-                     # controllo sul tipo
+                     # type check
                      if (self.checkPointLayer == True and lastEnt.layer.geometryType() == QgsWkbTypes.PointGeometry) or \
                         (self.checkLineLayer == True and lastEnt.layer.geometryType() == QgsWkbTypes.LineGeometry) or \
                         (self.checkPolygonLayer == True and lastEnt.layer.geometryType() == QgsWkbTypes.PolygonGeometry):
-                        # controllo su layer delle quotature
+                        # layer control of dimensions
                         if self.checkDimLayers == True or QadDimStyles.isDimEntity(lastEnt) == False:
                            self.setEntity(lastEnt.layer, lastEnt.featureId)
          elif type(value) == QgsPointXY:
             if entity is None:
-               # cerco se ci sono entità nel punto indicato
+               # I searc if there are entities in the indicated point
                result = qad_utils.getEntSel(self.getPointMapTool().toCanvasCoordinates(value),
                                             self.getPointMapTool(), \
                                             QadVariables.get(QadMsg.translate("Environment variables", "PICKBOX")), \
@@ -185,13 +183,13 @@ class QadEntSelClass(QadCommandClass):
                if result is not None:
                   feature = result[0]
                   layer = result[1]
-                  self.setEntity(layer, feature.id())               
+                  self.setEntity(layer, feature.id())
             else:
                self.setEntity(entity.layer, entity.featureId)
 
             self.point = value
-                                   
+
          if self.deselectOnFinish:
             self.entity.deselectOnLayer()
 
-         return True # fine comando
+         return True # end command

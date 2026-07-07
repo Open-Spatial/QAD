@@ -3,8 +3,8 @@
 /***************************************************************************
  QAD Quantum Aided Design plugin
 
- classe per la gestione delle linee
- 
+ class for managing lines
+
                               -------------------
         begin                : 2018-12-27
         copyright            : iiiii
@@ -38,62 +38,62 @@ from . import qad_utils
 # QadLine line class
 # ===============================================================================
 class QadLine():
-    
+
    def __init__(self, line = None):
       if line is not None:
          self.set(line.pt1, line.pt2)
-      else:    
+      else:
          self.pt1 = None
          self.pt2 = None
 
 
    def whatIs(self):
-      # obbligatoria
+      # required
       return "LINE"
 
-   
+
    def set(self, pt1, pt2 = None):
       if isinstance(pt1, QadLine):
          line = pt1
          return self.set(line.pt1, line.pt2)
-      
+
       self.pt1 = QgsPointXY(pt1)
       self.pt2 = QgsPointXY(pt2)
       return self
 
    def transform(self, coordTransform):
-      # obbligatoria
+      # required
       """Transform this geometry as described by CoordinateTransform ct."""
       self.pt1 = coordTransform.transform(self.pt1)
       self.pt2 = coordTransform.transform(self.pt2)
 
 
    def transformFromCRSToCRS(self, sourceCRS, destCRS):
-      # obbligatoria
+      # required
       """Transform this geometry as described by CRS."""
-      if (sourceCRS is not None) and (destCRS is not None) and sourceCRS != destCRS:       
-         coordTransform = QgsCoordinateTransform(sourceCRS, destCRS, QgsProject.instance()) # trasformo le coord
+      if (sourceCRS is not None) and (destCRS is not None) and sourceCRS != destCRS:
+         coordTransform = QgsCoordinateTransform(sourceCRS, destCRS, QgsProject.instance()) # I transform the coordinates
          self.transform(coordTransform)
 
-      
+
    def __eq__(self, line):
-      # obbligatoria
+      # required
       """self == other"""
       if line.whatIs() != "LINE": return False
-      # strettamente uguali (conta il verso)
+      # strictly equal (the direction counts)
       if self.pt1 != line.pt1 or self.pt2 != line.pt2:
          return False
       else:
-         return True    
+         return True
 
-  
+
    def __ne__(self, line):
       """self != other"""
       return not self.__eq__(line)
 
 
    def equals(self, line):
-      # uguali geometricamente (NON conta il verso)
+      # geometrically equal (the direction does NOT count)
       if line.whatIs() != "LINE": return False
       if self.__eq__(line): return True
       dummy = line.copy()
@@ -102,7 +102,7 @@ class QadLine():
 
 
    def copy(self):
-      # obbligatoria
+      # required
       return QadLine(self)
 
 
@@ -110,10 +110,10 @@ class QadLine():
    # reverse
    # ============================================================================
    def reverse(self):
-      # obbligatoria
-      # inverto direzione della linea
+      # required
+      # I reverse the direction of the line
       dummy = self.pt1
-      self.pt1 = self.pt2 
+      self.pt1 = self.pt2
       self.pt2 = dummy
       return self
 
@@ -121,36 +121,34 @@ class QadLine():
    # getStartPt, setStartPt
    # ============================================================================
    def getStartPt(self):
-      # obbligatoria
+      # required
       return self.pt1
-   
+
    def setStartPt(self, pt):
-      # obbligatoria
+      # required
       self.pt1 = QgsPointXY(pt)
-   
-   
+
+
    # ============================================================================
    # getEndPt, setEndPt
    # ============================================================================
    def getEndPt(self):
-      # obbligatoria
+      # required
       return self.pt2
-   
+
    def setEndPt(self, pt):
-      # obbligatoria
+      # required
       self.pt2 = QgsPointXY(pt)
-      
+
 
    # ===============================================================================
    # getMiddlePt
    # ===============================================================================
    def getMiddlePt(self):
-      """
-      la funzione ritorna il punto medio della linea (QgsPointXY)
-      """
+      """the function returns the midpoint of the line (QgsPointXY)"""
       x = (self.pt1.x() + self.pt2.x()) / 2
       y = (self.pt1.y() + self.pt2.y()) / 2
-      
+
       return QgsPointXY(x, y)
 
 
@@ -158,23 +156,21 @@ class QadLine():
    # getBoundingBox
    # ===============================================================================
    def getBoundingBox(self):
-      """
-      la funzione ritorna il rettangolo che racchiude il segmento.
-      """
+      """the function returns the rectangle that encloses the segment."""
       if self.pt1.x() > self.pt2.x():
          xMaxLine = self.pt1.x()
          xMinLine = self.pt2.x()
       else:
          xMaxLine = self.pt2.x()
          xMinLine = self.pt1.x()
-        
+
       if self.pt1.y() > self.pt2.y():
          yMaxLine = self.pt1.y()
          yMinLine = self.pt2.y()
       else:
          yMaxLine = self.pt2.y()
          yMinLine = self.pt1.y()
-   
+
       return QgsRectangle(xMinLine, yMinLine, xMaxLine, yMaxLine)
 
 
@@ -182,10 +178,9 @@ class QadLine():
    # getTanDirectionOnPt
    # ============================================================================
    def getTanDirectionOnPt(self, pt = None):
-      # obbligatoria
-      """
-      la funzione ritorna la direzione della tangente al punto dell'oggetto.
-      pt è usato solo per compatibilità con le altre classi lineari (es. arco)
+      # required
+      """the function returns the direction of the tangent to the object point.
+            pt is used only for compatibility with other linear classes (e.g. arc)
       """
       return qad_utils.getAngleBy2Pts(self.getStartPt(), self.getEndPt())
 
@@ -194,24 +189,18 @@ class QadLine():
    # getTanDirectionOnStartPt, getTanDirectionOnEndPt, getTanDirectionOnMiddlePt
    # ============================================================================
    def getTanDirectionOnStartPt(self):
-      # obbligatoria
-      """
-      la funzione ritorna la direzione della tangente al punto iniziale dell'oggetto.
-      """
+      # required
+      """the function returns the direction of the tangent to the starting point of the object."""
       return self.getTanDirectionOnPt()
 
    def getTanDirectionOnEndPt(self):
-      # obbligatoria
-      """
-      la funzione ritorna la direzione della tangente al punto finale dell'oggetto.
-      """
+      # required
+      """the function returns the direction of the tangent to the final point of the object."""
       return self.getTanDirectionOnPt()
 
    def getTanDirectionOnMiddlePt(self):
-      # obbligatoria
-      """
-      la funzione ritorna la direzione della tangente al punto medio dell'oggetto.
-      """
+      # required
+      """the function returns the direction of the tangent to the midpoint of the object."""
       return self.getTanDirectionOnPt()
 
 
@@ -219,11 +208,10 @@ class QadLine():
    # fromPt1PolarPt2
    # ============================================================================
    def fromPt1PolarPt2(self, pt1, angle, dist):
-      """
-      setta le caratteristiche della linea attraverso:
-      punto iniziale
-      angolo
-      distanza dal punto iniziale
+      """set the characteristics of the line through:
+            starting point
+            corner
+            distance from the starting point
       """
       self.pt1 = QgsPointXY(pt1)
       self.pt2 = qad_utils.getPolarPointByPtAngle(pt1, angle, dist)
@@ -234,18 +222,17 @@ class QadLine():
    # getXOnInfinityLine
    # ===============================================================================
    def getXOnInfinityLine(self, y):
+      """given the Y coordinate of a point the function returns the X coordinate of the same
+            on the line
       """
-      data la coordinata Y di un punto la funzione ritorna la coordinata X dello stesso
-      sulla linea 
-      """
-      
+
       diffX = self.pt2.x() - self.pt1.x()
       diffY = self.pt2.y() - self.pt1.y()
-                             
-      if qad_utils.doubleNear(diffX, 0): # se la retta passante per p1 e p2 é verticale
+
+      if qad_utils.doubleNear(diffX, 0): # if the straight line passing through p1 and p2 is vertical
          return self.pt1.x()
-      elif qad_utils.doubleNear(diffY, 0): # se la retta passante per p1 e p2 é orizzontale
-         return None # infiniti punti
+      elif qad_utils.doubleNear(diffY, 0): # if the straight line passing through p1 and p2 is horizontal
+         return None # infinite points
       else:
          coeff = diffY / diffX
          return self.pt1.x() + (y - self.pt1.y()) / coeff
@@ -255,33 +242,30 @@ class QadLine():
    # getYOnInfinityLine
    # ===============================================================================
    def getYOnInfinityLine(self, x):
+      """given the X coordinate of a point the function returns the Y coordinate of the same
+            on the line
       """
-      data la coordinata X di un punto la funzione ritorna la coordinata Y dello stesso
-      sulla linea
-      """
-      
+
       diffX = self.pt2.x() - self.pt1.x()
       diffY = self.pt2.y() - self.pt1.y()
-                             
-      if qad_utils.doubleNear(diffX, 0): # se la retta passante per p1 e p2 é verticale
-         return None # infiniti punti
-      elif qad_utils.doubleNear(diffY, 0): # se la retta passante per p1 e p2 é orizzontale
+
+      if qad_utils.doubleNear(diffX, 0): # if the straight line passing through p1 and p2 is vertical
+         return None # infinite points
+      elif qad_utils.doubleNear(diffY, 0): # if the straight line passing through p1 and p2 is horizontal
          return self.pt1.y()
       else:
          coeff = diffY / diffX
          return self.pt1.y() + (x - self.pt1.x()) * coeff
-   
+
 
    # ===============================================================================
    # getSqrLength
    # ===============================================================================
    def getSqrLength(self):
-      """
-      la funzione ritorna la lunghezza al quadrato della linea
-      """
+      """the function returns the squared length of the line"""
       dx = self.pt2.x() - self.pt1.x()
       dy = self.pt2.y() - self.pt1.y()
-      
+
       return dx * dx + dy * dy
 
 
@@ -289,7 +273,7 @@ class QadLine():
    # length
    # ===============================================================================
    def length(self):
-      # obbligatoria
+      # required
       return math.sqrt(self.getSqrLength())
 
 
@@ -297,9 +281,8 @@ class QadLine():
    # getMinDistancePtBetweenSegmentAndPt
    # ===============================================================================
    def getMinDistancePtBetweenSegmentAndPt(self, pt):
-      """
-      la funzione ritorna il punto di distanza minima e la distanza minima tra un segmento ed un punto
-      (<punto di distanza minima><distanza minima>)
+      """the function returns the minimum distance point and the minimum distance between a segment and a point
+            (<minimum distance point><minimum distance>)
       """
       if self.containsPt(pt) == True:
          return [pt, 0]
@@ -307,7 +290,7 @@ class QadLine():
       if perpPt is not None:
          if self.containsPt(perpPt) == True:
             return [perpPt, perpPt.distance(pt)]
-   
+
       distFromP1 = self.pt1.distance(pt)
       distFromP2 = self.pt2.distance(pt)
       if distFromP1 < distFromP2:
@@ -320,22 +303,20 @@ class QadLine():
    # getPerpendicularPointOnInfinityLine
    # ===============================================================================
    def getPerpendicularPointOnInfinityLine(self, pt):
-      """
-      la funzione ritorna il punto di proiezione perpendicolare di pt alla linea.
-      """
-      
+      """the function returns the perpendicular projection point of pt to the line."""
+
       diffX = self.pt2.x() - self.pt1.x()
       diffY = self.pt2.y() - self.pt1.y()
-                             
-      if qad_utils.doubleNear(diffX, 0): # se la retta passante per p1 e p2 é verticale
+
+      if qad_utils.doubleNear(diffX, 0): # if the straight line passing through p1 and p2 is vertical
          return QgsPointXY(self.pt1.x(), pt.y())
-      elif qad_utils.doubleNear(diffY, 0): # se la retta passante per p1 e p2 é orizzontale
+      elif qad_utils.doubleNear(diffY, 0): # if the straight line passing through p1 and p2 is horizontal
          return QgsPointXY(self.pt.x(), pt1.y())
       else:
          coeff = diffY / diffX
          x = (coeff * self.pt1.x() - self.pt1.y() + pt.x() / coeff + pt.y()) / (coeff + 1 / coeff)
          y = coeff * (x - self.pt1.x()) + self.pt1.y()
-         
+
          return QgsPointXY(x, y)
 
 
@@ -343,9 +324,7 @@ class QadLine():
    # getInfinityLinePerpOnMiddle
    # ===============================================================================
    def getInfinityLinePerpOnMiddle(self):
-      """
-      la funzione trova una linea perpendicolare e passante per il punto medio della linea.
-      """
+      """the function finds a line perpendicular to and passing through the midpoint of the line."""
       ptMiddle = self.getMiddlePt()
       dist = self.pt1.distance(ptMiddle)
       if dist == 0:
@@ -361,30 +340,28 @@ class QadLine():
    # isPtOnInfinityLine
    # ===============================================================================
    def isPtOnInfinityLine(self, point):
-      """
-      la funzione ritorna true se il punto é sul segmento (estremi compresi).
-      point è di tipo QgsPointXY.
+      """the function returns true if the point is on the segment (extremes included).
+            point is of type QgsPointXY.
       """
       y = self.getYOnInfinityLine(point.x())
-      if y is None: # la linea infinita lineP1-lineP2 é verticale
+      if y is None: # the infinite line lineP1-lineP2 is vertical
          if qad_utils.doubleNear(point.x(), self.pt1.x()):
             return True
       else:
-         # se il punto é sulla linea infinita che passa da p1-p2
+         # if the point is on the infinite line that passes from p1-p2
          if qad_utils.doubleNear(point.y(), y):
             return True
-            
-      return False  
 
-      
+      return False
+
+
    # ===============================================================================
    # containsPt
    # ===============================================================================
    def containsPt(self, point):
-      # obbligatoria
-      """
-      la funzione ritorna true se il punto é sul segmento (estremi compresi).
-      point è di tipo QgsPointXY.
+      # required
+      """the function returns true if the point is on the segment (extremes included).
+            point is of type QgsPointXY.
       """
       if self.pt1.x() < self.pt2.x():
          xMin = self.pt1.x()
@@ -392,31 +369,29 @@ class QadLine():
       else:
          xMax = self.pt1.x()
          xMin = self.pt2.x()
-        
-      # verifico se il punto può essere sul segmento
+
+      # check if the point can be on the segment
       if qad_utils.doubleSmaller(point.x(), xMin) or qad_utils.doubleGreater(point.x(), xMax): return False
-         
+
       if self.pt1.y() < self.pt2.y():
          yMin = self.pt1.y()
          yMax = self.pt2.y()
       else:
          yMax = self.pt1.y()
          yMin = self.pt2.y()
-   
-      # verifico se il punto può essere sul segmento
+
+      # check if the point can be on the segment
       if qad_utils.doubleSmaller(point.y(), yMin) or qad_utils.doubleGreater(point.y(), yMax): return False
-        
+
       return self.isPtOnInfinityLine(point)
-      
+
 
    # ===============================================================================
    # leftOf
    # ===============================================================================
    def leftOf(self, pt):
-      # obbligatoria
-      """
-      la funzione ritorna una numero < 0 se il punto pt é alla sinistra della linea pt1 -> pt2
-      """
+      # required
+      """the function returns a number < 0 if the point pt is to the left of the line pt1 -> pt2"""
       f1 = pt.x() - self.pt1.x()
       f2 = self.pt2.y() - self.pt1.y()
       f3 = pt.y() - self.pt1.y()
@@ -425,14 +400,14 @@ class QadLine():
 
 
    # ===============================================================================
-   # get a and b for line equation (y = ax + b) 
+   # get a and b for line equation (y = ax + b)
    # ===============================================================================
    def get_A_B_LineEquation(self):
-      # dati 2 punti vengono calcolati a e b dell'equazione della retta passante per i due punti (y = ax + b)
+      # given 2 points, a and b of the equation of the straight line passing through the two points are calculated (y = ax + b)
       a = (self.pt2.y() - self.pt1.y()) / (self.pt2.x() - self.pt1.x())
       # y = ax + b -> b = y - ax
       b = self.pt1.y() - (a * self.pt1.x())
-      
+
       return a, b
 
 
@@ -440,24 +415,23 @@ class QadLine():
    # sqrDist
    # ===============================================================================
    def sqrDist(self, point):
-      # obbligatoria
-      """
-      la funzione ritorna una lista con 
-      (<minima distanza al quadrato>
-       <punto più vicino>)
+      # required
+      """the function returns a list with
+            (<minimum distance squared>
+             <nearest point>)
       """
       minDistPoint = QgsPointXY()
-      
+
       if self.pt1.x() == self.pt2.x() and self.pt1.y() == self.pt2.y():
          minDistPoint.setX(self.pt1.x())
          minDistPoint.setY(self.pt1.y())
       else:
          nx = self.pt2.y() - self.pt1.y()
          ny = -( self.pt2.x() - self.pt1.x() )
-      
+
          t = (point.x() * ny - point.y() * nx - self.pt1.x() * ny + self.pt1.y() * nx ) / \
              (( self.pt2.x() - self.pt1.x() ) * ny - ( self.pt2.y() - self.pt1.y() ) * nx )
-      
+
          if t < 0.0:
             minDistPoint.setX(self.pt1.x())
             minDistPoint.setY(self.pt1.y())
@@ -467,14 +441,14 @@ class QadLine():
          else:
             minDistPoint.setX( self.pt1.x() + t *( self.pt2.x() - self.pt1.x() ) )
             minDistPoint.setY( self.pt1.y() + t *( self.pt2.y() - self.pt1.y() ) )
-   
+
       dist = point.sqrDist(minDistPoint)
-      # prevent rounding errors if the point is directly on the segment 
+      # prevent rounding errors if the point is directly on the segment
       if qad_utils.doubleNear(dist, 0.0):
          minDistPoint.setX( point.x() )
          minDistPoint.setY( point.y() )
          return (0.0, minDistPoint)
-     
+
       return (dist, minDistPoint)
 
 
@@ -482,15 +456,14 @@ class QadLine():
    # getDistanceFromStart
    # ============================================================================
    def getDistanceFromStart(self, pt):
-      # obbligatoria
-      """
-      la funzione restituisce la distanza di <pt> (che deve essere sull'oggetto o sua estensione)
-      dal punto iniziale.
+      # required
+      """the function returns the distance of <pt> (which must be on the object or its extension)
+            from the starting point.
       """
       dummy = QadLine(self)
       dummy.setEndPt(pt)
 
-      # se il punto é sull'estensione dalla parte del punto iniziale      
+      # if the point is on the extension from the starting point
       if self.containsPt(pt) == False and \
          self.getStartPt().distance(pt) < self.getEndPt().distance(pt):
          return -dummy.length()
@@ -502,17 +475,16 @@ class QadLine():
    # getPointFromStart
    # ============================================================================
    def getPointFromStart(self, distance):
-      # obbligatoria
-      """
-      la funzione restituisce un punto (e la direzione della tangente) alla distanza <distance> 
-      (che deve essere sull'oggetto) dal punto iniziale.
+      # required
+      """the function returns a point (and the direction of the tangent) at the distance <distance>
+            (which must be on the object) from the starting point.
       """
       if distance < 0:
          return None, None
       l = self.length()
       if distance > l:
          return None, None
-     
+
       angle = self.getTanDirectionOnStartPt()
       return qad_utils.getPolarPointByPtAngle(self.getStartPt(), angle, distance), angle
 
@@ -521,10 +493,9 @@ class QadLine():
    # getDistanceFromEnd
    # ============================================================================
    def getDistanceFromEnd(self, pt):
-      # obbligatoria
-      """
-      la funzione restituisce la distanza di <pt> (che deve essere sull'oggetto o sua estensione)
-      dal punto finale.
+      # required
+      """the function returns the distance of <pt> (which must be on the object or its extension)
+            from the final point.
       """
       return self.length() - self.getDistanceFromStart()
 
@@ -533,9 +504,8 @@ class QadLine():
    # getPointFromEnd
    # ===============================================================================
    def getPointFromEnd(self, distance):
-      """
-      la funzione restituisce un punto (e la direzione della tangente) alla distanza <distance> 
-      (che deve essere sull'oggetto) dal punto finale.
+      """the function returns a point (and the direction of the tangent) at the distance <distance>
+            (which must be on the object) from the end point.
       """
       d = self.length() - distance
       return self.getPointFromStart(d)
@@ -545,10 +515,8 @@ class QadLine():
    # asPolyline
    # ============================================================================
    def asPolyline(self, tolerance2ApproxCurve = None, atLeastNSegment = None):
-      # obbligatoria
-      """
-      ritorna una lista di punti che definisce la linea
-      """
+      # required
+      """returns a list of points that defines the line"""
       return [self.getStartPt(), self.getEndPt()]
 
 
@@ -556,25 +524,22 @@ class QadLine():
    # asLineString
    # ===============================================================================
    def asLineString(self, tolerance2ApproxCurve = None, atLeastNSegment = None, forcedStartPt = None):
-      """
-      la funzione ritorna la linea in forma di lineString.
-      tolerance2ApproxCurve e atLeastNSegment sono usati solo per compatibilità
-      Quando la linea fa parte di una polilinea è necessario che il suo punto iniziale coincida con quello finale della parte precedente
-      percui il punto iniziale viene forzato.      
+      """the function returns the line in the form of lineString.
+            tolerance2ApproxCurve and atLeastNSegment are used for compatibility only
+            When the line is part of a polyline, its starting point must coincide with the final point of the previous part
+            therefore the starting point is forced.
       """
       if forcedStartPt is None:
          return QgsLineString(QgsPoint(self.getStartPt()), QgsPoint(self.getEndPt()))
       else:
          return QgsLineString(QgsPoint(forcedStartPt), QgsPoint(self.getEndPt()))
-      
+
 
    # ===============================================================================
    # asAbstractGeom
    # ===============================================================================
    def asAbstractGeom(self, wkbType = QgsWkbTypes.LineString, tolerance2ApproxCurve = None, atLeastNSegment = None):
-      """
-      la funzione ritorna la linea in forma di QgsAbstractGeometry.
-      """
+      """the function returns the line in the form of QgsAbstractGeometry."""
       flatType = QgsWkbTypes.flatType(wkbType)
 
       if flatType == QgsWkbTypes.CompoundCurve:
@@ -586,26 +551,25 @@ class QadLine():
       elif flatType == QgsWkbTypes.MultiCurve:
          lineString = self.asLineString()
          multiCurve = QgsMultiCurve()
-         multiCurve.addGeometry(lineString)   
+         multiCurve.addGeometry(lineString)
          return multiCurve
 
       elif flatType == QgsWkbTypes.MultiLineString:
          lineString = self.asLineString()
          multiLineString = QgsMultiLineString()
-         multiLineString.addGeometry(lineString)   
+         multiLineString.addGeometry(lineString)
          return multiLineString
-      
+
       return self.asLineString()
-      
+
 
    # ===============================================================================
    # asGeom
    # ===============================================================================
    def asGeom(self, wkbType = QgsWkbTypes.LineString, tolerance2ApproxCurve = None, atLeastNSegment = None):
+      """the function returns the line in the form of QgsGeometry.
+            tolerance2ApproxCurve and atLeastNSegment are declared for compatibility only
       """
-      la funzione ritorna la linea in forma di QgsGeometry.
-      tolerance2ApproxCurve e atLeastNSegment sono dichiarati solo per compatibilità
-      """     
       return QgsGeometry(self.asAbstractGeom(wkbType, tolerance2ApproxCurve, atLeastNSegment))
 
 
@@ -613,16 +577,15 @@ class QadLine():
    # lengthen_delta
    # ============================================================================
    def lengthen_delta(self, move_startPt, delta):
-      # obbligatoria
-      """
-      la funzione sposta il punto iniziale (se move_startPt = True) o finale (se move_startPt = False)
-      di una distanza delta
+      # required
+      """the function moves the starting point (if move_startPt = True) or ending point (if move_startPt = False)
+            of a delta distance
       """
       length = self.length()
-      # lunghezza della parte + delta non può essere <= 0
+      # part length + delta cannot be <= 0
       if length + delta <= 0:
          return False
-      
+
       angle = self.getTanDirectionOnPt()
       if move_startPt == True:
          self.setStartPt(qad_utils.getPolarPointByPtAngle(self.getStartPt(), angle + math.pi, delta))
@@ -635,10 +598,9 @@ class QadLine():
    # lengthen_deltaAngle
    # ============================================================================
    def lengthen_deltaAngle(self, move_startPt, delta):
-      # obbligatoria
-      """
-      la funzione sposta il punto iniziale (se move_startPt = True) o finale (se move_startPt = False)
-      della linea di un certo numero di gradi delta rispetto il coefficiente angolare precedente
+      # required
+      """the function moves the starting point (if move_startPt = True) or ending point (if move_startPt = False)
+            of the line by a certain number of degrees delta compared to the previous slope
       """
       angle = self.getTanDirectionOnPt()
       if move_startPt == True:
@@ -652,7 +614,7 @@ class QadLine():
    # move
    # ============================================================================
    def move(self, offsetX, offsetY):
-      # obbligatoria
+      # required
       self.pt1 = qad_utils.movePoint(self.pt1, offsetX, offsetY)
       self.pt2 = qad_utils.movePoint(self.pt2, offsetX, offsetY)
 
@@ -663,7 +625,7 @@ class QadLine():
    def rotate(self, basePt, angle):
       self.pt1 = qad_utils.rotatePoint(self.pt1, basePt, angle)
       self.pt2 = qad_utils.rotatePoint(self.pt2, basePt, angle)
-   
+
 
    # ============================================================================
    # scale
@@ -685,15 +647,14 @@ class QadLine():
    # offset
    # ===============================================================================
    def offset(self, offsetDist, offsetSide):
-      """
-      la funzione ritorna l'offset di una linea
-      secondo una distanza e un lato di offset ("right" o "left")
+      """the function returns the offset of a line
+            according to a distance and an offset side ("right" or "left")
       """
       if offsetSide == "right":
          AngleProjected = qad_utils.getAngleBy2Pts(self.pt1, self.pt2) - (math.pi / 2)
       else:
          AngleProjected = qad_utils.getAngleBy2Pts(self.pt1, self.pt2) + (math.pi / 2)
-      # calcolo il punto proiettato
+      # calculate the projected point
       self.pt1 = qad_utils.getPolarPointByPtAngle(self.pt1, AngleProjected, offsetDist)
       self.pt2 = qad_utils.getPolarPointByPtAngle(self.pt2, AngleProjected, offsetDist)
       return True
@@ -703,9 +664,7 @@ class QadLine():
    # extend
    # ============================================================================
    def extend(self, limitPt):
-      """
-      la funzione estende la linea (punto iniziale o finale della linea) fino ad incontrare il punto <limitPt>.
-      """
+      """the function extends the line (start or end point of the line) until it meets the <limitPt> point."""
       if self.pt1.distance(limitPt) < self.pt2.distance(limitPt):
          self.pt1.setX(limitPt.x())
          self.pt1.setY(limitPt.y())
@@ -718,28 +677,27 @@ class QadLine():
    # breakOnPts
    # ===============================================================================
    def breakOnPts(self, firstPt, secondPt):
-      # obbligatoria
+      # required
+      """the function breaks the geometry at one point (if <secondPt> = None) or at two points
+            how does the trim. Returns one or two geometries resulting from the operation.
+            <firstPt> = first dividing point
+            <secondPt> = second dividing point
       """
-      la funzione spezza la geometria in un punto (se <secondPt> = None) o in due punti 
-      come fa il trim. Ritorna una o due geometrie risultanti dall'operazione.
-      <firstPt> = primo punto di divisione
-      <secondPt> = secondo punto di divisione
-      """
-      # la funzione ritorna una lista con (<minima distanza al quadrato> <punto più vicino>)
+      # the function returns a list with (<minimum squared distance> <nearest point>)
       dummy = self.sqrDist(firstPt)
       myFirstPt = dummy[1]
-      
+
       mySecondPt = None
       if secondPt is not None:
          dummy = self.sqrDist(secondPt)
          mySecondPt = dummy[1]
-      
-      # verifico se è il caso di invertire i punti
+
+      # check whether it is appropriate to reverse the points
       if self.getDistanceFromStart(myFirstPt) > self.getDistanceFromStart(mySecondPt):
          dummy = myFirstPt
          myFirstPt = mySecondPt
          mySecondPt = dummy
-      
+
       part1 = self.getGeomBetween2Pts(self.getStartPt(), myFirstPt)
       if mySecondPt is None:
          part2 = self.getGeomBetween2Pts(myFirstPt, self.getEndPt())
@@ -753,33 +711,30 @@ class QadLine():
    # getGeomBetween2Pts
    # ===============================================================================
    def getGeomBetween2Pts(self, startPt, endPt):
-      """
-      Ritorna una sotto geometria che parte dal punto startPt e finisce al punto endPt seguendo il tracciato della geometria.
-      """
+      """Returns a sub-geometry that starts from the startPt point and ends at the endPt point following the geometry path."""
       if qad_utils.ptNear(startPt, endPt): return None
       if self.containsPt(startPt) == False: return None
       if self.containsPt(endPt) == False: return None
-      
+
       return QadLine().set(startPt, endPt)
-      
-      
+
+
 # ===============================================================================
 # getBoundingPtsOnOnInfinityLine
 # ===============================================================================
 def getBoundingPtsOnOnInfinityLine(pts):
-   """
-   Data una lista di punti <pts> non ordinati su una linea infinita,
-   la funzione ritorna i due punti estremi al fascio di punti (i due punti più lontani tra di loro).
+   """Given a list of unordered points <pts> on an infinite line,
+      the function returns the two extreme points to the point bundle (the two points furthest from each other).
    """
    tot = len(pts)
    if tot < 3:
-      return pts[:] # copio la lista
-   
-   result = []  
+      return pts[:] # I copy the list
+
+   result = []
    # elaboro i tratti intermedi
-   # calcolo la direzione dal primo punto al secondo punto  
-   angle = qad_utils.getAngleBy2Pts(pts[0], pts[1]) 
-   # ciclo su tutti i punti considerando solo quelli che hanno la stessa direzione con il punto precedente (boundingPt1)
+   # calculate the direction from the first point to the second point
+   angle = qad_utils.getAngleBy2Pts(pts[0], pts[1])
+   # loop over all points considering only those that have the same direction with the previous point (boundingPt1)
    i = 2
    boundingPt1 = pts[1]
    while i < tot:
@@ -788,9 +743,9 @@ def getBoundingPtsOnOnInfinityLine(pts):
          boundingPt1 = pt2
       i = i + 1
 
-   # calcolo la direzione dal secondo punto al primo punto  
-   angle = qad_utils.getAngleBy2Pts(pts[1], pts[0]) 
-   # ciclo su tutti i punti considerando solo quelli che hanno la stessa direzione con il punto precedente (boundingPt2)
+   # calculate the direction from the second point to the first point
+   angle = qad_utils.getAngleBy2Pts(pts[1], pts[0])
+   # loop over all points considering only those that have the same direction with the previous point (boundingPt2)
    i = 2
    boundingPt2 = pts[0]
    while i < tot:
