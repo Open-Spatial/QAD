@@ -1,0 +1,27 @@
+QAD Notice
+==========
+
+This Open Spatial fork is based on the original QAD plugin by gam17:
+
+https://github.com/gam17/QAD
+
+QAD is distributed under the GNU General Public License. The original source
+headers generally state GPL version 2 or later. This repository includes the
+GNU GPL version 3 license text as a permitted later version.
+
+Open Spatial modifications include QGIS 4.x / Qt6 compatibility updates,
+metadata updates, packaging updates, and related maintenance for the Open
+Spatial QAD fork.
+
+Bundled Third-Party Components
+------------------------------
+
+The help documentation includes bundled JavaScript libraries with their own
+license notices in the source files, including:
+
+- jQuery 1.9.1, released under the MIT license.
+- jQuery Hotkeys, dual licensed under the MIT or GPL version 2 licenses.
+- jsTree 1.0-rc3, dual licensed under the MIT or GPL version 2 licenses.
+
+Keep upstream copyright notices, author credits, and license notices intact
+when redistributing modified versions.

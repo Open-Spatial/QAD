@@ -27,7 +27,7 @@ category=Vector
 # tags are comma separated with spaces allowed
 tags=cad,circle,digitizing,dimensioning,ellipse,polygon,polyline,rectangle,snap,vector
 
-homepage=https://qadplugin.wordpress.com
+homepage=https://github.com/Open-Spatial/QAD
 icon=icons/qad.png
 # experimental flag
 experimental=False
