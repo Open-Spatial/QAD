@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugins>
+  <pyqgis_plugin name="QAD" version="5.0.6">
+    <description>Quantum Aided Design: CAD-like commands in QGIS</description>
+    <about>Quantum Aided Design: CAD-like commands in QGIS, updated for QGIS 4 and Qt6.</about>
+    <version>5.0.6</version>
+    <qgis_minimum_version>4.0</qgis_minimum_version>
+    <qgis_maximum_version>4.99</qgis_maximum_version>
+    <author_name>Open Spatial Pty Ltd</author_name>
+    <email>support@openspatial.com</email>
+    <homepage>https://github.com/Open-Spatial/QAD</homepage>
+    <tracker>https://github.com/Open-Spatial/QAD/issues</tracker>
+    <repository>https://github.com/Open-Spatial/QAD</repository>
+    <category>Vector</category>
+    <tags>cad,circle,digitizing,dimensioning,ellipse,polygon,polyline,rectangle,snap,vector</tags>
+    <icon>https://raw.githubusercontent.com/Open-Spatial/QAD/master/icons/qad.png</icon>
+    <download_url>https://github.com/Open-Spatial/QAD/releases/download/v5.0.6/QAD_QT6_v5_0_6.zip</download_url>
+    <experimental>False</experimental>
+    <deprecated>False</deprecated>
+  </pyqgis_plugin>
+</plugins>
