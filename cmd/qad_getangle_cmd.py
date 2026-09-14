@@ -44,13 +44,16 @@ class QadGetAngleClass(QadCommandClass):
       """instantiates a new command of the same type"""
       return QadGetAngleClass(self.plugIn)
 
-   def __init__(self, plugIn, *, allow_points = True):
+   def __init__(self, plugIn, *, allow_points = True, keep_map_tool = False):
       QadCommandClass.__init__(self, plugIn)
       self.entity = QadEntity()
       self.startPt = None
       self.msg = QadMsg.translate("QAD", "Specify angle: ")
       self.angle = None # in radianti
       self.allowPoints = bool(allow_points)
+      # Some callers need scalar-only input while retaining QAD's point tool
+      # so a right-click can still submit the active command's default value.
+      self.keepMapTool = bool(keep_map_tool) and not self.allowPoints
       # I store last point because the point(s) indicated by this function must not
       # alterare lastpoint
       self.__prevLastPoint = self.plugIn.lastPoint
@@ -73,6 +76,11 @@ class QadGetAngleClass(QadCommandClass):
          inputType = QadInputTypeEnum.POINT2D | QadInputTypeEnum.ANGLE \
             if self.allowPoints else QadInputTypeEnum.ANGLE
          if self.allowPoints:
+            self.waitFor(self.msg, \
+                         inputType, \
+                         self.angle, "", \
+                         QadInputModeEnum.NOT_NULL)
+         elif self.keepMapTool:
             self.waitFor(self.msg, \
                          inputType, \
                          self.angle, "", \
@@ -114,7 +122,10 @@ class QadGetAngleClass(QadCommandClass):
             return True # end command
          elif type(value) == QgsPointXY:
             if not self.allowPoints:
-               return True
+               self.getPointMapTool().point = None
+               self.setMapTool(self.getPointMapTool())
+               self.showMsg(QadMsg.translate("QAD", "\nEnter a real number.\n"), True)
+               return False
             # the point(s) indicated by this function must not alter lastpoint
             self.plugIn.setLastPoint(self.__prevLastPoint)
 

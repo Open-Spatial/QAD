@@ -248,6 +248,7 @@ class QadTEXTCommandClass(QadCommandClass):
             self.GetDistClass = QadGetDistClass(
                self.plugIn,
                allow_points = not self.scalarTextInputs,
+               keep_map_tool = self.scalarTextInputs,
             )
             prompt = QadMsg.translate("Command_TEXT", "Specify the text height <{0}>: ")
             self.GetDistClass.msg = prompt.format(str(self.hText))
@@ -267,6 +268,7 @@ class QadTEXTCommandClass(QadCommandClass):
                self.GetAngleClass = QadGetAngleClass(
                   self.plugIn,
                   allow_points = not self.scalarTextInputs,
+                  keep_map_tool = self.scalarTextInputs,
                )
                prompt = QadMsg.translate("Command_TEXT", "Specify the text rotation <{0}>: ")
                self.GetAngleClass.msg = prompt.format(str(qad_utils.toDegrees(self.rot)))
@@ -302,6 +304,7 @@ class QadTEXTCommandClass(QadCommandClass):
                   self.GetAngleClass = QadGetAngleClass(
                      self.plugIn,
                      allow_points = not self.scalarTextInputs,
+                     keep_map_tool = self.scalarTextInputs,
                   )
                   prompt = QadMsg.translate("Command_TEXT", "Specify the text rotation <{0}>: ")
                   self.GetAngleClass.msg = prompt.format(str(qad_utils.toDegrees(self.rot)))
