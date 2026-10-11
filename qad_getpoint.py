@@ -119,7 +119,7 @@ class QadGetPoint(QgsMapTool):
       # All vector layers visible according to QGIS settings
       # (current layer only, a set of layers, all layers)
       self.setSnapLayersFromQgis()
-      self.canvas.snappingUtils().configChanged.connect(self.setSnapLayersFromQgis) # update snap layers whenever QGIS snap settings change
+      self.connectSnapLayerRefresh()
 
 
       self.__QadSnapper.setProgressDistance(QadVariables.get(QadMsg.translate("Environment variables", "OSPROGRDISTANCE")))
@@ -171,7 +171,18 @@ class QadGetPoint(QgsMapTool):
 
    def __del__(self):
       self.removeItems()
-      self.canvas.snappingUtils().configChanged.disconnect(self.setSnapLayersFromQgis) # update snap layers whenever QGIS snap settings change
+      self.disconnectSnapLayerRefresh()
+
+
+   def connectSnapLayerRefresh(self):
+      """Refresh cached snap layers when QGIS snapping or canvas layers change."""
+      self.canvas.snappingUtils().configChanged.connect(self.setSnapLayersFromQgis)
+      self.canvas.layersChanged.connect(self.setSnapLayersFromQgis)
+
+
+   def disconnectSnapLayerRefresh(self):
+      self.canvas.snappingUtils().configChanged.disconnect(self.setSnapLayersFromQgis)
+      self.canvas.layersChanged.disconnect(self.setSnapLayersFromQgis)
 
 
    def removeItems(self):
