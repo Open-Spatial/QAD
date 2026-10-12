@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 QAD_PARENT = Path(__file__).resolve().parents[2]
 if str(QAD_PARENT) not in sys.path:
     sys.path.insert(0, str(QAD_PARENT))
 
 from QAD import qad_getpoint
+from QAD import qad_utils
 from QAD.qad_getpoint import QadGetPoint
 
 
@@ -82,3 +84,53 @@ def test_qad_point_tool_refreshes_snap_layers_after_canvas_layer_changes(monkeyp
     point_tool.canvas.layersChanged.emit()
     point_tool.canvas.snappingUtils().configChanged.emit()
     assert point_tool._QadGetPoint__QadSnapper.layers == [other_layer]
+
+
+class _Layer:
+    def __init__(self, properties=None) -> None:
+        self._properties = properties or {}
+
+    def customProperty(self, key, default=None):
+        return self._properties.get(key, default)
+
+    def type(self):
+        return 1
+
+    def hasScaleBasedVisibility(self):
+        return False
+
+
+class _CanvasConfig:
+    def enabled(self):
+        return False
+
+    def mode(self):
+        return 0
+
+
+class _CanvasSnappingUtils:
+    def config(self):
+        return _CanvasConfig()
+
+
+class _LayerCanvas:
+    def __init__(self, layers) -> None:
+        self._layers = layers
+
+    def snappingUtils(self):
+        return _CanvasSnappingUtils()
+
+    def layers(self):
+        return list(self._layers)
+
+
+def test_display_only_layers_are_removed_from_qad_snap_targets(monkeypatch) -> None:
+    source_layer = _Layer()
+    highlight_layer = _Layer({"qad_disable_snapping": True})
+    monkeypatch.setattr(qad_utils, "QgsMapLayer", SimpleNamespace(VectorLayer=1))
+
+    layers = qad_utils.getSnappableVectorLayers(
+        _LayerCanvas([source_layer, highlight_layer])
+    )
+
+    assert layers == [source_layer]

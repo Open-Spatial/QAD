@@ -1,3 +1,7 @@
+Unreleased
+---------------------------
+* 2026-10-13 Honor the qad_disable_snapping layer property so display-only overlays do not become QAD snap targets.
+
 version 5.0.14
 ---------------------------
 * 2026-10-12 Fixed stale snap layers after canvas layer changes so MOVE NODE uses the correct prompts.

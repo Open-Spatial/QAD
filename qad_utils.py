@@ -930,6 +930,15 @@ def getVisibleVectorLayers(canvas):
    return layers
 
 
+def _isLayerExcludedFromSnapping(layer):
+   """Return whether a layer is explicitly marked as a display-only overlay."""
+   try:
+      value = str(layer.customProperty("qad_disable_snapping", "") or "").strip().lower()
+      return value in ("1", "true", "y", "yes")
+   except Exception:
+      return False
+
+
 # ===============================================================================
 # getSnappableVectorLayers
 # ===============================================================================
@@ -952,7 +961,8 @@ def getSnappableVectorLayers(canvas):
    # Only vector layers visible
    for i in range(len(layers) - 1, -1, -1):
       # if the layer is not vector or not visible at this scale
-      if layers[i].type() != QgsMapLayer.VectorLayer or \
+      if _isLayerExcludedFromSnapping(layers[i]) or \
+         layers[i].type() != QgsMapLayer.VectorLayer or \
          layers[i].hasScaleBasedVisibility() and \
          (canvas.mapSettings().scale() > layers[i].minimumScale() or canvas.mapSettings().scale() < layers[i].maximumScale()):
          del layers[i]
