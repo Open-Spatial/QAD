@@ -859,14 +859,26 @@ class QadGetPoint(QgsMapTool):
       self.dynamicEditInput.mouseMoveEvent(event.pos())
 
       # start = time.time() # test
+      snapLayers = self.__QadSnapper.getSnapLayers() or []
+      firstLayerToCheck = self.lastLayerFound
+      if firstLayerToCheck is not None:
+         try:
+            firstLayerId = firstLayerToCheck.id()
+         except RuntimeError:
+            firstLayerToCheck = None
+         if firstLayerToCheck is not None and not any(
+            layer.id() == firstLayerId for layer in snapLayers
+         ):
+            firstLayerToCheck = None
+
       result = qad_utils.getEntSel(event.pos(), self, \
                                    QadVariables.get(QadMsg.translate("Environment variables", "APERTURE")), \
-                                   None, \
+                                   snapLayers, \
                                    self.__geometryTypesAccordingToSnapType[0], \
                                    self.__geometryTypesAccordingToSnapType[1], \
                                    self.__geometryTypesAccordingToSnapType[2], \
                                    True, False, \
-                                   self.lastLayerFound, self.layerCacheGeomsDict, True)
+                                   firstLayerToCheck, self.layerCacheGeomsDict, True)
 
       #self.tempo1 += ((time.time() - start1) * 1000) # test
 

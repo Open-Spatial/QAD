@@ -10,7 +10,7 @@ if str(QAD_PARENT) not in sys.path:
 
 from QAD import qad_getpoint
 from QAD import qad_utils
-from QAD.qad_getpoint import QadGetPoint
+from QAD.qad_getpoint import QadGetPoint, QadGetPointDrawModeEnum, QadGetPointSelectionModeEnum
 
 
 class _Signal:
@@ -134,3 +134,93 @@ def test_display_only_layers_are_removed_from_qad_snap_targets(monkeypatch) -> N
     )
 
     assert layers == [source_layer]
+
+
+class _DynamicInput:
+    isVisible = False
+
+    def mouseMoveEvent(self, _position) -> None:
+        pass
+
+    def isActive(self) -> bool:
+        return False
+
+
+class _PointSelectionTool(_PointTool):
+    def __init__(self, snap_layers, last_layer) -> None:
+        super().__init__()
+        self._QadGetPoint__QadSnapper = SimpleNamespace(
+            getSnapLayers=lambda: snap_layers,
+            getSnapPoint=lambda *_args: {},
+            getExtLinearObjs=lambda: [],
+            getParLines=lambda: [],
+            getIntExtLinearObjs=lambda: [],
+            getOSnapPointsForPolar=lambda: {},
+            getOSnapLinesForPolar=lambda: [],
+        )
+        self._QadGetPoint__QadSnapPointsDisplayManager = SimpleNamespace(show=lambda *_args: None)
+        self._QadGetPoint__geometryTypesAccordingToSnapType = (True, True, True)
+        self._QadGetPoint__AutoSnap = 0
+        self._QadGetPoint__PolarAddAngles = []
+        self._QadGetPoint__oldSnapType = None
+        self._QadGetPoint__startPoint = None
+        self._QadGetPoint__OrthoMode = 0
+        self.dynamicEditInput = _DynamicInput()
+        self.tmpEntity = SimpleNamespace(clear=lambda: None)
+        self.tmpGeometries = []
+        self.tmpPoint = None
+        self.tmpShiftKey = False
+        self.lastLayerFound = last_layer
+        self.layerCacheGeomsDict = None
+        self.getSelectionMode = lambda: QadGetPointSelectionModeEnum.POINT_SELECTION
+        self.getDrawMode = lambda: QadGetPointDrawModeEnum.NONE
+        self.getRealPolarAng = lambda: None
+        self.getRealPolarAngOffset = lambda: None
+        self.toMapCoordinates = lambda position: position
+
+
+class _Event:
+    def pos(self):
+        return (0, 0)
+
+
+class _DeletedLayer:
+    def id(self):
+        raise RuntimeError("deleted")
+
+
+def test_point_selection_uses_snap_layers_and_ignores_excluded_last_layer(monkeypatch) -> None:
+    source_layer = SimpleNamespace(id=lambda: "source")
+    highlight_layer = SimpleNamespace(id=lambda: "highlight")
+    seen = {}
+    monkeypatch.setattr(qad_getpoint.QadVariables, "get", lambda _name: 1)
+    monkeypatch.setattr(
+        qad_utils,
+        "getEntSel",
+        lambda *args: seen.update(args=args) or None,
+    )
+    monkeypatch.setattr(qad_utils, "getGeomInBox", lambda *_args: None)
+    tool = _PointSelectionTool([source_layer], highlight_layer)
+
+    QadGetPoint.canvasMoveEventOnPointSel(tool, _Event())
+
+    assert seen["args"][3] == [source_layer]
+    assert seen["args"][9] is None
+
+
+def test_point_selection_ignores_deleted_cached_layer(monkeypatch) -> None:
+    source_layer = SimpleNamespace(id=lambda: "source")
+    seen = {}
+    monkeypatch.setattr(qad_getpoint.QadVariables, "get", lambda _name: 1)
+    monkeypatch.setattr(
+        qad_utils,
+        "getEntSel",
+        lambda *args: seen.update(args=args) or None,
+    )
+    monkeypatch.setattr(qad_utils, "getGeomInBox", lambda *_args: None)
+    tool = _PointSelectionTool([source_layer], _DeletedLayer())
+
+    QadGetPoint.canvasMoveEventOnPointSel(tool, _Event())
+
+    assert seen["args"][3] == [source_layer]
+    assert seen["args"][9] is None
