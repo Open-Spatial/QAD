@@ -385,7 +385,7 @@ class QadCommandsClass():
             keyword_text = keywords
          else:
             keyword_text = "/".join(str(value) for value in keywords)
-         keyword_types = ("keyword", "point_or_keyword", "point_or_angle_or_keyword")
+         keyword_types = ("keyword", "point_or_keyword")
          if normalized_type in keyword_types and keyword_text.strip() == "":
             callback(QadScalarCaptureResult(normalized_type, "failed", None, "Keyword input requires keywords."))
             return False

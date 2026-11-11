@@ -46,7 +46,15 @@ class QadScalarCaptureCommand(QadCommandClass):
             "point": QadInputTypeEnum.POINT2D,
             "point_or_keyword": QadInputTypeEnum.POINT2D | QadInputTypeEnum.KEYWORDS,
             "point_or_distance": QadInputTypeEnum.POINT2D | QadInputTypeEnum.FLOAT,
-            "point_or_angle_or_keyword": QadInputTypeEnum.POINT2D | QadInputTypeEnum.ANGLE | QadInputTypeEnum.KEYWORDS,
+            "point_or_angle_or_keyword": (
+               QadInputTypeEnum.POINT2D
+               | QadInputTypeEnum.ANGLE
+               | (
+                  QadInputTypeEnum.KEYWORDS
+                  if str(self.keywords or "").strip()
+                  else QadInputTypeEnum.NONE
+               )
+            ),
          }[self.inputTypeName]
          self.waitFor(
             self.prompt,
