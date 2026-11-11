@@ -1,3 +1,7 @@
+version 5.0.17
+---------------------------
+* 2026-11-12 Allow point-or-angle scalar capture when prompts have no keyword options.
+
 version 5.0.16
 ---------------------------
 * 2026-10-14 Keep display-only layers out of QAD point-selection candidates so they do not mask valid OSNAP targets.
